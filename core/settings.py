@@ -25,8 +25,13 @@ SECRET_KEY = 'django-insecure-k6*on4&eb_7ou5m5evf^ku$wra=!mmbcy1o^&_x75kb_ez=cif
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    "rentlogic-cly7.onrender.com",
+    "rentlogicapp.com",
+    "www.rentlogicapp.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 # Application definition
 
