@@ -1,18 +1,35 @@
-from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 
 from .models import InviteCode, Profile
 from .forms import InviteCodeEntryForm, CodeSignupForm, CreateUserInviteForm
 
-from django.shortcuts import render, redirect
-
-def signup(request):
-    return render(request, "accounts/signup.html")
 
 def user_login(request):
-    return render(request, "accounts/login.html")
+    error = None
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+
+            try:
+                profile = user.profile
+                if profile.role == "owner":
+                    return redirect("owner_dashboard")
+                return redirect("user_dashboard")
+            except Profile.DoesNotExist:
+                return redirect("home")
+
+        error = "Invalid username or password."
+
+    return render(request, "accounts/login.html", {"error": error})
 
 
 def enter_code(request):
@@ -67,7 +84,7 @@ def signup(request):
                 user=user,
                 role=role,
                 status=status,
-                phone=invite.phone
+                phone=invite.phone,
             )
 
             invite.is_used = True
@@ -82,15 +99,21 @@ def signup(request):
             return redirect("application_page")
 
     else:
-        form = CodeSignupForm(initial={
-            "email": invite.email,
-            "phone": invite.phone,
-        })
+        form = CodeSignupForm(
+            initial={
+                "email": invite.email,
+                "phone": invite.phone,
+            }
+        )
 
-    return render(request, "accounts/signup.html", {
-        "form": form,
-        "invite": invite,
-    })
+    return render(
+        request,
+        "accounts/signup.html",
+        {
+            "form": form,
+            "invite": invite,
+        },
+    )
 
 
 def application_page(request):
@@ -110,15 +133,19 @@ def owner_dashboard(request):
             created_by=request.user,
         )
 
-        messages.success(request, "Renter invite code created and email sent.")
+        messages.success(request, "Renter invite code created.")
         return redirect("owner_dashboard")
 
     invites = InviteCode.objects.filter(created_by=request.user).order_by("-created_at")
 
-    return render(request, "accounts/owner_dashboard.html", {
-        "form": form,
-        "invites": invites,
-    })
+    return render(
+        request,
+        "accounts/owner_dashboard.html",
+        {
+            "form": form,
+            "invites": invites,
+        },
+    )
 
 
 @login_required
