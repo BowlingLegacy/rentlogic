@@ -152,17 +152,3 @@ def owner_dashboard(request):
 def user_dashboard(request):
     return render(request, "accounts/user_dashboard.html")
 
-
-from django.contrib.auth.models import User
-from django.http import HttpResponse
-
-def create_admin(request):
-    if not User.objects.filter(username="admin").exists():
-        User.objects.create_superuser(
-            username="admin",
-            password="admin123",
-            email="admin@example.com"
-        )
-        return HttpResponse("Admin created: admin / admin123")
-    
-    return HttpResponse("Admin already exists")
