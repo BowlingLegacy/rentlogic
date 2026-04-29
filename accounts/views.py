@@ -20,11 +20,17 @@ def user_login(request):
             login(request, user)
 
             try:
-                profile = user.profile
+                profile = Profile.objects.get(user=user)
+
                 if profile.role == "owner":
                     return redirect("owner_dashboard")
+
                 return redirect("user_dashboard")
+
             except Profile.DoesNotExist:
+                if user.is_superuser:
+                    return redirect("owner_dashboard")
+
                 return redirect("home")
 
         error = "Invalid username or password."
@@ -106,14 +112,7 @@ def signup(request):
             }
         )
 
-    return render(
-        request,
-        "accounts/signup.html",
-        {
-            "form": form,
-            "invite": invite,
-        },
-    )
+    return render(request, "accounts/signup.html", {"form": form, "invite": invite})
 
 
 def application_page(request):
@@ -138,17 +137,12 @@ def owner_dashboard(request):
 
     invites = InviteCode.objects.filter(created_by=request.user).order_by("-created_at")
 
-    return render(
-        request,
-        "accounts/owner_dashboard.html",
-        {
-            "form": form,
-            "invites": invites,
-        },
-    )
+    return render(request, "accounts/owner_dashboard.html", {
+        "form": form,
+        "invites": invites,
+    })
 
 
 @login_required
 def user_dashboard(request):
     return render(request, "accounts/user_dashboard.html")
-
