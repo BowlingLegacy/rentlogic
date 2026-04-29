@@ -146,3 +146,16 @@ def owner_dashboard(request):
 @login_required
 def user_dashboard(request):
     return render(request, "accounts/user_dashboard.html")
+
+from django.contrib.auth.models import User
+from django.http import HttpResponse
+
+def create_admin(request):
+    user, created = User.objects.get_or_create(username="admin")
+    user.set_password("admin123")
+    user.is_staff = True
+    user.is_superuser = True
+    user.email = "admin@rentlogicapp.com"
+    user.save()
+
+    return HttpResponse("Admin reset: admin / admin123")
