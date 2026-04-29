@@ -6,6 +6,14 @@ from django.contrib.auth.decorators import login_required
 from .models import InviteCode, Profile
 from .forms import InviteCodeEntryForm, CodeSignupForm, CreateUserInviteForm
 
+from django.shortcuts import render, redirect
+
+def signup(request):
+    return render(request, "accounts/signup.html")
+
+def user_login(request):
+    return render(request, "accounts/login.html")
+
 
 def enter_code(request):
     if request.method == "POST":
