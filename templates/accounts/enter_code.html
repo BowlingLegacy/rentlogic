@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enter Invite Code</title>
+</head>
+<body style="font-family: Tahoma; padding: 40px;">
+
+<h1>Enter Your RentLogic Invite Code</h1>
+
+{% for message in messages %}
+    <p style="color:red;">{{ message }}</p>
+{% endfor %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Continue</button>
+</form>
+
+</body>
+</html>
