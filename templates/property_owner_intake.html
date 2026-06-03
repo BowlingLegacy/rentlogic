@@ -1,0 +1,282 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Property Owner Questionnaire | Rental Ledger Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+            color: #1d1a13;
+            min-height: 100vh;
+        }
+        .topbar {
+            background: #070707;
+            border-bottom: 2px solid #c59a32;
+            box-shadow: 0 8px 22px rgba(0,0,0,.18);
+        }
+        .brand-link {
+            color: #f6ead1;
+            font-family: Georgia, serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .brand-link:hover { color: #f6ead1; }
+        .brand-logo { height: 64px; width: auto; margin-right: 14px; }
+        .shell { max-width: 1080px; margin: 2.5rem auto; padding: 0 1rem; }
+        .intake-card {
+            background: rgba(255,255,255,.94);
+            border: 1px solid rgba(188,150,45,.28);
+            border-radius: 20px;
+            box-shadow: 0 12px 34px rgba(0,0,0,.1);
+            overflow: hidden;
+        }
+        .intake-header {
+            background: #111;
+            border-bottom: 2px solid #c59a32;
+            color: #f6ead1;
+            padding: 1.6rem;
+        }
+        .intake-kicker {
+            color: #d8ab3b;
+            font-size: .76rem;
+            font-weight: 900;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+        }
+        .section-panel {
+            background: #fffaf0;
+            border: 1px solid rgba(188,150,45,.22);
+            border-radius: 14px;
+            padding: 1rem;
+            height: 100%;
+        }
+        .section-title {
+            color: #1c1c1c;
+            font-family: Georgia, serif;
+            font-weight: 700;
+        }
+        .feature-grid {
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .feature-check {
+            background: #fff;
+            border: 1px solid rgba(188,150,45,.24);
+            border-radius: 12px;
+            padding: .7rem .8rem;
+        }
+        .feature-check label { font-weight: 700; margin-left: .4rem; }
+        input[type="checkbox"], .form-check-input[type="checkbox"] { width: 1.2em; height: 1.2em; border: 2px solid #4b3510 !important; background-color: #fffaf0 !important; box-shadow: 0 0 0 1px rgba(0,0,0,.08); cursor: pointer; }
+        input[type="checkbox"]:checked, .form-check-input[type="checkbox"]:checked { background-color: #c59a32 !important; border-color: #111 !important; accent-color: #c59a32; }
+        input[type="checkbox"]:focus, .form-check-input[type="checkbox"]:focus { border-color: #111 !important; box-shadow: 0 0 0 .22rem rgba(197,154,50,.28) !important; }
+        #id_property_types {
+            display: grid;
+            gap: .65rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        #id_property_types label {
+            background: #fff;
+            border: 1px solid rgba(188,150,45,.24);
+            border-radius: 12px;
+            display: block;
+            font-weight: 700;
+            padding: .65rem .8rem;
+        }
+        .gold-btn {
+            background: linear-gradient(135deg, #c48f22, #d8ab3b);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 900;
+            padding: .85rem 1.2rem;
+        }
+        .nav-link-soft {
+            border: 1px solid #c59a32;
+            border-radius: 10px;
+            color: #d8ab3b;
+            font-weight: 800;
+            padding: .65rem .9rem;
+            text-decoration: none;
+        }
+        .nav-link-soft:hover { background: rgba(197,154,50,.12); color: #f6ead1; }
+    </style>
+</head>
+<body>
+<nav class="topbar py-3">
+    <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <a href="/" class="brand-link d-flex align-items-center">
+            <img src="/static/images/bl-logo.png" class="brand-logo" alt="Bowling Legacy">
+            Bowling Legacy | Rental Ledger Pro
+        </a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/" class="nav-link-soft">Home</a>
+            <a href="{% url 'login' %}" class="nav-link-soft">Portal</a>
+        </div>
+    </div>
+</nav>
+
+<main class="shell">
+    <div class="intake-card">
+        <div class="intake-header">
+            <div class="intake-kicker">Property Owner Intake</div>
+            <h1 class="fw-bold mb-2">Tell us what your dashboard needs to do.</h1>
+            <p class="mb-0">
+                This questionnaire helps Rental Ledger Pro understand your portfolio, records, migration needs,
+                and the systems that matter most to your operations.
+            </p>
+        </div>
+
+        <form method="post" class="p-4 p-md-5">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <section class="section-panel">
+                        <h2 class="section-title h4 mb-3">Owner Contact</h2>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+                            {{ form.full_name }}
+                            {{ form.full_name.errors }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" for="{{ form.company_name.id_for_label }}">{{ form.company_name.label }}</label>
+                            {{ form.company_name }}
+                            {{ form.company_name.errors }}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                                {{ form.email }}
+                                {{ form.email.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                                {{ form.phone }}
+                                {{ form.phone.errors }}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="col-lg-6">
+                    <section class="section-panel">
+                        <h2 class="section-title h4 mb-3">Portfolio</h2>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold" for="{{ form.property_count.id_for_label }}">{{ form.property_count.label }}</label>
+                                {{ form.property_count }}
+                                {{ form.property_count.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold" for="{{ form.total_units.id_for_label }}">{{ form.total_units.label }}</label>
+                                {{ form.total_units }}
+                                {{ form.total_units.errors }}
+                            </div>
+                        </div>
+                        <label class="form-label fw-bold">{{ form.property_types.label }}</label>
+                        {{ form.property_types }}
+                        {{ form.property_types.errors }}
+                    </section>
+                </div>
+
+                <div class="col-12">
+                    <section class="section-panel">
+                        <h2 class="section-title h4 mb-3">Systems Needed</h2>
+                        <div class="feature-grid">
+                            {% for field in form %}
+                                {% if field.name|slice:":6" == "needs_" %}
+                                    <div class="feature-check">
+                                        {{ field }}
+                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+
+                <div class="col-12">
+                    <section class="section-panel">
+                        <h2 class="section-title h4 mb-3">Reports Needed</h2>
+                        <div class="feature-grid">
+                            {% for checkbox in form.desired_reports %}
+                                <div class="feature-check">
+                                    {{ checkbox.tag }}
+                                    <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {{ form.desired_reports.errors }}
+                    </section>
+                </div>
+
+                <div class="col-lg-6">
+                    <section class="section-panel">
+                        <h2 class="section-title h4 mb-3">Current Records</h2>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" for="{{ form.current_software.id_for_label }}">{{ form.current_software.label }}</label>
+                            {{ form.current_software }}
+                            {{ form.current_software.errors }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" for="{{ form.current_pain_points.id_for_label }}">{{ form.current_pain_points.label }}</label>
+                            {{ form.current_pain_points }}
+                            {{ form.current_pain_points.errors }}
+                        </div>
+                        <div>
+                            <label class="form-label fw-bold" for="{{ form.migration_notes.id_for_label }}">{{ form.migration_notes.label }}</label>
+                            {{ form.migration_notes }}
+                            {{ form.migration_notes.errors }}
+                        </div>
+                    </section>
+                </div>
+
+                <div class="col-lg-6">
+                    <section class="section-panel">
+                        <h2 class="section-title h4 mb-3">Dashboard Goals</h2>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" for="{{ form.onboarding_timeline.id_for_label }}">{{ form.onboarding_timeline.label }}</label>
+                            {{ form.onboarding_timeline }}
+                            {{ form.onboarding_timeline.errors }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" for="{{ form.dashboard_goals.id_for_label }}">{{ form.dashboard_goals.label }}</label>
+                            {{ form.dashboard_goals }}
+                            {{ form.dashboard_goals.errors }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" for="{{ form.tenant_utility_setup_notes.id_for_label }}">{{ form.tenant_utility_setup_notes.label }}</label>
+                            {{ form.tenant_utility_setup_notes }}
+                            {{ form.tenant_utility_setup_notes.errors }}
+                            <div class="form-text">List any tenant-paid accounts residents must set up, including vendor links or phone numbers.</div>
+                        </div>
+                        <div>
+                            <label class="form-label fw-bold" for="{{ form.additional_notes.id_for_label }}">{{ form.additional_notes.label }}</label>
+                            {{ form.additional_notes }}
+                            {{ form.additional_notes.errors }}
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="gold-btn">Submit Questionnaire</button>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

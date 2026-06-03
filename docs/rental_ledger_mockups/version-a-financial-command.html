@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rental Ledger Pro - Financial Command</title>
+    <style>
+        :root {
+            --ink: #14202a;
+            --muted: #5c6973;
+            --paper: #f7f3eb;
+            --panel: #fffefa;
+            --gold: #b78c2e;
+            --green: #426957;
+            --blue: #2e5f82;
+            --line: #ded0b5;
+            --bad: #8b3d36;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+        .nav {
+            position: absolute;
+            inset: 0 0 auto;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 34px;
+            color: #fff;
+        }
+
+        .brand { font-weight: 900; font-size: 1.25rem; letter-spacing: 0; }
+        .nav a { color: #fff; text-decoration: none; font-weight: 800; font-size: .9rem; margin-left: 18px; }
+        .nav .cta { border: 1px solid rgba(255,255,255,.72); border-radius: 6px; padding: 10px 14px; }
+
+        .hero {
+            min-height: 92vh;
+            background:
+                linear-gradient(90deg, rgba(17, 23, 30, .86), rgba(17, 23, 30, .38)),
+                url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1800&q=82") center/cover;
+            color: #fff;
+            display: grid;
+            align-items: center;
+            padding: 92px 34px 46px;
+        }
+
+        .hero-inner { width: min(1120px, 100%); margin: 0 auto; }
+        .kicker { color: #f2c876; font-size: .82rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 900; }
+        h1 { font-size: clamp(2.55rem, 6vw, 5.8rem); line-height: .96; margin: 12px 0 18px; letter-spacing: 0; max-width: 850px; }
+        .hero p { max-width: 650px; font-size: 1.12rem; line-height: 1.58; color: #f5efe2; }
+        .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+        .button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 12px 18px; border-radius: 6px; font-weight: 900; text-decoration: none; }
+        .primary { background: var(--gold); color: #111; }
+        .secondary { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.62); color: #fff; }
+
+        .section { width: min(1120px, calc(100% - 32px)); margin: 44px auto; }
+        .band { background: #fff; border-block: 1px solid var(--line); padding: 42px 0; }
+        .band .section { margin-block: 0; }
+        .split { display: grid; grid-template-columns: 1fr 1.08fr; gap: 28px; align-items: start; }
+        .section h2 { font-size: clamp(1.8rem, 3vw, 3rem); margin: 0 0 12px; line-height: 1.05; }
+        .section p { color: var(--muted); line-height: 1.55; margin: 0; }
+
+        .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+        .metric { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+        .metric b { display: block; font-size: 1.55rem; margin-bottom: 4px; }
+        .metric span { color: var(--muted); font-size: .86rem; }
+
+        .report {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 14px 42px rgba(30, 35, 40, .12);
+        }
+
+        .report-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+        .report-head strong { font-size: 1rem; }
+        .pill { background: #eaf2ed; color: var(--green); border-radius: 999px; padding: 6px 10px; font-size: .78rem; font-weight: 900; }
+        table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+        th, td { padding: 11px 12px; border-bottom: 1px solid #eee2cc; text-align: right; white-space: nowrap; }
+        th:first-child, td:first-child { text-align: left; }
+        th { color: #5f5040; background: #f0e4ce; font-size: .76rem; text-transform: uppercase; }
+        .positive { color: var(--green); font-weight: 900; }
+        .negative { color: var(--bad); font-weight: 900; }
+
+        .features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .feature { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 20px; min-height: 172px; }
+        .feature h3 { margin: 0 0 8px; font-size: 1.08rem; }
+        .feature p { font-size: .95rem; }
+
+        .footer-cta { background: var(--ink); color: #fff; padding: 44px 0; }
+        .footer-cta p { color: #dbe2e7; }
+
+        @media (max-width: 860px) {
+            .nav { position: static; background: var(--ink); padding: 16px; align-items: flex-start; gap: 12px; flex-direction: column; }
+            .nav a { margin: 0 14px 0 0; display: inline-flex; }
+            .hero { min-height: 78vh; padding: 46px 18px; }
+            .split, .features, .metrics { grid-template-columns: 1fr; }
+            table { font-size: .78rem; }
+            th, td { padding: 9px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="brand">Rental Ledger Pro</div>
+        <div>
+            <a href="#">Reports</a>
+            <a href="#">Accounting</a>
+            <a href="#">Demo</a>
+            <a class="cta" href="#">Request Access</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-inner">
+            <div class="kicker">Commercial Multifamily Management</div>
+            <h1>Rent records, owner reports, and property books in one place.</h1>
+            <p>Rental Ledger Pro gives property owners and landlords a clear operating ledger for rent, utilities, deposits, expenses, documents, communication, and bank-ready reports.</p>
+            <div class="hero-actions">
+                <a class="button primary" href="#">Try the Demo</a>
+                <a class="button secondary" href="#">See Owner Reports</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="split">
+                <div>
+                    <div class="kicker" style="color:var(--gold)">Financial Command Center</div>
+                    <h2>Built for the numbers property owners actually need.</h2>
+                    <p>Keep rent roll, payment logs, T-12, NOI, cash flow after debt, deposit records, and vendor expenses connected to the same property ledger.</p>
+                    <div class="metrics">
+                        <div class="metric"><b>17</b><span>Units tracked</span></div>
+                        <div class="metric"><b>12</b><span>Months visible</span></div>
+                        <div class="metric"><b>$0</b><span>Unmatched receipts</span></div>
+                        <div class="metric"><b>1</b><span>Audit trail</span></div>
+                    </div>
+                </div>
+                <div class="report" aria-label="T-12 report preview">
+                    <div class="report-head">
+                        <strong>T-12 Performance Snapshot</strong>
+                        <span class="pill">Printable</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr><th>Line</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Rental Income</td><td>$10,105</td><td>$9,737</td><td>$10,605</td><td>$10,705</td><td>$10,030</td></tr>
+                            <tr><td>Operating Expense</td><td>$4,854</td><td>$4,640</td><td>$3,662</td><td>$4,296</td><td>$3,418</td></tr>
+                            <tr><td>NOI</td><td class="positive">$5,251</td><td class="positive">$5,097</td><td class="positive">$6,943</td><td class="positive">$6,409</td><td class="positive">$6,612</td></tr>
+                            <tr><td>Debt Service</td><td>$4,000</td><td>$4,000</td><td>$4,000</td><td>$4,000</td><td>$4,000</td></tr>
+                            <tr><td>Cash Flow</td><td>$1,251</td><td>$1,097</td><td>$2,943</td><td>$2,409</td><td>$2,612</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="band">
+            <div class="section">
+                <div class="features">
+                    <article class="feature">
+                        <h3>Bank-ready reports</h3>
+                        <p>Generate rent roll, T-12, NOI, valuation estimate, payment history, deposit liability, and vendor expense reports.</p>
+                    </article>
+                    <article class="feature">
+                        <h3>Receipt-backed books</h3>
+                        <p>Upload receipts from a phone or computer, attach them to categories, and keep proof inside the property file.</p>
+                    </article>
+                    <article class="feature">
+                        <h3>Property data separation</h3>
+                        <p>Owners and landlords only see the properties, residents, messages, payments, and financial records they are allowed to access.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="footer-cta">
+            <div class="section">
+                <div class="split">
+                    <div>
+                        <h2>Make the ledger match the real property.</h2>
+                        <p>Start with owner onboarding, upload existing records, and let each property build its own operating history.</p>
+                    </div>
+                    <div style="align-self:center">
+                        <a class="button primary" href="#">Request a Setup Call</a>
+                        <a class="button secondary" href="#">Open Demo</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.mail-reader-shell {
+    max-width: 980px;
+    margin: 0 auto;
+}
+.mail-reader-card {
+    background: #fffdf8;
+    border: 1px solid rgba(188,150,45,.22);
+    border-radius: 18px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.10);
+    overflow: hidden;
+}
+.mail-reader-head {
+    background: #111;
+    color: #f6ead1;
+    padding: 1.2rem 1.4rem;
+    border-bottom: 2px solid #c59a32;
+}
+.mail-letter {
+    max-width: 760px;
+    margin: 1.5rem auto;
+    background: #fff;
+    border: 1px solid #ead9aa;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(0,0,0,.07);
+    padding: clamp(1.1rem, 3vw, 2rem);
+    color: #1d1b16;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
+    line-height: 1.68;
+    white-space: pre-wrap;
+}
+.mail-meta {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem 0;
+}
+.mail-reply {
+    max-width: 760px;
+    margin: 0 auto 1.5rem;
+    padding: 0 1.5rem 1.5rem;
+}
+@media (max-width: 576px) {
+    .mail-reader-head {
+        padding: 1rem;
+    }
+    .mail-meta,
+    .mail-reply {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    .mail-letter {
+        margin: 1rem;
+        font-size: 1rem;
+    }
+}
+</style>
+
+<div class="mail-reader-shell">
+<div class="mail-reader-card">
+    <div class="mail-reader-head d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <div class="text-uppercase small fw-bold">Company Email</div>
+            <h1 class="h3 fw-bold mb-1">{{ message.subject }}</h1>
+            <div class="text-white-50">From {{ message.sender_name }} &lt;{{ message.sender_email }}&gt;</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'company_mailbox' %}" class="btn btn-outline-light">Inbox</a>
+            <form method="post" onsubmit="return confirm('Delete this email from the company mailbox?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <button type="submit" class="btn btn-outline-danger fw-bold">Delete Email</button>
+            </form>
+            {% if message.web_link %}
+                <a href="{{ message.web_link }}" class="btn btn-warning fw-bold" target="_blank" rel="noopener">Open in Outlook</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <div class="mail-meta text-muted">{{ message.received }}</div>
+
+        <article class="mail-letter">{{ message.body_text }}</article>
+
+        <form method="post" class="mail-reply">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reply">
+            <h2 class="h5 fw-bold">Reply From Company Mailbox</h2>
+            {{ form.body }}
+            {% if form.body.errors %}
+                <div class="text-danger small">{{ form.body.errors }}</div>
+            {% endif %}
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary fw-bold">Send Reply</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+{% endblock %}

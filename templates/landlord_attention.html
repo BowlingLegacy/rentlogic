@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Needs Attention</h1>
+            <p class="text-muted mb-0">New applications, resident messages, and uploaded documents.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'current_resident_roster_upload' %}" class="btn btn-outline-primary">Approved Resident List</a>
+            <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-dark">Back to Landlord Menu</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="fw-bold h4">Current Resident Profile Setups</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Resident</th><th>Property</th><th>Submitted</th><th>Contact</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    {% for row in existing_resident_intakes %}
+                        {% with intake=row.intake %}
+                        <tr>
+                            <td>
+                                <strong>{{ intake.full_name }}</strong><br>
+                                {% if row.duplicate_count > 1 %}
+                                    <span class="badge text-bg-warning mb-1">{{ row.duplicate_count }} duplicate setup attempts</span><br>
+                                {% endif %}
+                                <a href="{% url 'landlord_existing_resident_intake_detail' intake.id %}" class="btn btn-outline-secondary btn-sm mt-1">Open</a>
+                            </td>
+                            <td>{{ intake.property.name }}</td>
+                            <td>{{ intake.created_at|date:"M j, g:i A" }}</td>
+                            <td>{{ intake.email }}<br><span class="text-muted small">{{ intake.phone }}</span></td>
+                            <td>
+                                {% if row.setup_status == "completed" %}
+                                    <span class="btn btn-outline-success btn-sm disabled">Completed</span>
+                                    <a href="{% url 'landlord_existing_resident_intake_detail' intake.id %}" class="btn btn-outline-secondary btn-sm">View</a>
+                                {% elif row.setup_status == "invite_sent" %}
+                                    <a href="{% url 'landlord_existing_resident_intake_detail' intake.id %}" class="btn btn-outline-primary btn-sm">Open / Resend</a>
+                                {% else %}
+                                    <a href="{% url 'landlord_existing_resident_intake_detail' intake.id %}" class="btn btn-primary btn-sm">Review / Send</a>
+                                    <form method="post" action="{% url 'delete_existing_resident_intake' intake.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="btn btn-outline-danger btn-sm"
+                                                onclick="return confirm('Delete this invalid setup attempt?');">
+                                            Delete
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endwith %}
+                    {% empty %}
+                        <tr><td colspan="5" class="text-muted">No current resident profile setups.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="fw-bold h4">Applications</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Applicant</th><th>Property</th><th>Submitted</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    {% for application in new_applications %}
+                        <tr>
+                            <td>
+                                <strong>{{ application.full_name }}</strong><br>
+                                {% if application.attention_duplicate_count > 1 %}
+                                    <span class="badge text-bg-warning mb-1">{{ application.attention_duplicate_count }} duplicate applications</span><br>
+                                {% endif %}
+                                <span class="text-muted small">{{ application.email }}</span>
+                            </td>
+                            <td>{{ application.property.name|default:"No Property" }}</td>
+                            <td>{{ application.created_at|date:"M j, g:i A" }}</td>
+                            <td class="d-flex gap-2 flex-wrap">
+                                <a href="{% url 'application_detail' application.id %}" class="btn btn-outline-secondary btn-sm">Open</a>
+                                <a href="{% url 'landlord_create_tenant' %}?application={{ application.id }}" class="btn btn-primary btn-sm">Create File</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-muted">No new applications.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="fw-bold h4">Messages</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Resident</th><th>Subject</th><th>Submitted</th><th></th></tr></thead>
+                    <tbody>
+                    {% for resident_message in new_messages %}
+                        <tr>
+                            <td>{{ resident_message.application.full_name }}</td>
+                            <td><strong>{{ resident_message.subject }}</strong><br><span class="text-muted small">{{ resident_message.get_message_type_display }}</span></td>
+                            <td>{{ resident_message.created_at|date:"M j, g:i A" }}</td>
+                            <td><a href="{% url 'landlord_message_detail' resident_message.id %}" class="btn btn-outline-secondary btn-sm">Open</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-muted">No new messages.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="fw-bold h4">Documents</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Resident</th><th>Document</th><th>Uploaded</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    {% for document in new_documents %}
+                        <tr>
+                            <td>{{ document.application.full_name }}</td>
+                            <td><strong>{{ document.name }}</strong><br><span class="text-muted small">{{ document.get_document_type_display }}</span></td>
+                            <td>{{ document.created_at|date:"M j, g:i A" }}</td>
+                            <td class="d-flex gap-2 flex-wrap">
+                                {% if document.file %}<a href="{% url 'open_applicant_document' document.id %}" target="_blank" class="btn btn-outline-secondary btn-sm">Open</a>{% endif %}
+                                <form method="post" action="{% url 'mark_document_reviewed' document.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary btn-sm">Mark Reviewed</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-muted">No new documents.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

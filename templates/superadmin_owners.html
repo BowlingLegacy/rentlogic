@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Owners & Properties</h1>
+            <p class="text-muted mb-0">Open an owner to see the properties assigned to that owner email.</p>
+        </div>
+        <a href="{% url 'superadmin_dashboard' %}" class="btn btn-outline-dark">Back to Super Admin</a>
+    </div>
+
+    {% for owner in owner_groups %}
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h2 class="h4 fw-bold">{{ owner.email }}</h2>
+                <p class="text-muted">{{ owner.property_count }} propert{{ owner.property_count|pluralize:"y,ies" }}</p>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead><tr><th>Property</th><th>Public Page</th><th>Financials</th><th>Blog</th></tr></thead>
+                        <tbody>
+                        {% for property in owner.properties %}
+                            <tr>
+                                <td><strong>{{ property.name }}</strong><br><span class="text-muted small">{{ property.address }}</span></td>
+                                <td><a href="{% url 'property_detail' property.pk %}" class="btn btn-outline-secondary btn-sm">Open</a></td>
+                                <td><a href="{% url 'property_financials' property.name %}" class="btn btn-outline-primary btn-sm">Open</a></td>
+                                <td><a href="{% url 'property_blog_manager' %}" class="btn btn-outline-dark btn-sm">Open</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="alert alert-warning">No properties found.</div>
+    {% endfor %}
+</div>
+
+{% endblock %}

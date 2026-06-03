@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Blog Manager</h1>
+            <p class="text-muted mb-0">Create private property updates and approve submitted comments for the properties you manage.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if request.user.is_superuser %}
+                <a href="{% url 'superadmin_dashboard' %}" class="btn btn-outline-dark">Back to Super Admin</a>
+            {% endif %}
+            <a href="{% url 'property_blog_create' %}" class="btn btn-primary">Create Blog Post</a>
+        </div>
+    </div>
+
+    {% if can_manage_website_blog %}
+        <div class="card shadow-sm border-dark mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <div>
+                        <h2 class="fw-bold mb-1">Public Website Blog</h2>
+                        <p class="text-muted mb-0">Only the superuser can post public Bowling Legacy updates.</p>
+                    </div>
+                    <a href="{% url 'property_blog_create' %}" class="btn btn-dark">Create Public or Property Post</a>
+                </div>
+                {% for post in website_posts %}
+                    <div class="border rounded p-3 mb-3">
+                        <div class="text-muted small">Public website | {{ post.created_at|date:"M j, Y" }}</div>
+                        <h3 class="fw-bold">{{ post.title }}</h3>
+                        <p class="mb-0">{{ post.body|truncatewords:42 }}</p>
+                    </div>
+                {% empty %}
+                    <p class="text-muted mb-0">No public website blog posts yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="fw-bold mb-3">Private Property Blogs</h3>
+                    {% for property in properties %}
+                        <section class="border rounded p-3 mb-3">
+                            <div class="text-muted small">Private property blog</div>
+                            <h4 class="fw-bold">{{ property.name }}</h4>
+                            {% for post in posts %}
+                                {% if post.property_id == property.id %}
+                                    <div class="border rounded bg-light p-3 mt-2">
+                                        <div class="text-muted small">{{ post.created_at|date:"M j, Y" }}</div>
+                                        <h5 class="fw-bold">{{ post.title }}</h5>
+                                        <p class="mb-0">{{ post.body|truncatewords:35 }}</p>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </section>
+                    {% empty %}
+                        <p class="text-muted">No property blogs are assigned to this login yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="fw-bold mb-3">Comments Waiting Approval</h3>
+                    {% for comment in pending_comments %}
+                        <div class="border rounded p-3 mb-3">
+                            <div class="text-muted small">{{ comment.post.property.name|default:"No Property" }} | {{ comment.created_at|date:"M j, Y" }}</div>
+                            <strong>{{ comment.name }}</strong>
+                            <p>{{ comment.comment|linebreaks }}</p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <form method="post" action="{% url 'approve_blog_comment' comment.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm">Approve Comment</button>
+                                </form>
+                                <form method="post" action="{% url 'delete_blog_comment' comment.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete Comment</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No comments waiting for approval.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load formatting %}
+{% block content %}
+
+<style>
+.file-shell {
+    background: rgba(255,255,255,.94);
+    border: 1px solid rgba(188,150,45,.2);
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+    overflow: hidden;
+}
+
+.file-head {
+    background: #111;
+    border-bottom: 2px solid #c59a32;
+    color: #f6ead1;
+    padding: 1.35rem;
+}
+
+.file-panel {
+    background: #fffaf0;
+    border: 1px solid rgba(188,150,45,.24);
+    border-radius: 14px;
+    height: 100%;
+    padding: 1rem;
+}
+
+.file-label {
+    color: #6f5411;
+    font-size: .75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.gold-btn {
+    background: linear-gradient(135deg, #c48f22, #d8ab3b);
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 900;
+    padding: .75rem 1rem;
+}
+
+.message-btn {
+    background: transparent;
+    border: 1px solid #c59a32;
+    border-radius: 12px;
+    color: #a57c18;
+    font-weight: 800;
+    padding: .7rem 1rem;
+    text-decoration: none;
+}
+</style>
+
+<div class="file-shell">
+    <div class="file-head d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <div class="text-uppercase small fw-bold text-warning">Current Resident Setup</div>
+            <h1 class="fw-bold mb-1">{{ intake.full_name }}</h1>
+            <div>{{ intake.property.name }} · Submitted {{ intake.created_at|date:"M j, Y g:i A" }}</div>
+        </div>
+        <a href="{% url 'landlord_attention' %}" class="message-btn">Back to Needs Attention</a>
+    </div>
+
+    <div class="p-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="file-panel">
+                    <div class="file-label">Email</div>
+                    <div class="fw-bold">{{ intake.email }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="file-panel">
+                    <div class="file-label">Phone</div>
+                    <div class="fw-bold">{{ intake.phone|phone_format }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="file-panel">
+                    <div class="file-label">Room / Unit</div>
+                    <div class="fw-bold">{{ intake.room_unit_label|default:"Not provided" }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="file-panel">
+                    <div class="file-label">Years at Residence</div>
+                    <div class="fw-bold">{{ intake.years_at_residence }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="file-panel">
+                    <div class="file-label">Move-In Month</div>
+                    <div class="fw-bold">{{ intake.move_in_month|default:"Not provided" }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="file-panel">
+                    <div class="file-label">Valid ODL</div>
+                    <div class="fw-bold">{{ intake.has_valid_odl|yesno:"Yes,No" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-5">
+                <div class="file-panel">
+                    <h2 class="h5 fw-bold">Profile Photo</h2>
+                    {% if intake.profile_photo %}
+                        <img src="{{ intake.profile_photo.url }}" alt="{{ intake.full_name }}" class="img-fluid rounded">
+                    {% else %}
+                        <p class="text-muted mb-0">No profile photo uploaded.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="file-panel mb-3">
+                    <h2 class="h5 fw-bold">Portal Setup</h2>
+
+                    {% if roster_match_status == "matched" %}
+                        <div class="alert alert-success">This submission matches the approved current resident list.</div>
+                    {% elif roster_match_status == "not_matched" %}
+                        <div class="alert alert-warning">This submission does not match the approved current resident list. Review carefully before sending a code.</div>
+                    {% else %}
+                        <div class="alert alert-warning">No approved current resident list has been uploaded for this property yet.</div>
+                    {% endif %}
+
+                    {% if setup_status == "completed" %}
+                        <div class="alert alert-success">Completed. This resident has created their portal login.</div>
+                    {% elif setup_status == "invite_sent" %}
+                        <div class="alert alert-info">
+                            Setup invite has been created. Use resend if they did not receive the email.
+                            {% if pending_user.invite_code %}
+                                <br><strong>Backup code:</strong> {{ pending_user.invite_code }}
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">No setup invite is currently attached to this intake.</div>
+                    {% endif %}
+
+                    {% if setup_status != "completed" %}
+                        <form method="post" action="{% url 'landlord_send_existing_resident_invite' intake.id %}">
+                            {% csrf_token %}
+                            {% if roster_match_status != "matched" %}
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="allow_roster_override"
+                                           id="allowRosterOverride"
+                                           required>
+                                    <label class="form-check-label fw-bold" for="allowRosterOverride">
+                                        I confirm this person is a current resident of this property and I want to override the roster check.
+                                    </label>
+                                </div>
+                            {% endif %}
+                            <button type="submit" class="gold-btn">
+                                {% if setup_status == "invite_sent" %}Resend Setup Invite{% else %}Send Setup Invite{% endif %}
+                            </button>
+                            {% if roster_match_status != "matched" %}
+                                <p class="text-muted small mt-2 mb-0">Use override only after manually confirming the resident's identity and room.</p>
+                            {% endif %}
+                        </form>
+                    {% endif %}
+                </div>
+
+                <div class="file-panel">
+                    <h2 class="h5 fw-bold">Resident File</h2>
+                    {% if application %}
+                        <p class="mb-2">A resident file exists for this intake.</p>
+                        <a href="{% url 'application_detail' application.id %}" class="message-btn">Open Resident File</a>
+                    {% else %}
+                        <p class="text-muted mb-0">No resident file has been created yet. Sending the setup invite will create one.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if intake.additional_notes %}
+            <div class="file-panel mt-3">
+                <h2 class="h5 fw-bold">Additional Notes</h2>
+                <p class="mb-0">{{ intake.additional_notes|linebreaksbr }}</p>
+            </div>
+        {% endif %}
+
+        <div class="file-panel mt-3 border-danger">
+            <h2 class="h5 fw-bold text-danger">Invalid Setup Attempt</h2>
+            <p class="text-muted">
+                Delete this only when you have confirmed this is a duplicate or bad-email setup attempt.
+                If a temporary code/user was created but the resident has not completed login, it will be cancelled and removed.
+            </p>
+            <form method="post" action="{% url 'delete_existing_resident_intake' intake.id %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="btn btn-outline-danger"
+                        onclick="return confirm('Delete this setup attempt and cancel any unused setup code?');">
+                    Delete / Cancel Setup Attempt
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

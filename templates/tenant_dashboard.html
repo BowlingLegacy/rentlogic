@@ -1,0 +1,806 @@
+{% extends "base.html" %}
+{% load formatting %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+    color: #1f1f1f;
+}
+
+.page-shell {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.dashboard-wrap {
+    padding-bottom: 2rem;
+}
+
+.hero-row {
+    margin-bottom: 2.2rem;
+}
+
+.house-thumb {
+    width: min(100%, 220px);
+    height: 150px;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+}
+
+.painted-lady-wrap {
+    border-right: 1px solid rgba(191,150,52,0.35);
+    padding-right: 2rem;
+}
+
+.the-script {
+    font-family: "Times New Roman", serif;
+    font-style: italic;
+    color: #c59a32;
+    font-size: 3.2rem;
+    line-height: 0.7;
+}
+
+.painted-lady-title {
+    font-family: Georgia, serif;
+    font-size: 3rem;
+    color: #1f1f1f;
+    line-height: 0.95;
+    letter-spacing: 1px;
+}
+
+.community-line {
+    color: #a57c18;
+    letter-spacing: 5px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    margin-top: 0.8rem;
+}
+
+.welcome-title {
+    font-family: Georgia, serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #121212;
+}
+
+.welcome-text {
+    color: #555;
+    font-size: 1.15rem;
+}
+
+.soft-card {
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(188,150,45,0.12);
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+.card-title,
+.section-title {
+    font-family: Georgia, serif;
+    color: #1c1c1c;
+}
+
+.card-title {
+    font-size: 1.65rem;
+    margin-bottom: 1rem;
+}
+
+.section-title {
+    font-size: 1.8rem;
+}
+
+.profile-card {
+    min-height: 620px;
+}
+
+.profile-photo {
+    width: 135px;
+    height: 135px;
+    border-radius: 50%;
+    background: #f0e5ca;
+    color: #b98b1d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-size: 3.3rem;
+    margin: 1rem auto;
+    overflow: hidden;
+}
+
+.profile-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-photo-form {
+    display: block;
+    cursor: pointer;
+}
+
+.profile-photo-hint {
+    color: #a57c18;
+    font-size: .82rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.profile-name {
+    font-family: Georgia, serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.profile-line {
+    margin-bottom: 0.8rem;
+    color: #333;
+}
+
+.profile-divider {
+    border-top: 1px solid rgba(188,150,45,0.3);
+    margin: 1.4rem 0;
+}
+
+.amount {
+    font-family: Georgia, serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.account-card {
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+}
+
+.account-card .card-actions {
+    margin-top: auto;
+}
+
+.gold-btn {
+    background: linear-gradient(135deg, #c48f22, #d8ab3b);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    font-weight: 700;
+    width: 100%;
+}
+
+.message-btn {
+    background: transparent;
+    border: 1px solid #c59a32;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    color: #a57c18;
+    font-weight: 700;
+    width: 100%;
+}
+
+.gold-link {
+    color: #a97d17;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead {
+    background: #f3ead7;
+}
+
+.table th {
+    color: #6f5411;
+    border-bottom: none;
+}
+
+.table td {
+    color: #333;
+    vertical-align: middle;
+}
+
+.footer,
+.footer p,
+.footer a {
+    color: #3d3320 !important;
+}
+
+.modal-content {
+    border-radius: 18px;
+}
+
+@media (max-width: 768px) {
+    .painted-lady-wrap {
+        border-right: none;
+        padding-right: 0;
+        text-align: center;
+    }
+
+    .painted-lady-title {
+        font-size: 2rem;
+    }
+
+    .the-script {
+        font-size: 2.4rem;
+    }
+
+    .welcome-title {
+        font-size: 2rem;
+        text-align: center;
+    }
+
+    .welcome-text {
+        text-align: center;
+    }
+
+    .profile-card {
+        min-height: auto;
+    }
+
+    .house-thumb {
+        width: 145px;
+        height: 105px;
+    }
+}
+</style>
+
+{% if application %}
+
+<div class="dashboard-wrap">
+    {% if request.user.is_superuser or request.user.role == "admin" %}
+        <div class="mb-3 text-end">
+            <a href="{% url 'superadmin_dashboard' %}" class="btn btn-outline-dark rounded-pill">
+                Back to Super Admin Dashboard
+            </a>
+        </div>
+    {% endif %}
+
+    <div class="row align-items-center hero-row g-4">
+        <div class="col-lg-2 text-center">
+            {% if application.property and application.property.photo %}
+                <img src="{{ application.property.photo.url }}" class="house-thumb" alt="{{ application.property.name }}">
+            {% else %}
+                <img src="/static/images/photo03.JPG" class="house-thumb" alt="{{ application.property.name|default:'Resident property' }}">
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4 painted-lady-wrap">
+            <div class="the-script">{% if application.property %}Your{% else %}The{% endif %}</div>
+            <div class="painted-lady-title">{{ application.property.name|default:"Resident Portal" }}</div>
+            <div class="community-line">A Bowling Legacy Community</div>
+        </div>
+
+        <div class="col-lg-4">
+            <h1 class="welcome-title">
+                Welcome back, {{ application.full_name }}
+            </h1>
+            <p class="welcome-text mb-0">
+                We're glad to have you as part of {{ application.property.name|default:"your resident" }} community.
+            </p>
+        </div>
+
+        <div class="col-lg-2">
+            <button class="message-btn" data-bs-toggle="modal" data-bs-target="#messageModal">
+                Send a Message
+            </button>
+            <p class="small text-muted mt-2 mb-0">
+                We typically respond within 1 business day.
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-3">
+            <div class="soft-card profile-card p-4">
+                <div class="card-title">Resident Profile</div>
+
+                {% if profile_photo_form %}
+                    <form method="post"
+                          action="{% url 'update_resident_profile_photo' %}"
+                          enctype="multipart/form-data"
+                          id="profilePhotoForm"
+                          class="mb-3">
+                        {% csrf_token %}
+                        <label for="{{ profile_photo_form.profile_photo.id_for_label }}" class="profile-photo profile-photo-form" title="Change profile photo">
+                            {% if application.profile_photo %}
+                                <img id="profilePhotoPreview" src="{{ application.profile_photo.url }}" alt="{{ application.full_name }}">
+                            {% else %}
+                                <span id="profilePhotoInitial">{{ application.full_name|first|upper }}</span>
+                                <img id="profilePhotoPreview" src="" alt="{{ application.full_name }}" style="display:none;">
+                            {% endif %}
+                        </label>
+                        {{ profile_photo_form.profile_photo }}
+                        <label for="{{ profile_photo_form.profile_photo.id_for_label }}" class="message-btn mt-2">
+                            Change Photo
+                        </label>
+                        <div class="profile-photo-hint mt-2">Your dashboard photo updates as soon as you choose a new image.</div>
+                    </form>
+                {% else %}
+                    <div class="profile-photo">
+                        {% if application.profile_photo %}
+                            <img src="{{ application.profile_photo.url }}" alt="{{ application.full_name }}">
+                        {% else %}
+                            {{ application.full_name|first|upper }}
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <div class="text-center">
+                    <div class="profile-name">{{ application.full_name }}</div>
+                    <div class="profile-line">{{ application.space_type }} {{ application.space_label }} | {{ application.property.name|default:"Resident Portal" }}</div>
+                </div>
+
+                <div class="profile-divider"></div>
+
+                <div class="profile-line">{{ application.email }}</div>
+                <div class="profile-line">{{ application.phone|phone_format }}</div>
+
+                <div class="profile-divider"></div>
+
+                <div class="profile-line">
+                    <strong>Space Type</strong><br>
+                    {{ application.space_type }}
+                </div>
+
+                <div class="profile-line">
+                    <strong>Room / Space</strong><br>
+                    {{ application.space_label }}
+                </div>
+
+                <div class="profile-line">
+                    <strong>Status</strong><br>
+                    Active Resident
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+
+            <div class="row g-4 mb-4">
+
+                <div class="col-lg-4">
+                    <div class="soft-card account-card p-4">
+                        <div class="card-title">Current Balance</div>
+
+                        <div class="amount text-center mt-4">
+                            ${{ total_due }}
+                        </div>
+
+                        <p class="text-center text-muted">
+                            Total amount currently due
+                        </p>
+
+                        <div class="card-actions">
+                            {% if total_due > 0 %}
+                                <a href="{% url 'pay_by_type' application.id 'total' %}"
+                                   class="gold-btn d-block text-center text-decoration-none mt-3">
+                                    Pay Total Due
+                                </a>
+                            {% endif %}
+                            <div class="text-center mt-3">
+                                <a href="{{ resident_balance_url }}" class="gold-link">
+                                    View Balance Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if show_utilities %}
+                <div class="col-lg-4">
+                    <div class="soft-card account-card p-4">
+                        <div class="card-title">Utilities</div>
+
+                        <div class="amount text-center mt-4">
+                            ${% if utility_due > 0 %}{{ utility_due }}{% else %}{{ application.utility_monthly }}{% endif %}
+                        </div>
+
+                        <p class="text-center text-muted">
+                            {% if utility_due > 0 %}
+                                Utility balance currently due.
+                            {% else %}
+                                Current monthly utility fee.
+                            {% endif %}
+                        </p>
+
+                        <div class="card-actions text-center">
+                            {% if utility_due > 0 %}
+                                <a href="{% url 'pay_by_type' application.id 'utility' %}"
+                                   class="gold-btn d-block text-center text-decoration-none mt-3">
+                                    Pay Utilities
+                                </a>
+                            {% endif %}
+                            <a href="{{ resident_balance_url }}" class="gold-link d-inline-block mt-3">
+                                View Utility Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="col-lg-4">
+                    <div class="soft-card account-card p-4">
+                        <div class="card-title">Maintenance</div>
+
+                        <p class="text-center mt-4" style="font-size:1.2rem;">
+                            Need something taken care of?
+                        </p>
+
+                        <button class="gold-btn mt-3"
+                                data-bs-toggle="modal"
+                                data-bs-target="#messageModal">
+                            Submit a Request
+                        </button>
+
+                        <div class="card-actions text-center mt-3">
+                            <a href="{{ resident_requests_url }}" class="gold-link">
+                                View My Requests
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            {% if utility_setup_items %}
+            <div class="soft-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <div class="section-title">Utility Setup</div>
+                        <p class="text-muted mb-0">Set up the tenant-paid services required for this property.</p>
+                    </div>
+                    {% if utility_setup_complete %}
+                        <span class="badge text-bg-success p-2">Completed</span>
+                    {% else %}
+                        <span class="badge text-bg-warning p-2">Action Needed</span>
+                    {% endif %}
+                </div>
+
+                <div class="row g-3">
+                    {% for setup in utility_setup_items %}
+                        <div class="col-md-6">
+                            <div class="border rounded-3 bg-white p-3 h-100">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div>
+                                        <div class="fw-bold">{{ setup.vendor.service_type }}</div>
+                                        <div>{{ setup.vendor.provider_name }}</div>
+                                    </div>
+                                    {% if setup.completed_at %}
+                                        <span class="text-success fw-bold">Done</span>
+                                    {% else %}
+                                        <span class="text-warning fw-bold">Open</span>
+                                    {% endif %}
+                                </div>
+                                {% if setup.vendor.phone %}
+                                    <div class="small text-muted mt-2">Phone: {{ setup.vendor.phone }}</div>
+                                {% endif %}
+                                {% if setup.vendor.notes %}
+                                    <div class="small text-muted mt-2">{{ setup.vendor.notes }}</div>
+                                {% endif %}
+                                {% if setup.completed_at %}
+                                    <div class="small text-muted mt-3">Completed {{ setup.completed_at|date:"M j, Y g:i A" }}</div>
+                                {% else %}
+                                    <a href="{% url 'resident_utility_setup_open' setup.id %}" class="gold-btn d-inline-block text-decoration-none mt-3">
+                                        Open Setup
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="soft-card p-4 mb-4">
+                <div class="row align-items-center g-3">
+                    <div class="col-lg-8">
+                        <div class="section-title">Renters Insurance</div>
+                        <p class="text-muted mb-0">
+                            Renters insurance can help protect your belongings and may be useful if something unexpected happens in your room or shared space.
+                        </p>
+                    </div>
+                    <div class="col-lg-4">
+                        {% if application.property and application.property.renters_insurance_url %}
+                            <a href="{{ application.property.renters_insurance_url }}"
+                               target="_blank"
+                               rel="noopener"
+                               class="message-btn d-block text-center text-decoration-none">
+                                {{ application.property.renters_insurance_provider_name|default:"Explore Coverage" }}
+                            </a>
+                        {% else %}
+                            <button class="message-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#messageModal"
+                                    data-message-subject="Renters Insurance Information">
+                                Ask About Coverage
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-lg-6">
+                    <div id="resident-inbox" class="soft-card h-100">
+                        <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+                            <div class="section-title">Inbox</div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table">
+                                <tbody>
+                                    {% for signed_document in application.signed_documents.all %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ signed_document.title }}</strong><br>
+                                            <small>{{ signed_document.get_document_type_display }}</small>
+                                        </td>
+                                        <td>
+                                            {% if signed_document.locked %}
+                                                Locked Final
+                                            {% else %}
+                                                Needs Signature
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'onboarding_document' signed_document.id %}" class="gold-link">
+                                                {% if signed_document.locked %}View{% else %}Sign{% endif %}
+                                            </a>
+                                            {% if signed_document.locked %}
+                                                |
+                                                <a href="{% url 'onboarding_document' signed_document.id %}?print=1"
+                                                   target="_blank"
+                                                   class="gold-link">
+                                                    Print
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+
+                                    {% for document in application.documents.all %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ document.name }}</strong><br>
+                                            <small>{{ document.get_document_type_display }}</small>
+                                        </td>
+                                        <td>{{ document.get_status_display }}</td>
+                                        <td>
+                                            {% if document.file %}
+                                            <a href="{{ document.file.url }}" target="_blank" class="gold-link">View</a>
+                                            |
+                                            <a href="{{ document.file.url }}" target="_blank" class="gold-link">Print</a>
+                                            {% else %}
+                                            —
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+
+                                    {% for resident_message in resident_messages %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ resident_message.subject }}</strong><br>
+                                            <small>{{ resident_message.get_message_type_display }}</small>
+                                        </td>
+                                        <td>{{ resident_message.get_status_display }}</td>
+                                        <td>{{ resident_message.created_at|date:"M j, Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+
+                                    {% if not application.documents.all and not application.signed_documents.all and not resident_messages %}
+                                    <tr>
+                                        <td class="p-4 text-muted" colspan="3">
+                                            No inbox items yet.
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div id="payment-history" class="soft-card h-100">
+                        <div class="p-4 border-bottom d-flex justify-content-between align-items-center gap-2">
+                            <div class="section-title">Payment History</div>
+                            <a href="{{ resident_payment_history_url }}" class="gold-link">Print History</a>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for payment in payments %}
+                                    <tr>
+                                        <td>{{ payment.created_at|date:"M j, Y" }}</td>
+                                        <td>{{ payment.get_payment_type_display }}</td>
+                                        <td>${{ payment.amount }}</td>
+                                        <td>{{ payment.get_status_display }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="p-4 text-muted">
+                                            No payment history yet.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            {% if application.property %}
+                <div id="property-updates" class="soft-card mt-4">
+                    <div class="p-4 border-bottom">
+                        <div class="section-title">Private Property Updates</div>
+                        <p class="text-muted mb-0">
+                            Visible only to residents of {{ application.property.name }} and property management.
+                        </p>
+                    </div>
+
+                    <div class="p-4">
+                        {% for post in property_blog_posts %}
+                            <article class="border rounded p-3 mb-3 bg-light">
+                                <h3 class="h5 fw-bold">{{ post.title }}</h3>
+                                <p class="small text-muted mb-2">
+                                    {{ post.created_at|date:"M j, Y" }}
+                                    {% if post.author %} by {{ post.author.username }}{% endif %}
+                                </p>
+                                {% if post.image %}
+                                    <img src="{{ post.image.url }}" class="img-fluid rounded mb-3" alt="{{ post.title }}">
+                                {% endif %}
+                                <div>{{ post.body|linebreaks }}</div>
+
+                                <hr>
+                                <div class="fw-bold mb-2">Approved Comments</div>
+                                {% for comment in post.comments.all %}
+                                    {% if comment.approved %}
+                                        <div class="border rounded bg-white p-2 mb-2">
+                                            <strong>{{ comment.name }}</strong>
+                                            <div>{{ comment.comment|linebreaks }}</div>
+                                        </div>
+                                    {% endif %}
+                                {% empty %}
+                                    <p class="text-muted">No comments yet.</p>
+                                {% endfor %}
+
+                                <form method="post" action="{% url 'add_blog_comment' post.id %}" class="mt-3">
+                                    {% csrf_token %}
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <input type="text" name="name" class="form-control" placeholder="Your name" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="email" name="email" class="form-control" placeholder="Your email optional">
+                                        </div>
+                                    </div>
+                                    <textarea name="comment" class="form-control my-2" rows="3" placeholder="Write a comment for approval." required></textarea>
+                                    <button type="submit" class="message-btn">Submit Comment</button>
+                                </form>
+                            </article>
+                        {% empty %}
+                            <p class="text-muted mb-0">No private property updates yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Request / Message Landlord</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="POST" action="{% url 'submit_resident_message' %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Message Type</label>
+                        <select name="message_type" class="form-select">
+                            <option value="maintenance">Maintenance Request</option>
+                            <option value="complaint">Complaint</option>
+                            <option value="general">General Message</option>
+                            <option value="document">Document Question</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Subject</label>
+                        <input type="text" name="subject" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Message</label>
+                        <textarea name="message" class="form-control" rows="5" required></textarea>
+                    </div>
+
+                    <button type="submit" class="gold-btn">
+                        Submit Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+
+<div class="alert alert-warning">
+    No resident file is connected to this login yet.
+</div>
+
+<a href="{% url 'enter_invite_code' %}" class="btn btn-primary rounded-pill">Enter Access Code</a>
+<a href="/" class="btn btn-outline-secondary rounded-pill">Return Home</a>
+
+{% endif %}
+
+<script>
+const profilePhotoInput = document.querySelector('input[name="profile_photo"]');
+const profilePhotoPreview = document.getElementById("profilePhotoPreview");
+const profilePhotoInitial = document.getElementById("profilePhotoInitial");
+const messageSubjectInput = document.querySelector('#messageModal input[name="subject"]');
+
+document.querySelectorAll("[data-message-subject]").forEach(function (button) {
+    button.addEventListener("click", function () {
+        if (messageSubjectInput) {
+            messageSubjectInput.value = this.dataset.messageSubject;
+        }
+    });
+});
+
+if (profilePhotoInput && profilePhotoPreview) {
+    profilePhotoInput.addEventListener("change", function () {
+        const file = this.files && this.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        profilePhotoPreview.src = URL.createObjectURL(file);
+        profilePhotoPreview.style.display = "block";
+
+        if (profilePhotoInitial) {
+            profilePhotoInitial.style.display = "none";
+        }
+
+        document.getElementById("profilePhotoForm").submit();
+    });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.owner-file { background: rgba(255,255,255,.94); border: 1px solid rgba(188,150,45,.2); border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,.06); overflow: hidden; }
+.owner-file-head { background: #111; border-bottom: 2px solid #c59a32; color: #f6ead1; padding: 1.35rem; }
+.owner-file-body { padding: 1.25rem; }
+.file-panel { background: #fffaf0; border: 1px solid rgba(188,150,45,.24); border-radius: 14px; height: 100%; padding: 1rem; }
+.file-label { color: #7d5c0b; font-size: .78rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.file-value { color: #17130a; font-weight: 700; }
+</style>
+
+<div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <a href="{% url 'superadmin_owner_intakes' %}" class="message-btn">Back to Owner Intake Inbox</a>
+    <a href="{% url 'superadmin_owners' %}" class="message-btn">Owners & Properties</a>
+</div>
+
+<div class="owner-file">
+    <div class="owner-file-head d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <div class="small text-uppercase fw-bold" style="color:#d8ab3b;">Owner File</div>
+            <h1 class="fw-bold mb-1">{{ intake.full_name }}</h1>
+            <div>{{ intake.company_name|default:"No company entered" }} | {{ intake.email }}</div>
+        </div>
+        <div>
+            <div class="badge text-bg-light p-2">{{ intake.get_status_display }}</div>
+            {% if intake.invite_sent_at %}
+                <div class="small mt-2">Invite sent {{ intake.invite_sent_at|date:"M j, Y g:i A" }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="owner-file-body">
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="file-panel"><div class="file-label">Phone</div><div class="file-value">{{ intake.phone }}</div></div></div>
+            <div class="col-md-4"><div class="file-panel"><div class="file-label">Properties</div><div class="file-value">{{ intake.property_count }}</div></div></div>
+            <div class="col-md-4"><div class="file-panel"><div class="file-label">Units</div><div class="file-value">{{ intake.total_units }}</div></div></div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap mb-4">
+            <form method="post" action="{% url 'superadmin_send_owner_invite' intake.id %}">
+                {% csrf_token %}
+                <button type="submit" class="gold-btn">
+                    {% if intake.status == "submitted" %}Send Owner Setup Invite{% else %}Resend Owner Setup Invite{% endif %}
+                </button>
+            </form>
+            {% if intake.user and intake.user.invite_code %}
+                <div class="file-panel">
+                    <div class="file-label">Backup Setup Code</div>
+                    <div class="file-value fs-4">{{ intake.user.invite_code }}</div>
+                </div>
+            {% endif %}
+        </div>
+
+        <h2 class="h3 fw-bold">Questionnaire</h2>
+        <div class="row g-3">
+            <div class="col-md-6"><div class="file-panel"><div class="file-label">Property Types</div><div class="file-value">{{ intake.property_types|default:"Not entered" }}</div></div></div>
+            <div class="col-md-6"><div class="file-panel"><div class="file-label">Current Software</div><div class="file-value">{{ intake.current_software|default:"Not entered" }}</div></div></div>
+            <div class="col-12"><div class="file-panel"><div class="file-label">Current Pain Points</div><div>{{ intake.current_pain_points|linebreaks|default:"Not entered" }}</div></div></div>
+            <div class="col-12"><div class="file-panel"><div class="file-label">Migration Notes</div><div>{{ intake.migration_notes|linebreaks|default:"Not entered" }}</div></div></div>
+            <div class="col-12"><div class="file-panel"><div class="file-label">Requested Reports</div><div>{{ intake.desired_reports|default:"Not entered" }}</div></div></div>
+            <div class="col-12"><div class="file-panel"><div class="file-label">Tenant Utility Setup</div><div>{{ intake.tenant_utility_setup_notes|linebreaks|default:"Not entered" }}</div></div></div>
+            <div class="col-12"><div class="file-panel"><div class="file-label">Dashboard Goals</div><div>{{ intake.dashboard_goals|linebreaks|default:"Not entered" }}</div></div></div>
+            <div class="col-12"><div class="file-panel"><div class="file-label">Additional Notes</div><div>{{ intake.additional_notes|linebreaks|default:"Not entered" }}</div></div></div>
+        </div>
+
+        <h2 class="h3 fw-bold mt-4">Requested Tools</h2>
+        <div class="row g-2">
+            <div class="col-md-4">Rent collection: <strong>{{ intake.needs_rent_collection|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Accounting: <strong>{{ intake.needs_accounting|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Owner reporting: <strong>{{ intake.needs_owner_reporting|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Data migration: <strong>{{ intake.needs_data_migration|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Resident files: <strong>{{ intake.needs_resident_files|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Documents: <strong>{{ intake.needs_documents|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Maintenance: <strong>{{ intake.needs_maintenance|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Resident communication: <strong>{{ intake.needs_resident_communication|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Screening: <strong>{{ intake.needs_screening|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Application fee: <strong>{{ intake.charges_application_fee|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Background checks: <strong>{{ intake.performs_background_checks|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Advertises units: <strong>{{ intake.advertises_available_units|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Automatic late fees: <strong>{{ intake.uses_automatic_late_fees|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Custom reports: <strong>{{ intake.needs_custom_reports|yesno:"Yes,No" }}</strong></div>
+            <div class="col-md-4">Renters insurance: <strong>{{ intake.offers_renters_insurance|yesno:"Yes,No" }}</strong></div>
+        </div>
+
+        <h2 class="h3 fw-bold mt-4">Properties Already Linked To This Owner Email</h2>
+        {% for property in owner_properties %}
+            <div class="file-panel mb-2">{{ property.name }}{% if property.address %} | {{ property.address }}{% endif %}</div>
+        {% empty %}
+            <p class="text-muted mb-0">No property records currently use this owner email.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

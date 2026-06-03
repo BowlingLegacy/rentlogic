@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.intake-shell { display: grid; gap: 1rem; }
+.intake-panel { background: rgba(255,255,255,.92); border: 1px solid rgba(188,150,45,.2); border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,.06); padding: 1rem; }
+.intake-row { border: 1px solid rgba(188,150,45,.22); border-radius: 14px; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: .75rem; padding: 1rem; }
+.intake-row:last-child { margin-bottom: 0; }
+.status-pill { background: #111; border-radius: 999px; color: #f3d27a; display: inline-block; font-size: .78rem; font-weight: 900; padding: .35rem .65rem; text-transform: uppercase; }
+@media (max-width: 768px) { .intake-row { flex-direction: column; } }
+</style>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1 class="section-title mb-1">Owner Intake Inbox</h1>
+        <p class="text-muted mb-0">Submitted questionnaires stay in the inbox until an owner setup invite is issued.</p>
+    </div>
+    <a href="{% url 'superadmin_dashboard' %}" class="message-btn">Back to Super Admin</a>
+</div>
+
+<div class="intake-shell">
+    <section class="intake-panel">
+        <h2 class="h3 fw-bold">New Questionnaires</h2>
+        {% for intake in submitted_owner_intakes %}
+            <div class="intake-row">
+                <div>
+                    <div class="fw-bold">{{ intake.full_name }}</div>
+                    <div>{{ intake.company_name|default:"No company entered" }}</div>
+                    <div class="text-muted">{{ intake.email }} | {{ intake.phone }}</div>
+                    <div class="small text-muted">{{ intake.created_at|date:"M j, Y g:i A" }}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="status-pill">{{ intake.get_status_display }}</span>
+                    <a href="{% url 'superadmin_owner_intake_detail' intake.id %}" class="gold-btn">Open Questionnaire</a>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-muted mb-0">No new owner questionnaires are waiting.</p>
+        {% endfor %}
+    </section>
+
+    <section class="intake-panel">
+        <h2 class="h3 fw-bold">Owner Files</h2>
+        <p class="text-muted">Questionnaires move here after an invite is issued or the owner account is registered.</p>
+        {% for intake in owner_files %}
+            <div class="intake-row">
+                <div>
+                    <div class="fw-bold">{{ intake.full_name }}</div>
+                    <div>{{ intake.company_name|default:"No company entered" }}</div>
+                    <div class="text-muted">{{ intake.email }}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="status-pill">{{ intake.get_status_display }}</span>
+                    <a href="{% url 'superadmin_owner_intake_detail' intake.id %}" class="message-btn">Open Owner File</a>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-muted mb-0">No processed owner files yet.</p>
+        {% endfor %}
+    </section>
+</div>
+
+{% endblock %}

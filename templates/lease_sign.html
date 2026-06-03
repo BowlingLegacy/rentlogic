@@ -1,0 +1,637 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    body {
+        background: #faf6ee;
+    }
+
+    .lease-wrapper {
+        max-width: 950px;
+        margin: auto;
+    }
+
+    .lease-document {
+        background: #fffaf0;
+        border: 1px solid rgba(169,130,38,.35);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .lease-header {
+        position: relative;
+        background: #090909;
+        color: #f3d27a;
+        padding: 2rem 2rem 3.5rem;
+        text-align: center;
+        overflow: hidden;
+    }
+
+    .lease-header::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        height: 55px;
+        background: #fffaf0;
+        clip-path: polygon(0 70%, 50% 100%, 100% 70%, 100% 100%, 0 100%);
+        border-top: 4px solid #d4af37;
+    }
+
+    .lease-header img {
+        max-width: 130px;
+        margin-bottom: 0.75rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .lease-header h1,
+    .lease-header p {
+        position: relative;
+        z-index: 2;
+    }
+
+    .lease-header h1 {
+        font-weight: 800;
+        margin-bottom: 0.25rem;
+    }
+
+    .lease-header p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    .lease-body {
+        padding: 2rem;
+    }
+
+    .lease-section {
+        margin-bottom: 2rem;
+    }
+
+    .lease-section h3 {
+        color: #1c1c1c;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #d4af37;
+        padding-bottom: 0.5rem;
+    }
+
+    .lease-section p,
+    .lease-section li {
+        line-height: 1.7;
+        color: #222;
+    }
+
+    .initial-box {
+        max-width: 140px;
+        margin-top: 1rem;
+    }
+
+    .signature-box {
+        background: #f4ead2;
+        border-radius: 18px;
+        padding: 1.5rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .info-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 1.25rem;
+        border: 1px solid #e1e4e8;
+    }
+
+    @media (max-width: 768px) {
+
+        .lease-header {
+            padding: 1.5rem 1rem 3rem;
+        }
+
+        .lease-body {
+            padding: 1.25rem;
+        }
+
+        .lease-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .lease-section h3 {
+            font-size: 1.1rem;
+        }
+
+        .lease-document {
+            border-radius: 16px;
+        }
+    }
+
+    @media print {
+        .footer,
+        .no-print {
+            display: none !important;
+        }
+
+        body {
+            background: #fff;
+        }
+
+        .lease-document {
+            border-radius: 0;
+            box-shadow: none;
+        }
+    }
+</style>
+
+<div class="container my-4 lease-wrapper">
+    <div class="d-flex justify-content-end gap-2 mb-3 no-print">
+        <a href="{% url 'tenant_dashboard' %}" class="btn btn-outline-dark">Back to Dashboard</a>
+        <button type="button" onclick="window.print()" class="btn btn-dark">Print</button>
+    </div>
+
+    <div class="lease-document">
+
+        <div class="lease-header">
+
+            <img src="/static/images/bl-logo.png" alt="Bowling Legacy">
+
+            <h1>Bowling Legacy Housing</h1>
+
+            <p>
+                Resident Lease Agreement
+            </p>
+
+        </div>
+
+        <div class="lease-body">
+
+            <div class="lease-section">
+
+                <h3>Resident Information</h3>
+
+                <div class="info-card">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Resident:</strong><br>
+                            {{ signed_document.resident_name }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <strong>Property:</strong><br>
+                            {{ signed_document.property_name }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <strong>Room / Space:</strong><br>
+                            {{ signed_document.room_space }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <strong>Lease Start Date:</strong><br>
+                            {{ signed_document.lease_start_date }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <strong>Monthly Rent:</strong><br>
+                            ${{ signed_document.monthly_rent }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <strong>Utility Contribution:</strong><br>
+                            ${{ signed_document.utility_fee }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <strong>Security Deposit:</strong><br>
+                            ${{ signed_document.security_deposit }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <strong>Deposit Payment Terms:</strong><br>
+                            {{ signed_document.get_deposit_payment_plan_display }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <strong>Landlord Signature:</strong><br>
+                            {{ signed_document.landlord_signature }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% if signed_document.locked %}
+                <div class="alert alert-success">
+                    This lease has been signed and filed. It is viewable but no longer editable.
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'submit_onboarding_document' signed_document.id %}">
+
+                {% csrf_token %}
+                <fieldset {% if signed_document.locked %}disabled{% endif %}>
+
+                <div class="lease-section">
+                    <h3>1. Premises and Purpose</h3>
+
+                    <p>
+                        Residents are granted the right to occupy a room at
+                        The Painted Lady Inn, a permanent housing option
+                        committed to sobriety, self-sufficiency, and community support.
+                        Residency is contingent upon compliance with the terms below.
+                    </p>
+                </div>
+
+                <div class="lease-section">
+                    <h3>2. Term of Residency</h3>
+
+                    <ul>
+                        <li>Start Date: {{ signed_document.lease_start_date }}</li>
+                        <li>End Date: Month-to-month unless terminated earlier pursuant to Section 10</li>
+                        <li>Renewal: Automatic month-to-month renewal unless otherwise agreed in writing</li>
+                    </ul>
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>3. Monthly Rent and Payment Terms</h3>
+
+                    <ul>
+                        <li>Base Rent: ${{ signed_document.monthly_rent }} per month</li>
+                        <li>Due Date: Rent is due on the 1st of each month</li>
+                        <li>Collection Date: Rent is collected on the 3rd</li>
+                        <li>Late Fee: $25.00 after the 5th pursuant to ORS 90.260</li>
+                        <li>Returned Check Fee: $50.00 pursuant to ORS 90.302</li>
+                    </ul>
+
+                    <p>
+                        This lease becomes binding after move-in costs are paid and the resident has signed and
+                        submitted all required onboarding documents. No key will be issued until the first month's
+                        rent is paid.
+                    </p>
+
+                    <p>
+                        The security deposit is due in full at move-in unless the 90-day deposit payment plan is
+                        approved in writing.
+                    </p>
+
+                    {% if signed_document.deposit_payment_plan == "ninety_day_plan" %}
+                        <div class="alert alert-warning">
+                            <strong>Deposit Payment Amendment:</strong>
+                            The resident has elected to pay the security deposit in no more than three payments over
+                            90 days. Failure to complete the deposit payment schedule is a lease compliance issue.
+                        </div>
+                    {% endif %}
+
+                    <label class="fw-bold">
+                        Resident Initials
+                    </label>
+
+                    <input type="text"
+                           name="rent_initials"
+                           class="form-control initial-box"
+                           maxlength="10"
+                           value="{{ signed_document.rent_initials }}"
+                           required>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>4. Shared Utilities</h3>
+
+                    <p>
+                        Residents contribute to shared utilities including electric,
+                        gas, water, and garbage.
+                    </p>
+
+                    <ul>
+                        <li>Current Utility Fee: ${{ signed_document.utility_fee }}</li>
+                        <li>Utility adjustments may occur based on occupancy</li>
+                        <li>30-day written notice provided for changes</li>
+                    </ul>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>5. Periodic Rent Adjustments</h3>
+
+                    <ul>
+                        <li>Rent increases take effect January 1 annually</li>
+                        <li>No increase exceeds Oregon limits under ORS 90.323</li>
+                        <li>Residents may submit hardship requests for review</li>
+                    </ul>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>6. Resident Responsibilities</h3>
+
+                    <ul>
+                        <li>Maintain cleanliness in common areas</li>
+                        <li>Avoid excessive trash, clutter, or food waste</li>
+                        <li>Clean private rooms regularly</li>
+                        <li>Respect fellow residents and house harmony</li>
+                        <li>Participation in recovery programs is encouraged but not required</li>
+                    </ul>
+
+                    <label class="fw-bold">
+                        Resident Initials
+                    </label>
+
+                    <input type="text"
+                           name="cleanliness_initials"
+                           class="form-control initial-box"
+                           maxlength="10"
+                           value="{{ signed_document.cleanliness_initials }}"
+                           required>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>7. Manager Housing and Support</h3>
+
+                    <p>
+                        The Painted Lady Inn may provide on-site housing for a manager
+                        who supports daily operations, enforces house rules,
+                        and models recovery.
+                    </p>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>8. Property Improvements and Access Notice</h3>
+
+                    <ul>
+                        <li>Property is undergoing phased remodeling</li>
+                        <li>24-hour notice provided whenever possible under ORS 90.322</li>
+                        <li>Residents agree to cooperate with reasonable access requests</li>
+                    </ul>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>9. House Rules and Charter Conditions</h3>
+
+                    <p>
+                        Serious violations may result in termination under ORS 90.392
+                        or ORS 90.396.
+                    </p>
+
+                    <ul>
+                        <li>Alcohol or illegal drug use</li>
+                        <li>Being under the influence on the property</li>
+                        <li>Disruption of house harmony or safety</li>
+                        <li>Failure to pay rent or utilities</li>
+                        <li>Repeated failure to maintain cleanliness</li>
+                        <li>Refusal of reasonable testing</li>
+                    </ul>
+
+                    <label class="fw-bold">
+                        Resident Initials
+                    </label>
+
+                    <input type="text"
+                           name="sobriety_initials"
+                           class="form-control initial-box"
+                           maxlength="10"
+                           value="{{ signed_document.sobriety_initials }}"
+                           required>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>10. Termination of Residency</h3>
+
+                    <ul>
+                        <li>24-Hour Notice pursuant to ORS 90.396</li>
+                        <li>10-Day Notice pursuant to ORS 90.392</li>
+                        <li>Standard nonpayment notices apply</li>
+                        <li>Resident may terminate with 30 days written notice</li>
+                    </ul>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>11. Resident Portal, Communications, and Payment Records</h3>
+
+                    <p>
+                        Bowling Legacy Housing is moving routine Painted Lady Inn house business onto the resident
+                        portal so rent, utilities, deposit payments, maintenance requests, complaints, resident
+                        documents, and house communications can be tracked in one organized place.
+                    </p>
+
+                    <p>
+                        Residents will use the portal to view balances, payment history, receipts, resident file
+                        documents, maintenance updates, and messages related to house business. Rent, utilities,
+                        deposits, and other approved resident payments will be processed or recorded through the
+                        portal so Bowling Legacy can maintain accurate resident payment ledgers and receipts.
+                    </p>
+
+                    <p>
+                        House updates may be sent by email and, for residents who choose to participate, by group
+                        text message. Text message participation is optional. Residents may opt in or opt out through
+                        the portal or by following the text instructions provided by management. Standard message and
+                        data rates may apply. Choosing not to participate in group text messaging does not remove the
+                        resident's responsibility to review official portal messages, email messages, written notices,
+                        or other communications delivered as required by law.
+                    </p>
+
+                    <p>
+                        A mobile application for easier resident access is in development and is expected to become
+                        available through Google Play and the Apple App Store. Until then, residents can use the
+                        website to create a profile, access the resident dashboard, make or record payments, submit
+                        maintenance requests, and review documents.
+                    </p>
+
+                    <p>
+                        Resident feedback is welcome. Residents are encouraged to share ideas that would make the
+                        portal easier to use or more helpful for daily house communication.
+                    </p>
+
+                    <p>
+                        For the June 2026 platform transition, residents are asked to review this updated lease and
+                        platform acknowledgment by June 1, 2026. Any questions, concerns, or requested corrections
+                        should be sent to management in writing before that date so they can be reviewed.
+                    </p>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>12. Sober-Living Environment and Resident Responsibilities</h3>
+
+                    <p>
+                        This residence operates as a sober-living community.
+                        All residents agree to maintain complete abstinence from alcohol,
+                        illegal drugs, and misuse of prescription medications.
+                    </p>
+
+                    <p>
+                        Refusal to submit to reasonable testing is considered
+                        a violation of residency requirements.
+                    </p>
+
+                    <p>
+                        Residents agree to maintain safety, cleanliness,
+                        and harmony in all shared living spaces.
+                    </p>
+
+                    <label class="fw-bold">
+                        Resident Initials
+                    </label>
+
+                    <input type="text"
+                           name="testing_initials"
+                           class="form-control initial-box"
+                           maxlength="10"
+                           value="{{ signed_document.testing_initials }}"
+                           required>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>17. Guests, Family, and Community</h3>
+
+                    <ul>
+                        <li>Guest policies exist to protect safety and harmony</li>
+                        <li>Immediate family may visit during normal visiting hours</li>
+                        <li>Non-family guests require manager approval</li>
+                        <li>Guests must be introduced upon arrival</li>
+                        <li>Residents are responsible for guest behavior</li>
+                        <li>No guests after 10:00 PM without approval</li>
+                        <li>First 90 days guest restrictions apply</li>
+                    </ul>
+
+                    <label class="fw-bold">
+                        Resident Initials
+                    </label>
+
+                    <input type="text"
+                           name="guest_policy_initials"
+                           class="form-control initial-box"
+                           maxlength="10"
+                           value="{{ signed_document.guest_policy_initials }}"
+                           required>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>Lead-Based Paint Disclosure</h3>
+
+                    <p>
+                        Housing built before 1978 may contain lead-based paint.
+                        Residents acknowledge receipt of lead awareness information
+                        and agree to report peeling or damaged paint immediately.
+                    </p>
+
+                    <label class="fw-bold">
+                        Resident Initials
+                    </label>
+
+                    <input type="text"
+                           name="disclosure_initials"
+                           class="form-control initial-box"
+                           maxlength="10"
+                           value="{{ signed_document.disclosure_initials }}"
+                           required>
+
+                </div>
+
+                <div class="lease-section">
+
+                    <h3>Asbestos Disclosure</h3>
+
+                    <p>
+                        Residents acknowledge receipt of asbestos awareness information
+                        and agree not to disturb suspected materials.
+                    </p>
+
+                </div>
+
+                <div class="signature-box">
+
+                    <h3 class="mb-3">
+                        Electronic Signature
+                    </h3>
+
+                    <p>
+                        By typing my name below and submitting this agreement,
+                        I acknowledge that my typed name constitutes my electronic
+                        signature and that I agree to the terms of this Lease Agreement.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="fw-bold">
+                            Full Legal Name
+                        </label>
+
+                        <input type="text"
+                               name="resident_signature"
+                               class="form-control"
+                               value="{{ signed_document.resident_signature }}"
+                               required>
+                    </div>
+
+                    <div class="form-check mb-4">
+
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="signature_agreement"
+                               id="signatureAgreement"
+                               {% if signed_document.signature_agreement %}checked{% endif %}
+                               required>
+
+                        <label class="form-check-label"
+                               for="signatureAgreement">
+
+                            I agree that my typed name constitutes my
+                            electronic signature.
+
+                        </label>
+
+                    </div>
+
+                    {% if not signed_document.locked %}
+                        <button type="submit"
+                                class="btn btn-dark btn-lg rounded-pill px-5">
+
+                            Sign & Submit Lease
+
+                        </button>
+                    {% endif %}
+
+                </div>
+                </fieldset>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% if request.GET.print %}
+<script>
+window.addEventListener("load", function () {
+    window.print();
+});
+</script>
+{% endif %}
+
+{% endblock %}

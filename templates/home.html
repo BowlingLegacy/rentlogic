@@ -1,26 +1,292 @@
+{% load static %}
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>RentLogic</title>
+    <meta charset="UTF-8">
+    <title>Bowling Legacy Housing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+            color: #1f1f1f;
+            min-height: 100vh;
+        }
+
+        .site-header { background: #070707; border-bottom: 2px solid #c59a32; box-shadow: 0 8px 24px rgba(0,0,0,0.22); }
+        .brand-lockup { color: #f6ead1; text-decoration: none; }
+        .brand-lockup:hover { color: #f6ead1; }
+        .brand-logo { height: 86px; width: auto; margin-right: 16px; }
+        .brand-script { font-family: "Lucida Calligraphy", "Brush Script MT", Georgia, serif; color: #d8ab3b; font-size: 24px; line-height: 1; font-weight: normal; }
+        .brand-subtitle { color: #c59a32; letter-spacing: 7px; text-transform: uppercase; font-size: .72rem; margin-left: 6px; margin-top: .3rem; }
+        .nav-link-bl { color: #f6ead1; text-decoration: none; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: .86rem; padding: .75rem .85rem; border-bottom: 2px solid transparent; }
+        .nav-link-bl:hover, .nav-link-bl.active { color: #d8ab3b; border-bottom-color: #c59a32; }
+        .resident-start {
+            background: #111;
+            border-bottom: 2px solid #c59a32;
+            color: #f6ead1;
+        }
+        .resident-start .container {
+            align-items: center;
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            padding-top: 1rem;
+        }
+        .resident-start-title { color: #f3d27a; font-family: Georgia, serif; font-size: 1.35rem; font-weight: 700; }
+        .resident-start-copy { color: #f6ead1; margin: 0; }
+        .resident-start-btn { background: #d8ab3b; border-radius: 12px; color: #080808; font-weight: 900; min-height: 54px; padding: .9rem 1.2rem; text-align: center; text-decoration: none; }
+        .resident-start-btn:hover { background: #ebc868; color: #080808; }
+        .hero-section { padding: 4rem 0 2rem; }
+        .hero-kicker { font-family: Georgia, serif; font-style: italic; font-size: 1.55rem; color: #1f1f1f; margin-bottom: .25rem; }
+        .hero-title { font-family: Georgia, serif; color: #080808; font-size: clamp(2.75rem, 6vw, 4.9rem); line-height: .95; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 1.35rem; }
+        .gold-rule { height: 1px; background: linear-gradient(90deg, transparent, #c59a32, transparent); margin: 1.4rem 0; }
+        .hero-tagline { font-family: Georgia, serif; font-style: italic; color: #1c1c1c; font-size: 1.45rem; line-height: 1.35; margin-bottom: 1rem; }
+        .hero-copy { color: #333; font-size: 1.08rem; line-height: 1.7; max-width: 640px; }
+        .gold-btn, .dark-btn, .outline-btn { border-radius: 10px; padding: .85rem 1.25rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
+        .dark-btn { background: #080808; color: #d8ab3b; border: 1px solid #c59a32; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+        .dark-btn:hover { color: #f6ead1; background: #151515; }
+        .gold-btn { background: linear-gradient(135deg, #c48f22, #d8ab3b); color: white; border: none; }
+        .gold-btn:hover { color: white; filter: brightness(.96); }
+        .outline-btn { color: #8b6815; border: 1px solid #c59a32; background: rgba(255,255,255,.45); }
+        .outline-btn:hover { color: #5e460e; background: rgba(197,154,50,.1); }
+        .hero-image-frame { background: #080808; border: 2px solid #c59a32; border-radius: 24px; padding: 12px; box-shadow: 0 18px 42px rgba(0,0,0,.24); position: relative; }
+        .hero-image { width: 100%; min-height: 360px; max-height: 520px; object-fit: cover; border-radius: 16px; display: block; }
+        .image-plaque { position: absolute; right: 34px; bottom: 34px; background: rgba(8,8,8,.86); border: 1px solid #c59a32; color: #d8ab3b; border-radius: 14px; padding: .85rem 1.25rem; text-align: center; font-family: Georgia, serif; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+        .mission-section { padding: 2rem 0 1rem; }
+        .section-title { font-family: Georgia, serif; color: #1c1c1c; font-size: 2.15rem; font-weight: 700; }
+        .soft-card { background: rgba(255,255,255,0.88); border: 1px solid rgba(188,150,45,0.18); border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .value-card { padding: 1.35rem; height: 100%; }
+        .value-card-link { color: inherit; cursor: pointer; display: block; text-decoration: none; transition: transform .18s ease, box-shadow .18s ease; width: 100%; }
+        .value-card-link:hover { color: inherit; transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.12); }
+        .value-icon { width: 54px; height: 54px; min-width: 54px; border-radius: 999px; background: #080808; border: 1px solid #c59a32; color: #d8ab3b; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; margin-bottom: 1rem; }
+        .value-title { font-family: Georgia, serif; color: #1c1c1c; font-weight: 700; font-size: 1.1rem; text-transform: uppercase; letter-spacing: .05em; }
+        .founder-modal-photo { width: 150px; height: 150px; object-fit: cover; border-radius: 14px; border: 1px solid #c59a32; float: left; margin: 0 1.25rem 1rem 0; }
+        .founder-kicker { color: #a57c18; letter-spacing: 3px; text-transform: uppercase; font-size: .72rem; font-weight: 900; }
+        .founder-contact { background: #080808; color: #f6ead1; border-radius: 14px; padding: 1rem; border: 1px solid #c59a32; }
+        .founder-contact a { color: #d8ab3b; font-weight: 800; }
+        .property-card { overflow: hidden; height: 100%; }
+        .property-card img { height: 235px; object-fit: cover; width: 100%; border-bottom: 1px solid rgba(188,150,45,.22); }
+        .journal-wrap { padding: 3rem 0; }
+        .journal-post { padding: 1.5rem; margin-bottom: 1.5rem; }
+        .journal-img { max-height: 260px; object-fit: cover; width: 100%; border-radius: 16px; border: 8px solid #080808; outline: 2px solid #c59a32; margin-bottom: 1rem; }
+        .journal-body { max-height: 360px; overflow-y: auto; padding-right: 10px; line-height: 1.7; font-size: 1.05rem; color: #333; }
+        .site-footer { background: #070707; color: #f6ead1; border-top: 2px solid #c59a32; padding: 1.5rem 0; }
+        .footer-script { font-family: Georgia, serif; font-style: italic; color: #d8ab3b; }
+
+        @media (max-width: 992px) {
+            .site-header .container { justify-content: center !important; }
+            .brand-lockup { width: 100%; justify-content: center; }
+            .nav-wrap { justify-content: center; }
+            .hero-section { padding-top: 2.5rem; }
+        }
+        @media (max-width: 768px) {
+            .site-header { padding-bottom: .55rem !important; padding-top: .55rem !important; }
+            .site-header .container { gap: .45rem !important; }
+            .brand-logo { height: 46px; margin-right: 10px; }
+            .brand-script { font-size: 18px; }
+            .brand-subtitle { font-size: .58rem; letter-spacing: 4px; margin-top: .1rem; }
+            .nav-link-bl { font-size: .72rem; padding: .35rem .45rem; }
+            .resident-start .container { align-items: stretch; flex-direction: column; padding-bottom: .85rem; padding-top: .85rem; text-align: center; }
+            .resident-start-title { font-size: 1.2rem; }
+            .resident-start-btn { width: 100%; }
+            .hero-title { font-size: 2.6rem; }
+            .hero-image { min-height: 260px; }
+            .image-plaque { position: static; margin-top: .8rem; }
+        }
+    </style>
 </head>
-<body style="font-family: Tahoma; text-align:center; padding:50px;">
 
-    <h1>Welcome to RentLogic</h1>
-    <p>Your Property Management Platform</p>
+<body>
+<header class="site-header py-3">
+    <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <a class="brand-lockup d-flex align-items-center" href="/">
+            <img src="/static/images/bl-logo.png" class="brand-logo" alt="Bowling Legacy">
+            <div>
+                <div class="brand-script">Bowling Legacy</div>
+                <div class="brand-subtitle">Rental Ledger Pro</div>
+            </div>
+        </a>
+        <nav class="nav-wrap d-flex gap-2 flex-wrap align-items-center">
+            <a href="/" class="nav-link-bl active">Home</a>
+            <a href="/creed/" class="nav-link-bl">The Creed</a>
+            <a href="{% url 'properties_list' %}" class="nav-link-bl">Properties</a>
+            {% if demo_public_url %}
+                <a href="{{ demo_public_url }}" class="nav-link-bl">Try Demo</a>
+            {% endif %}
+            <a href="{% url 'login' %}?next={% url 'tenant_dashboard' %}" class="nav-link-bl">Portal</a>
+        </nav>
+    </div>
+</header>
 
-    <br>
+{% if painted_lady_profile_open %}
+<section class="resident-start">
+    <div class="container">
+        <div>
+            <div class="resident-start-title">Already live at The Painted Lady Inn?</div>
+            <p class="resident-start-copy">Start here first. Set up your resident profile so we can prepare your Rental Ledger Pro access.</p>
+        </div>
+        <a href="{% url 'existing_resident_intake' painted_lady_profile_property.pk %}" class="resident-start-btn">
+            Set Up My Profile
+        </a>
+    </div>
+</section>
+{% endif %}
 
-    <a href="/admin/">
-        <button style="
-            padding:15px 30px;
-            font-size:18px;
-            background-color:gold;
-            border:3px solid white;
-            cursor:pointer;
-        ">
-            Admin Portal
-        </button>
-    </a>
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+                <div class="hero-kicker">Welcome to</div>
+                <h1 class="hero-title">Bowling Legacy</h1>
+                <div class="gold-rule"></div>
+                <div class="hero-tagline">Building More Than Properties.<br>Building a Legacy.</div>
+                <p class="hero-copy">Bowling Legacy provides long-term, dignified housing for adults 55+ at risk of homelessness, creating safe, stable environments built on respect, structure, accountability, and community.</p>
+                <div class="d-flex gap-3 flex-wrap mt-4">
+                    {% if painted_lady_profile_open %}
+                        <a href="{% url 'existing_resident_intake' painted_lady_profile_property.pk %}" class="gold-btn">Resident Profile Setup</a>
+                    {% endif %}
+                    <a href="{% url 'properties_list' %}" class="dark-btn">View Properties</a>
+                    {% if demo_public_url %}
+                        <a href="{{ demo_public_url }}" class="gold-btn">Try Demo</a>
+                    {% endif %}
+                    <a href="{% url 'login' %}?next={% url 'tenant_dashboard' %}" class="outline-btn">Tenant Portal</a>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="hero-image-frame">
+                    {% if properties and properties.0.photo %}
+                        <img src="{{ properties.0.photo.url }}" class="hero-image" alt="{{ properties.0.name }}">
+                    {% else %}
+                        <img src="{% static 'images/photo03.JPG' %}" class="hero-image" alt="The Painted Lady Inn">
+                    {% endif %}
+                    <div class="image-plaque"><div style="font-size:1rem; letter-spacing:.08em; text-transform:uppercase;">Painted Lady</div><div style="font-size:.8rem; color:#f6ead1;">A Bowling Legacy Community</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
+<section class="mission-section"><div class="container"><div class="soft-card p-4 p-md-5 text-center"><h2 class="section-title mb-3">Our Mission</h2><p class="text-muted fs-5 mb-0">To provide quality housing, maintain beautiful properties, and create communities where dignity, safety, recovery, and respect come first.</p></div></div></section>
+
+<section class="container my-5">
+    <div class="row g-4">
+        <div class="col-md-3">
+            <a href="#founderModal" class="soft-card value-card value-card-link" role="button" data-bs-toggle="modal" data-bs-target="#founderModal">
+                <div class="value-icon">▣</div>
+                <div class="value-title">About the Founder</div>
+                <p class="text-muted mb-0">A brief note from Michael Bowling about Bowling Legacy and The Painted Lady Inn.</p>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'who_we_serve' %}" class="soft-card value-card value-card-link">
+                <div class="value-icon">◇</div>
+                <div class="value-title">Who We Serve</div>
+                <p class="text-muted mb-0">A public version of the community values residents receive during onboarding.</p>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'creed' %}" class="soft-card value-card value-card-link">
+                <div class="value-icon">✓</div>
+                <div class="value-title">Integrity & Trust</div>
+                <p class="text-muted mb-0">Open the creed that guides how Bowling Legacy serves residents and owners.</p>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="#rentalLedgerProModal" class="soft-card value-card value-card-link" role="button" data-bs-toggle="modal" data-bs-target="#rentalLedgerProModal">
+                <div class="value-icon">⌂</div>
+                <div class="value-title">Rental Ledger Pro</div>
+                <p class="text-muted mb-0">Technology built from real property operations to simplify management.</p>
+            </a>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="founderModal" tabindex="-1" aria-labelledby="founderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content soft-card">
+            <div class="modal-header border-0">
+                <div>
+                    <div class="founder-kicker mb-1">About the Founder</div>
+                    <h2 class="section-title mb-0" id="founderModalLabel">Michael Bowling</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <img src="{% static 'images/a pic of me.JPG' %}" class="founder-modal-photo mb-4" alt="Michael Bowling, founder of Bowling Legacy">
+                <p class="text-muted fs-5">
+                    Bowling Legacy was founded in August 2025, when Michael Bowling stepped in to assume
+                    operations of The Painted Lady Inn, a property already aligned with his personal mission creed:
+                    helping people who need help with dignity, structure, and respect.
+                </p>
+                <p class="text-muted">
+                    After taking over operations, Michael dug into the property's needs and connected with grant
+                    programs that were excited to support the mission. With that backing, The Painted Lady Inn is
+                    receiving long-overdue improvements and a renewed commitment to stable housing.
+                </p>
+                <p class="text-muted">
+                    From that work came this website and the foundation for Rental Ledger Pro, a commercial multifamily
+                    property management system built to be comprehensive, reliable, and easy to use for tenants,
+                    owners, and operators. The goal is to build the best system in the industry by pairing serious
+                    management tools with a clear, approachable user experience.
+                </p>
+
+                <div class="founder-contact mt-4">
+                    <div class="fw-bold mb-1">Contact</div>
+                    <div>Bowling Legacy LLC</div>
+                    <div><a href="mailto:michael@bowlinglegacy.com">michael@bowlinglegacy.com</a></div>
+                    <div><a href="https://bowlinglegacy.com">bowlinglegacy.com</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rentalLedgerProModal" tabindex="-1" aria-labelledby="rentalLedgerProModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content soft-card">
+            <div class="modal-header border-0">
+                <div>
+                    <div class="founder-kicker mb-1">Rental Ledger Pro</div>
+                    <h2 class="section-title mb-0" id="rentalLedgerProModalLabel">Built From Real Property Operations</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <p class="text-muted fs-5">
+                    Rental Ledger Pro is growing out of the daily operating needs of Bowling Legacy and The Painted Lady Inn.
+                    The goal is a comprehensive commercial multifamily management system that keeps the interface clear
+                    for residents, property owners, landlords, and operators.
+                </p>
+                <p class="text-muted mb-0">
+                    The long-term system is being built around simple navigation, reliable records, rent collection,
+                    resident files, owner reporting, property communication, and accounting tools that make large
+                    property operations easier to manage without losing important data.
+                </p>
+                <div class="mt-4">
+                    <a href="{% url 'property_owner_intake' %}" class="dark-btn">Property Owner Questionnaire</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="container my-5">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-4"><div><h2 class="section-title mb-1">Our Properties</h2><p class="text-muted mb-0">Explore Bowling Legacy communities and available housing information.</p></div><a href="{% url 'properties_list' %}" class="outline-btn">View All Properties</a></div>
+    <div class="row g-4">
+        {% for property in properties %}
+        <div class="col-md-4"><div class="soft-card property-card">{% if property.photo %}<img src="{{ property.photo.url }}" alt="{{ property.name }}">{% else %}<img src="{% static 'images/photo03.JPG' %}" alt="Property">{% endif %}<div class="p-4"><h5 class="section-title" style="font-size:1.45rem;">{{ property.name }}</h5><p class="text-muted">{{ property.description|truncatewords:18 }}</p><a href="{% url 'property_detail' property.pk %}" class="outline-btn">View Details</a></div></div></div>
+        {% empty %}<p class="text-muted">No properties available.</p>{% endfor %}
+    </div>
+</section>
+
+<section class="journal-wrap"><div class="container"><h2 class="section-title mb-4">Journal & Updates</h2>{% for post in posts %}<article class="soft-card journal-post">{% if post.image %}<img src="{{ post.image.url }}" class="journal-img" alt="{{ post.title }}">{% endif %}<h3 class="section-title" style="font-size:1.55rem;">{{ post.title }}</h3><p class="text-muted small">{{ post.created_at }}</p><div class="journal-body">{{ post.body|linebreaksbr }}</div><hr><h6 class="fw-bold">Comments</h6>{% for comment in post.comments.all %}{% if comment.approved %}<div class="border rounded p-2 mb-2 bg-light"><strong>{{ comment.name }}</strong><p class="mb-0">{{ comment.comment|linebreaks }}</p></div>{% endif %}{% empty %}<p class="text-muted">No comments yet.</p>{% endfor %}<button class="outline-btn mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#commentForm{{ post.id }}">Comment</button><div class="collapse mt-3" id="commentForm{{ post.id }}"><form method="post" action="{% url 'add_blog_comment' post.id %}">{% csrf_token %}<input type="text" name="name" class="form-control mb-2" placeholder="Your name" required><input type="email" name="email" class="form-control mb-2" placeholder="Your email optional"><textarea name="comment" class="form-control mb-2" rows="3" placeholder="Write your comment..." required></textarea><button type="submit" class="gold-btn">Submit Comment</button><p class="text-muted small mt-2">Comments appear after approval.</p></form></div></article>{% empty %}<p class="text-muted">No updates yet.</p>{% endfor %}</div></section>
+
+<footer class="site-footer"><div class="container d-flex justify-content-between align-items-center flex-wrap gap-3"><div class="footer-script">A legacy is not what I leave for people,<br>but what I leave in people. — TRMF</div><div class="text-end"><div>&copy; {{ year|default:2026 }} Bowling Legacy LLC</div><div class="small" style="color:#d8ab3b;">Tenant experience powered by Rental Ledger Pro</div></div></div></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

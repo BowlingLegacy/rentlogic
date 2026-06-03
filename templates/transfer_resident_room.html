@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Move Resident Room</h1>
+            <p class="text-muted mb-0">{{ application.full_name }} | {{ application.property.name|default:"No Property" }}</p>
+        </div>
+        <a href="{% url 'landlord_resident_files' %}" class="btn btn-outline-dark">Back to Resident Files</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <div class="alert alert-info">
+                Current room: <strong>{{ application.space_type }} {{ application.space_label }}</strong>.
+                Current rent: <strong>${{ application.monthly_rent }}</strong>.
+            </div>
+
+            {% if current_room_setting %}
+                <div class="alert alert-light border">
+                    Current room settings: rent ${{ current_room_setting.monthly_rent }},
+                    utilities ${{ current_room_setting.utility_monthly }},
+                    deposit ${{ current_room_setting.deposit_required }}.
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        {{ form.space_type.label_tag }}
+                        {{ form.space_type }}
+                        {{ form.space_type.errors }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.space_label.label_tag }}
+                        {{ form.space_label }}
+                        {{ form.space_label.errors }}
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            {{ form.apply_room_rent }}
+                            <label class="form-check-label fw-bold" for="{{ form.apply_room_rent.id_for_label }}">
+                                {{ form.apply_room_rent.label }}
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            If the room has no saved room-rent settings, only the room label changes.
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        {{ form.notes.label_tag }}
+                        {{ form.notes }}
+                        {{ form.notes.errors }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="{% url 'application_detail' application.id %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Room Move</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

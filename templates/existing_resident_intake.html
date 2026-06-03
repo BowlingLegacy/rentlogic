@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Existing Resident Profile | {{ property.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%); color: #1d1a13; min-height: 100vh; }
+        .topbar { background: #070707; border-bottom: 2px solid #c59a32; }
+        .brand-link { color: #f6ead1; text-decoration: none; }
+        .brand-link:hover { color: #f6ead1; }
+        .brand-logo { height: 58px; width: auto; margin-right: .75rem; }
+        .brand-script { color: #d8ab3b; font-family: "Lucida Calligraphy", "Brush Script MT", Georgia, serif; font-size: 20px; line-height: 1; }
+        .brand-subtitle { color: #c59a32; font-size: .64rem; letter-spacing: 5px; margin-left: 4px; margin-top: .2rem; text-transform: uppercase; }
+        .shell { max-width: 860px; margin: 1.5rem auto; padding: 0 .85rem 2rem; }
+        .profile-card { background: rgba(255,255,255,.96); border: 1px solid rgba(188,150,45,.28); border-radius: 20px; box-shadow: 0 10px 28px rgba(0,0,0,.1); overflow: hidden; }
+        .profile-head { background: #111; border-bottom: 2px solid #c59a32; color: #f6ead1; padding: 1.25rem; }
+        .eyebrow { color: #d8ab3b; font-size: .75rem; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+        .section-panel { background: #fffaf0; border: 1px solid rgba(188,150,45,.22); border-radius: 14px; padding: 1rem; }
+        .gold-btn { background: linear-gradient(135deg, #c48f22, #d8ab3b); border: 0; border-radius: 12px; color: #fff; font-weight: 900; min-height: 52px; padding: .85rem 1rem; width: 100%; }
+        .helper { color: #554d3b; font-size: .95rem; }
+        .form-control { min-height: 48px; }
+        textarea.form-control { min-height: auto; }
+        input[type="checkbox"], .form-check-input[type="checkbox"] { width: 1.2em; height: 1.2em; border: 2px solid #4b3510 !important; background-color: #fffaf0 !important; box-shadow: 0 0 0 1px rgba(0,0,0,.08); cursor: pointer; }
+        input[type="checkbox"]:checked, .form-check-input[type="checkbox"]:checked { background-color: #c59a32 !important; border-color: #111 !important; accent-color: #c59a32; }
+        input[type="checkbox"]:focus, .form-check-input[type="checkbox"]:focus { border-color: #111 !important; box-shadow: 0 0 0 .22rem rgba(197,154,50,.28) !important; }
+        @media (min-width: 768px) {
+            .shell { margin-top: 2.5rem; }
+            .profile-head { padding: 1.7rem; }
+            .gold-btn { width: auto; min-width: 240px; }
+        }
+        @media (max-width: 767px) {
+            .topbar { padding-bottom: .55rem !important; padding-top: .55rem !important; }
+            .brand-logo { height: 44px; }
+            .brand-script { font-size: 18px; }
+            .brand-subtitle { font-size: .58rem; letter-spacing: 4px; margin-top: .1rem; }
+        }
+    </style>
+</head>
+<body>
+<nav class="topbar py-3">
+    <div class="container">
+        <a href="{% url 'property_detail' property.pk %}" class="brand-link d-flex align-items-center">
+            <img src="/static/images/bl-logo.png" class="brand-logo" alt="Bowling Legacy">
+            <div>
+                <div class="brand-script">Bowling Legacy</div>
+                <div class="brand-subtitle">Rental Ledger Pro</div>
+            </div>
+        </a>
+    </div>
+</nav>
+<main class="shell">
+    <div class="profile-card">
+        <div class="profile-head">
+            <div class="eyebrow">Existing Resident Profile</div>
+            <h1 class="fw-bold mb-2">{{ property.name }}</h1>
+            <p class="mb-0">Use this form if you already live here and need your Rental Ledger Pro resident profile prepared.</p>
+        </div>
+        <form method="post" enctype="multipart/form-data" class="p-3 p-md-5">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-4"><label class="form-label fw-bold">{{ form.first_name.label }}</label>{{ form.first_name }}{{ form.first_name.errors }}</div>
+                <div class="col-md-4"><label class="form-label fw-bold">{{ form.middle_name.label }}</label>{{ form.middle_name }}{{ form.middle_name.errors }}</div>
+                <div class="col-md-4"><label class="form-label fw-bold">{{ form.last_name.label }}</label>{{ form.last_name }}{{ form.last_name.errors }}</div>
+                <div class="col-md-6"><label class="form-label fw-bold">{{ form.email.label }}</label>{{ form.email }}{{ form.email.errors }}</div>
+                <div class="col-md-6"><label class="form-label fw-bold">{{ form.phone.label }}</label>{{ form.phone }}{{ form.phone.errors }}</div>
+                <div class="col-md-6"><label class="form-label fw-bold">{{ form.room_unit_label.label }}</label>{{ form.room_unit_label }}{{ form.room_unit_label.errors }}</div>
+                <div class="col-12">
+                    <div class="section-panel">
+                        <label class="form-label fw-bold">{{ form.profile_photo.label }}</label>
+                        {{ form.profile_photo }}{{ form.profile_photo.errors }}
+                        <p class="helper mb-0 mt-2">A clear selfie or selected photo helps match your profile to your resident file.</p>
+                    </div>
+                </div>
+                <div class="col-sm-6"><label class="form-label fw-bold">{{ form.years_at_residence.label }}</label>{{ form.years_at_residence }}{{ form.years_at_residence.errors }}</div>
+                <div class="col-sm-6"><label class="form-label fw-bold">{{ form.move_in_month.label }}</label>{{ form.move_in_month }}{{ form.move_in_month.errors }}</div>
+                <div class="col-12">
+                    <div class="form-check section-panel">
+                        {{ form.has_valid_odl }}
+                        <label class="form-check-label fw-bold" for="{{ form.has_valid_odl.id_for_label }}">{{ form.has_valid_odl.label }}</label>
+                    </div>
+                </div>
+                <div class="col-12"><label class="form-label fw-bold">{{ form.additional_notes.label }}</label>{{ form.additional_notes }}{{ form.additional_notes.errors }}</div>
+            </div>
+            <div class="d-flex justify-content-end mt-4"><button type="submit" class="gold-btn">Submit Resident Profile</button></div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

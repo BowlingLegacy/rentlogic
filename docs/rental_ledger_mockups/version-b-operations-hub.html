@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rental Ledger Pro - Operations Hub</title>
+    <style>
+        :root {
+            --ink: #1d262f;
+            --muted: #596671;
+            --paper: #f3f5f1;
+            --panel: #ffffff;
+            --sage: #506f62;
+            --gold: #bd933b;
+            --blue: #315d75;
+            --line: #d6ddda;
+            --alert: #9a6231;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+        a { color: inherit; }
+        .hero {
+            min-height: 88vh;
+            background:
+                linear-gradient(rgba(22, 30, 37, .64), rgba(22, 30, 37, .46)),
+                url("https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1800&q=82") center/cover;
+            color: #fff;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 34px;
+        }
+
+        .brand { font-weight: 900; font-size: 1.22rem; }
+        .nav-links { display: flex; flex-wrap: wrap; gap: 18px; font-weight: 800; font-size: .9rem; }
+        .nav-links a { text-decoration: none; }
+        .hero-body { width: min(1120px, calc(100% - 32px)); margin: 0 auto; display: grid; align-items: end; padding: 60px 0 52px; }
+        .kicker { color: #f0cd7a; font-size: .8rem; letter-spacing: .17em; text-transform: uppercase; font-weight: 900; }
+        h1 { margin: 10px 0 16px; max-width: 840px; font-size: clamp(2.35rem, 5.4vw, 5.35rem); line-height: .98; letter-spacing: 0; }
+        .lead { max-width: 690px; color: #eef3ef; line-height: 1.6; font-size: 1.1rem; }
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+        .button { min-height: 46px; border-radius: 6px; padding: 12px 18px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 900; }
+        .primary { background: var(--gold); color: #151515; }
+        .secondary { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.6); color: #fff; }
+        .section { width: min(1120px, calc(100% - 32px)); margin: 44px auto; }
+        .intro { display: grid; grid-template-columns: .9fr 1.1fr; gap: 28px; align-items: start; }
+        h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 3.15rem); line-height: 1.05; letter-spacing: 0; }
+        p { color: var(--muted); line-height: 1.55; margin: 0; }
+
+        .workspace {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 16px 44px rgba(20, 34, 46, .13);
+        }
+
+        .workspace-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .workspace-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tab { background: #edf1ef; border-radius: 999px; padding: 7px 10px; font-size: .78rem; font-weight: 900; }
+        .tab.active { background: var(--sage); color: #fff; }
+        .workspace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+        .pane { padding: 16px; border-right: 1px solid var(--line); min-height: 320px; }
+        .pane:last-child { border-right: 0; }
+        .row {
+            display: grid;
+            grid-template-columns: 46px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid #edf0ed;
+            padding: 10px 0;
+        }
+        .unit { background: #e8f0ec; border-radius: 6px; padding: 9px 0; text-align: center; font-weight: 900; color: var(--sage); }
+        .name { font-weight: 900; }
+        .meta { color: var(--muted); font-size: .82rem; margin-top: 3px; }
+        .status { font-size: .78rem; font-weight: 900; border-radius: 999px; padding: 6px 9px; background: #f2ead9; color: var(--alert); }
+        .status.good { background: #e6f1eb; color: var(--sage); }
+
+        .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 18px; min-height: 164px; }
+        .card h3 { margin: 0 0 9px; font-size: 1rem; }
+        .card p { font-size: .93rem; }
+
+        .property-strip {
+            background: var(--ink);
+            color: #fff;
+            padding: 44px 0;
+        }
+
+        .property-strip p { color: #dce4df; }
+
+        @media (max-width: 900px) {
+            .nav { padding: 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+            .hero { min-height: 80vh; }
+            .intro, .workspace-grid, .cards { grid-template-columns: 1fr; }
+            .pane { border-right: 0; border-bottom: 1px solid var(--line); }
+            .pane:last-child { border-bottom: 0; }
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <nav class="nav">
+            <div class="brand">Rental Ledger Pro</div>
+            <div class="nav-links">
+                <a href="#">Owners</a>
+                <a href="#">Landlords</a>
+                <a href="#">Residents</a>
+                <a href="#">Demo</a>
+            </div>
+        </nav>
+        <div class="hero-body">
+            <div>
+                <div class="kicker">Daily Property Operations</div>
+                <h1>One workspace for rent, records, messages, and resident files.</h1>
+                <p class="lead">Rental Ledger Pro turns the busy landlord day into a clear operating dashboard, with each property separated and every resident file tied to payments, documents, messages, and setup status.</p>
+                <div class="actions">
+                    <a class="button primary" href="#">Try Operations Demo</a>
+                    <a class="button secondary" href="#">View Resident Flow</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section intro">
+            <div>
+                <div class="kicker" style="color:var(--gold)">At a Glance</div>
+                <h2>Less hunting through pages. More immediate answers.</h2>
+                <p>Landlords can see who paid, who still owes, what messages need attention, which documents are waiting, and which residents still need profile setup.</p>
+            </div>
+            <div class="workspace" aria-label="Dashboard preview">
+                <div class="workspace-head">
+                    <strong>Cedar Ridge Apartments</strong>
+                    <div class="workspace-tabs">
+                        <span class="tab active">Residents</span>
+                        <span class="tab">Payments</span>
+                        <span class="tab">Messages</span>
+                    </div>
+                </div>
+                <div class="workspace-grid">
+                    <div class="pane">
+                        <div class="row">
+                            <div class="unit">B</div>
+                            <div><div class="name">Grady Bradley</div><div class="meta">Rent paid, utilities paid</div></div>
+                            <div class="status good">Clear</div>
+                        </div>
+                        <div class="row">
+                            <div class="unit">N</div>
+                            <div><div class="name">Hero Lowe</div><div class="meta">Rent not recorded</div></div>
+                            <div class="status">Needs attention</div>
+                        </div>
+                        <div class="row">
+                            <div class="unit">Q</div>
+                            <div><div class="name">Chris Honey</div><div class="meta">Deposit balance open</div></div>
+                            <div class="status">Balance</div>
+                        </div>
+                        <div class="row">
+                            <div class="unit">R</div>
+                            <div><div class="name">Aaron Brown</div><div class="meta">Service credit applied</div></div>
+                            <div class="status good">Clear</div>
+                        </div>
+                    </div>
+                    <div class="pane">
+                        <div class="row">
+                            <div class="unit">4</div>
+                            <div><div class="name">New messages</div><div class="meta">Resident and owner inbox</div></div>
+                            <div class="status">Open</div>
+                        </div>
+                        <div class="row">
+                            <div class="unit">2</div>
+                            <div><div class="name">Documents</div><div class="meta">Awaiting review or signature</div></div>
+                            <div class="status">Open</div>
+                        </div>
+                        <div class="row">
+                            <div class="unit">1</div>
+                            <div><div class="name">Receipt</div><div class="meta">Needs accounting review</div></div>
+                            <div class="status">Review</div>
+                        </div>
+                        <div class="row">
+                            <div class="unit">0</div>
+                            <div><div class="name">Cross-property issues</div><div class="meta">Property data stays separated</div></div>
+                            <div class="status good">Secure</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="cards">
+                <article class="card">
+                    <h3>Resident files</h3>
+                    <p>Applications, lease documents, emergency contacts, payment history, uploads, and notes stay attached to the resident.</p>
+                </article>
+                <article class="card">
+                    <h3>Property messaging</h3>
+                    <p>Send individual messages or property-wide announcements with portal records and future text alerts.</p>
+                </article>
+                <article class="card">
+                    <h3>Rent setup by unit</h3>
+                    <p>Set rent, utilities, deposit, due day, and room/unit details without retyping the same data for every resident.</p>
+                </article>
+                <article class="card">
+                    <h3>Owner visibility</h3>
+                    <p>Owners see their properties, reports, rent roll, T-12, documents, and property-level communication.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="property-strip">
+            <div class="section intro" style="margin-block:0">
+                <div>
+                    <div class="kicker">Purpose Built</div>
+                    <h2>Every property gets its own operating lane.</h2>
+                </div>
+                <p>Rental Ledger Pro is designed so a landlord with one property is not overwhelmed, while an owner with many properties can still drill into each property, unit, resident, payment, and document.</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

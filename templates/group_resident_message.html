@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="soft-card p-4 p-md-5" style="max-width:980px;margin:0 auto;">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="section-title mb-1">Group Resident Message</h1>
+            <p class="text-muted mb-0">
+                Send one secure portal message to every resident in one property, or every resident you can manage.
+            </p>
+        </div>
+        <a href="{% url 'landlord_dashboard' %}" class="message-btn">Back to Dashboard</a>
+    </div>
+
+    <div class="alert alert-info">
+        This creates a private copy in each resident file. It does not create a shared group thread where residents can see each other.
+        SMS only sends to residents who have opted in. If Twilio is not configured yet, the attempt is logged but no text is sent.
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">{{ form.property_id.label }}</label>
+            {{ form.property_id }}
+            {{ form.property_id.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">{{ form.delivery_method.label }}</label>
+            {{ form.delivery_method }}
+            {{ form.delivery_method.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">{{ form.subject.label }}</label>
+            {{ form.subject }}
+            {{ form.subject.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">{{ form.message.label }}</label>
+            {{ form.message }}
+            {{ form.message.errors }}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="text-muted">Accessible portal resident files: {{ preview_count }}</span>
+            <button type="submit" class="gold-btn">Send Secure Message</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

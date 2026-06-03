@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.rent-setup-card {
+    background: rgba(255,255,255,.94);
+    border: 1px solid rgba(188,150,45,.2);
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+    overflow: hidden;
+}
+.rent-setup-head {
+    background: #111;
+    border-bottom: 2px solid #c59a32;
+    color: #f6ead1;
+    padding: 1.35rem;
+}
+.rent-input {
+    min-width: 105px;
+}
+.day-input {
+    min-width: 72px;
+}
+.quick-room-card {
+    background: #fff9ec;
+    border: 1px solid rgba(197,154,50,.45);
+    border-radius: 14px;
+    padding: 1rem;
+}
+.property-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+.property-choice {
+    display: block;
+    background: #fff9ec;
+    border: 1px solid rgba(197,154,50,.45);
+    border-radius: 14px;
+    padding: 1rem;
+    color: #15110a;
+    text-decoration: none;
+}
+.property-choice:hover {
+    background: #fff3d8;
+    color: #15110a;
+}
+.rent-table th {
+    white-space: nowrap;
+    color: #6f5411;
+    background: #f3ead7;
+}
+</style>
+
+<div class="rent-setup-card">
+    <div class="rent-setup-head d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <div class="text-uppercase small fw-bold text-warning">Rent Setup</div>
+            <h1 class="fw-bold mb-1">Rent By Room</h1>
+            <div>Set each room once. Matching resident files update from the room letter.</div>
+        </div>
+        <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-light">Back to Dashboard</a>
+    </div>
+
+    <div class="p-4">
+        {% if not selected_property %}
+            <div class="alert alert-warning">
+                Choose a property before editing rent. Each property has its own rent setup page.
+            </div>
+
+            <div class="property-picker">
+                {% for property in properties %}
+                    <a href="{% url 'landlord_rent_setup_property' property.id %}" class="property-choice">
+                        <div class="text-uppercase small fw-bold text-warning">Property</div>
+                        <h2 class="h5 fw-bold mb-1">{{ property.name }}</h2>
+                        <div class="text-muted small">Open rent setup</div>
+                    </a>
+                {% empty %}
+                    <div class="text-muted">No properties are assigned to this account.</div>
+                {% endfor %}
+            </div>
+        {% else %}
+        <div class="alert alert-warning">
+            {{ selected_property.name }} monthly rent setup. Room, space, unit, and suite labels like <strong>B</strong> and <strong>Room B</strong> are treated as the same space.
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="room_count" value="{{ room_rows|length }}">
+
+            <h2 class="h4 fw-bold mb-2">Rent By Space</h2>
+            <p class="text-muted">
+                Set each space once. Future current-resident profile setups will pull the rent from this property automatically.
+            </p>
+
+            <div class="quick-room-card mb-4">
+                <h3 class="h5 fw-bold mb-3">Add Space Rent</h3>
+                <div class="row g-3 align-items-end">
+                    <input type="hidden" name="add_room_property_id" value="{{ selected_property.id }}">
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Space / Unit</label>
+                        <input type="text" class="form-control" name="add_room_unit_label" placeholder="B">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Rent</label>
+                        <input type="number" class="form-control" step="0.01" min="0" name="add_room_monthly_rent" placeholder="575.00">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Due Day</label>
+                        <input type="number" class="form-control" min="1" max="31" name="add_room_rent_due_day" value="1">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Utilities</label>
+                        <input type="number" class="form-control" step="0.01" min="0" name="add_room_utility_monthly" placeholder="0.00">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Deposit</label>
+                        <input type="number" class="form-control" step="0.01" min="0" name="add_room_deposit_required" placeholder="450.00">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Deposit Paid</label>
+                        <input type="number" class="form-control" step="0.01" min="0" name="add_room_deposit_paid" placeholder="450.00">
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100" name="save_added_room" value="1">
+                            Save Room Rent
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive mb-3">
+                <table class="table align-middle rent-table">
+                    <thead>
+                        <tr>
+                            <th>Space</th>
+                            <th>Name</th>
+                            <th>Rent</th>
+                            <th>Due Day</th>
+                            <th>Utilities</th>
+                            <th>Deposit</th>
+                            <th>Deposit Paid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in room_rows %}
+                            <tr>
+                                <td>
+                                    <strong>{{ row.room_unit_label }}</strong>
+                                    <input type="hidden" name="room_{{ forloop.counter0 }}_property_id" value="{{ row.property.id }}">
+                                    <input type="hidden" name="room_{{ forloop.counter0 }}_room_unit_label" value="{{ row.room_unit_label }}">
+                                </td>
+                                <td>
+                                    {% for resident_name in row.residents %}
+                                        <div>{{ resident_name }}</div>
+                                    {% empty %}
+                                        <span class="text-muted">No resident file yet</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control rent-input" step="0.01" min="0" name="room_{{ forloop.counter0 }}_monthly_rent" value="{% if row.setting %}{{ row.setting.monthly_rent }}{% else %}0.00{% endif %}">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control day-input" min="1" max="31" name="room_{{ forloop.counter0 }}_rent_due_day" value="{% if row.setting %}{{ row.setting.rent_due_day }}{% else %}1{% endif %}">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control rent-input" step="0.01" min="0" name="room_{{ forloop.counter0 }}_utility_monthly" value="{% if row.setting %}{{ row.setting.utility_monthly }}{% else %}0.00{% endif %}">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control rent-input" step="0.01" min="0" name="room_{{ forloop.counter0 }}_deposit_required" value="{% if row.setting %}{{ row.setting.deposit_required }}{% else %}0.00{% endif %}">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control rent-input" step="0.01" min="0" name="room_{{ forloop.counter0 }}_deposit_paid" value="{% if row.setting %}{{ row.setting.deposit_paid }}{% else %}0.00{% endif %}">
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-muted">No spaces found yet. Upload the current resident roster or add a space above.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <label class="form-check mb-4">
+                <input type="checkbox" class="form-check-input" name="apply_room_rents" checked>
+                <span class="form-check-label fw-bold">Apply these room settings to matching resident files now</span>
+            </label>
+
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="gold-btn">Save Rent Setup</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,5 +1,8 @@
 Django==5.0.3
 gunicorn
 whitenoise
-psycopg2-binary
 Pillow
+psycopg2==2.9.9
+reportlab
+stripe
+openpyxl==3.1.5

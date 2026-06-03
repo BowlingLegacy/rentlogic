@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="soft-card p-4 p-md-5" style="max-width:960px;margin:0 auto;">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="section-title mb-1">{{ property.name }} Onboarding Files</h1>
+            <p class="text-muted mb-0">Add the documents Rental Ledger Pro needs to prepare this property intake workflow.</p>
+        </div>
+        <a href="{% url 'property_owner_dashboard' %}" class="message-btn">Skip for Now</a>
+    </div>
+
+    <div class="alert alert-warning">
+        Upload the property application and lease first. They are saved for conversion into the property-specific fillable workflow before they are published to applicants or attached to new residents.
+    </div>
+
+    <div class="alert alert-info">
+        Current residents can use the property profile setup link now. If you already have signed paper leases, keep those leases ready for each resident file. If you want residents to sign the digital lease instead, add the lease here so the property workflow can be prepared.
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">{{ form.application_file.label }}</label>
+                {{ form.application_file }}
+                {{ form.application_file.errors }}
+                <div class="form-text">This becomes the source for the property application card.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">{{ form.lease_file.label }}</label>
+                {{ form.lease_file }}
+                {{ form.lease_file.errors }}
+                <div class="form-text">This becomes the source lease for new resident onboarding.</div>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold">{{ form.other_documents.label }}</label>
+                {{ form.other_documents }}
+                {{ form.other_documents.errors }}
+                <div class="form-text">Add house rules, acknowledgments, emergency forms, or other onboarding files.</div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mt-4">
+            <button type="submit" class="gold-btn">Save Onboarding Files</button>
+        </div>
+    </form>
+
+    {% if documents %}
+        <div class="border-top mt-4 pt-4">
+            <h2 class="card-title">Uploaded Files</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Type</th><th>File</th><th>Status</th></tr></thead>
+                    <tbody>
+                    {% for document in documents %}
+                        <tr>
+                            <td>{{ document.get_document_type_display }}</td>
+                            <td><a href="{{ document.source_file.url }}" target="_blank">{{ document.title }}</a></td>
+                            <td>{{ document.get_conversion_status_display }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

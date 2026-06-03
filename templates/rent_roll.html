@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rent Roll | Bowling Legacy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .property-picker {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+        .property-choice {
+            display: block;
+            background: #fff;
+            border: 1px solid rgba(197,154,50,.35);
+            border-radius: 12px;
+            padding: 1rem;
+            color: #15110a;
+            text-decoration: none;
+        }
+        .property-choice:hover {
+            background: #fff7e8;
+            color: #15110a;
+        }
+        .rent-roll-table {
+            min-width: 980px;
+        }
+        .rent-roll-table th,
+        .rent-roll-table td {
+            font-size: .92rem;
+            vertical-align: middle;
+        }
+        .unit-col {
+            width: 72px;
+            white-space: nowrap;
+        }
+        .money-col {
+            width: 105px;
+            white-space: nowrap;
+        }
+        .totals-row td {
+            background: #15110a !important;
+            color: #f7d77d !important;
+            font-weight: 800;
+        }
+        @media print {
+            @page {
+                size: landscape;
+                margin: .35in;
+            }
+
+            nav,
+            .report-actions,
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                font-size: 9px !important;
+            }
+
+            .container-fluid {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+            }
+
+            .rent-roll-table {
+                min-width: 0 !important;
+                width: 100% !important;
+                table-layout: fixed;
+            }
+
+            .rent-roll-table th,
+            .rent-roll-table td {
+                font-size: 8px !important;
+                padding: 3px 4px !important;
+                white-space: normal !important;
+                word-break: break-word;
+            }
+
+            .unit-col,
+            .money-col {
+                width: auto !important;
+                min-width: 0 !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-light bg-white shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">Bowling Legacy Housing</a>
+
+        <div class="d-flex gap-2">
+            <a href="{% url 'payment_log' %}" class="btn btn-outline-primary btn-sm">Payment Log</a>
+            <a href="{% url 't12_report' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="btn btn-outline-primary btn-sm">T-12</a>
+            <a href="{% url 'financial_upload' %}" class="btn btn-outline-secondary btn-sm">Financial Upload</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid my-5 px-4">
+    <h1 class="fw-bold mb-2">Rent Roll</h1>
+    <p class="text-muted mb-3">
+        Month viewed: <strong>{{ selected_month|date:"F Y" }}</strong>
+        {% if selected_property %}
+            | Property: <strong>{{ selected_property.name }}</strong>
+        {% endif %}
+    </p>
+
+    <div class="d-flex gap-2 flex-wrap mb-4 report-actions">
+        <a href="{% url 'rent_roll' %}?month={{ previous_month|date:'Y-m' }}{% if selected_property %}&property_id={{ selected_property.id }}{% endif %}" class="btn btn-outline-primary btn-sm">Previous Month</a>
+        <a href="{% url 'rent_roll' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="btn btn-outline-dark btn-sm">Current Month</a>
+        <a href="{% url 'rent_roll' %}?month={{ next_month|date:'Y-m' }}{% if selected_property %}&property_id={{ selected_property.id }}{% endif %}" class="btn btn-outline-primary btn-sm">Next Month</a>
+        {% if not show_property_picker %}
+            <a href="{% url 'export_rent_roll_csv' %}?month={{ selected_month|date:'Y-m' }}{% if selected_property %}&property_id={{ selected_property.id }}{% endif %}" class="btn btn-success btn-sm">Download CSV</a>
+            <button type="button" class="btn btn-dark btn-sm" onclick="window.print()">Print Report</button>
+        {% endif %}
+    </div>
+
+    {% if show_property_picker %}
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h4 fw-bold mb-2">Choose A Property</h2>
+                <p class="text-muted">Select one property so the rent roll stays readable.</p>
+                <div class="property-picker">
+                    {% for property in properties %}
+                        <a href="{% url 'rent_roll' %}?month={{ selected_month|date:'Y-m' }}&property_id={{ property.id }}" class="property-choice">
+                            <div class="text-uppercase small fw-bold text-warning">Property</div>
+                            <h3 class="h5 fw-bold mb-0">{{ property.name }}</h3>
+                        </a>
+                    {% empty %}
+                        <div class="text-muted">No properties are assigned to this account.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle bg-white rent-roll-table">
+                <thead>
+                    <tr>
+                        <th class="unit-col">Unit</th>
+                        <th>Resident</th>
+                        <th class="money-col">Rent</th>
+                        <th class="money-col">Rent Paid</th>
+                        <th class="money-col">Rent Balance</th>
+                        <th class="money-col">Utilities</th>
+                        <th class="money-col">Utilities Paid</th>
+                        <th class="money-col">Utilities Balance</th>
+                        <th class="money-col">Deposit</th>
+                        <th class="money-col">Deposit Paid</th>
+                        <th class="money-col">Deposit Balance</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td class="unit-col">{{ row.room }}</td>
+                            <td>{{ row.resident }}</td>
+                            <td class="money-col">${{ row.monthly_rent }}</td>
+                            <td class="money-col">${{ row.rent_paid }}</td>
+                            <td class="money-col">${{ row.rent_balance }}</td>
+                            <td class="money-col">${{ row.utility_monthly }}</td>
+                            <td class="money-col">${{ row.utility_paid }}</td>
+                            <td class="money-col">${{ row.utility_balance }}</td>
+                            <td class="money-col">${{ row.deposit_required }}</td>
+                            <td class="money-col">${{ row.deposit_paid }}</td>
+                            <td class="money-col">${{ row.deposit_balance }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="11" class="text-muted">No residents found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+                {% if rows %}
+                    <tfoot>
+                        <tr class="totals-row">
+                            <td class="unit-col"></td>
+                            <td>Total</td>
+                            <td class="money-col">${{ totals.monthly_rent }}</td>
+                            <td class="money-col">${{ totals.rent_paid }}</td>
+                            <td class="money-col">${{ totals.rent_balance }}</td>
+                            <td class="money-col">${{ totals.utility_monthly }}</td>
+                            <td class="money-col">${{ totals.utility_paid }}</td>
+                            <td class="money-col">${{ totals.utility_balance }}</td>
+                            <td class="money-col">${{ totals.deposit_required }}</td>
+                            <td class="money-col">${{ totals.deposit_paid }}</td>
+                            <td class="money-col">${{ totals.deposit_balance }}</td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

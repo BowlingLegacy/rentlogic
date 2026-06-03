@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+    color: #1f1f1f;
+}
+
+.application-shell {
+    max-width: 1120px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.application-card {
+    background: rgba(255,255,255,0.96);
+    border: 1px solid rgba(188,150,45,0.18);
+    border-radius: 22px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.application-header {
+    background: rgba(20,20,20,0.97);
+    padding: 2rem;
+    border-bottom: 1px solid rgba(197,154,50,0.25);
+}
+
+.application-logo {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
+.application-eyebrow {
+    color: #c59a32;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-size: .72rem;
+    font-weight: 700;
+    margin-bottom: .5rem;
+}
+
+.application-title {
+    color: #f6ead1;
+    font-family: Georgia, serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: .35rem;
+}
+
+.application-subtitle {
+    color: rgba(255,255,255,0.72);
+    font-size: 1rem;
+}
+
+.application-body {
+    padding: 2rem;
+}
+
+.section-card {
+    border: 1px solid rgba(188,150,45,0.14);
+    border-radius: 18px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: rgba(255,255,255,0.78);
+}
+
+.section-title {
+    font-family: Georgia, serif;
+    color: #1c1c1c;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.field-item,
+.notes-box {
+    background: #fff;
+    border: 1px solid rgba(188,150,45,0.12);
+    border-radius: 14px;
+    padding: 1rem;
+}
+
+.field-wide {
+    grid-column: 1 / -1;
+}
+
+.field-label {
+    color: #9b771f;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: .4rem;
+}
+
+.field-value {
+    color: #222;
+    font-size: 1rem;
+    font-weight: 600;
+    word-break: break-word;
+    white-space: pre-line;
+}
+
+.action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.dark-btn,
+.gold-btn,
+.green-btn {
+    padding: .8rem 1.2rem;
+    border-radius: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dark-btn {
+    background: #1a1a1a;
+    color: white;
+}
+
+.gold-btn {
+    background: linear-gradient(135deg, #c48f22, #d8ab3b);
+    color: white;
+}
+
+.green-btn {
+    background: #198754;
+    color: white;
+}
+
+.dark-btn:hover,
+.gold-btn:hover,
+.green-btn:hover {
+    color: white;
+    opacity: .94;
+}
+
+@media print {
+    .action-bar,
+    .navbar,
+    .footer {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+    }
+
+    .application-shell {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .application-card {
+        box-shadow: none;
+        border: none;
+    }
+
+    .section-card {
+        break-inside: avoid;
+    }
+}
+</style>
+
+<div class="application-shell">
+
+<div class="action-bar">
+    <a href="{% url 'landlord_dashboard' %}" class="dark-btn">
+        Back To Dashboard
+    </a>
+
+    <a href="#" onclick="window.print(); return false;" class="gold-btn">
+        Print Application
+    </a>
+
+    {% if not application.user %}
+    <a href="{% url 'landlord_create_tenant' %}?application={{ application.id }}" class="green-btn">
+        Approve / Create Invite
+    </a>
+    {% endif %}
+</div>
+
+<div class="application-card">
+    <div class="application-header">
+        <img src="/static/images/bl-logo.png" alt="Bowling Legacy Logo" class="application-logo">
+
+        <div class="application-eyebrow">
+            Bowling Legacy Housing
+        </div>
+
+        <h1 class="application-title">
+            Full Resident Application Review
+        </h1>
+
+        <div class="application-subtitle">
+            Complete submitted application and onboarding intake record.
+        </div>
+    </div>
+
+    <div class="application-body">
+
+        <div class="section-card">
+            <h2 class="section-title">Applicant Information</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Full Name</div><div class="field-value">{{ application.full_name|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Email</div><div class="field-value">{{ application.email|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Phone</div><div class="field-value">{{ application.phone|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Age</div><div class="field-value">{{ application.age|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Date Submitted</div><div class="field-value">{{ application.created_at|date:"M j, Y g:i A" }}</div></div>
+                <div class="field-item"><div class="field-label">Portal User</div><div class="field-value">{% if application.user %}{{ application.user.username }}{% else %}Not created{% endif %}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Property & Resident File</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Property</div><div class="field-value">{% if application.property %}{{ application.property.name }}{% else %}Not assigned{% endif %}</div></div>
+                <div class="field-item"><div class="field-label">Property Address</div><div class="field-value">{% if application.property %}{{ application.property.address|default:"Not provided" }}{% else %}Not assigned{% endif %}</div></div>
+                <div class="field-item"><div class="field-label">Space Type</div><div class="field-value">{{ application.space_type|default:"Not assigned" }}</div></div>
+                <div class="field-item"><div class="field-label">Room / Space</div><div class="field-value">{{ application.space_label|default:"Not assigned" }}</div></div>
+                <div class="field-item"><div class="field-label">Monthly Rent</div><div class="field-value">${{ application.monthly_rent }}</div></div>
+                <div class="field-item"><div class="field-label">Balance</div><div class="field-value">${{ application.balance }}</div></div>
+                <div class="field-item"><div class="field-label">Rent Due Day</div><div class="field-value">{{ application.rent_due_day }}</div></div>
+                <div class="field-item"><div class="field-label">Lease Start Date</div><div class="field-value">{{ application.lease_start_date|date:"M j, Y"|default:"Not set" }}</div></div>
+                <div class="field-item"><div class="field-label">Deposit Required</div><div class="field-value">${{ application.deposit_required }}</div></div>
+                <div class="field-item"><div class="field-label">Deposit Paid</div><div class="field-value">${{ application.deposit_paid }}</div></div>
+                <div class="field-item"><div class="field-label">Utility Monthly</div><div class="field-value">${{ application.utility_monthly }}</div></div>
+                <div class="field-item"><div class="field-label">Utility Balance</div><div class="field-value">${{ application.utility_balance }}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Rental / Housing History</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Current Address</div><div class="field-value">{{ application.current_address|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Current Address Length</div><div class="field-value">{{ application.current_address_length|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Previous Housing / Shared Housing Experience</div><div class="field-value">{{ application.previous_address_1|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Reason for Leaving Previous Housing</div><div class="field-value">{{ application.previous_address_1_length|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Previous Address 2</div><div class="field-value">{{ application.previous_address_2|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Previous Address 2 Length</div><div class="field-value">{{ application.previous_address_2_length|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Previous Address 3</div><div class="field-value">{{ application.previous_address_3|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Previous Address 3 Length</div><div class="field-value">{{ application.previous_address_3_length|default:"Not provided" }}</div></div>
+                <div class="field-item field-wide"><div class="field-label">Previous Evictions / Housing Barriers</div><div class="field-value">{{ application.previous_evictions|default:"Not provided" }}</div></div>
+                <div class="field-item field-wide"><div class="field-label">Housing Need / Accessibility / Move-In Notes</div><div class="field-value">{{ application.housing_need|default:"Not provided" }}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Income & Stability</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Monthly Income</div><div class="field-value">${{ application.monthly_income }}</div></div>
+                <div class="field-item"><div class="field-label">Income Source</div><div class="field-value">{{ application.income_source|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Employer / Program / Benefit Source</div><div class="field-value">{{ application.employer_name|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Income Stability Length</div><div class="field-value">{{ application.employment_length|default:"Not provided" }}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Identification</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Driver License Number</div><div class="field-value">{{ application.drivers_license_number|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Valid Oregon ID / License</div><div class="field-value">{% if application.has_valid_odl %}Yes{% else %}No{% endif %}</div></div>
+                <div class="field-item"><div class="field-label">Oregon ID Number</div><div class="field-value">{{ application.oregon_id_number|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Uploaded ID</div><div class="field-value">{% if application.id_upload %}<a href="{{ application.id_upload.url }}" target="_blank">Open uploaded ID</a>{% else %}Not uploaded{% endif %}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Health, Wellness & Community Fit</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Addiction / Recovery History</div><div class="field-value">{% if application.in_recovery %}Yes{% else %}No{% endif %}</div></div>
+                <div class="field-item"><div class="field-label">Support / Stability Notes</div><div class="field-value">{{ application.drug_of_choice|default:"Not provided" }}</div></div>
+                <div class="field-item field-wide"><div class="field-label">Additional Wellness / Shared-Living Notes</div><div class="field-value">{{ application.additional_notes|default:"Not provided" }}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Justice System Information</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">On Parole / Probation / Pending Case</div><div class="field-value">{% if application.on_parole %}Yes{% else %}No{% endif %}</div></div>
+                <div class="field-item"><div class="field-label">Served Time with ODOC</div><div class="field-value">{% if application.odoc_time_served %}Yes{% else %}No{% endif %}</div></div>
+                <div class="field-item"><div class="field-label">Officer / Contact Name</div><div class="field-value">{{ application.parole_officer_name|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Officer / Contact Phone</div><div class="field-value">{{ application.parole_officer_phone|default:"Not provided" }}</div></div>
+                <div class="field-item field-wide"><div class="field-label">Felony / Court / Context Notes</div><div class="field-value">{{ application.felony_history|default:"Not provided" }}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">References</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Reference 1 Name</div><div class="field-value">{{ application.reference_1_name|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Reference 1 Phone</div><div class="field-value">{{ application.reference_1_phone|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Reference 1 Relationship</div><div class="field-value">{{ application.reference_1_relationship|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Reference 1 Type</div><div class="field-value">{{ application.reference_1_type|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Reference 2 Name</div><div class="field-value">{{ application.reference_2_name|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Reference 2 Phone</div><div class="field-value">{{ application.reference_2_phone|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Reference 2 Relationship</div><div class="field-value">{{ application.reference_2_relationship|default:"Not provided" }}</div></div>
+                <div class="field-item"><div class="field-label">Reference 2 Type</div><div class="field-value">{{ application.reference_2_type|default:"Not provided" }}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Program & Conduct Acknowledgments</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Drug- and Alcohol-Free Rules Acknowledged</div><div class="field-value">{% if application.sobriety_acknowledgment %}Yes{% else %}No{% endif %}</div></div>
+                <div class="field-item"><div class="field-label">Unconditional Positive Regard Acknowledged</div><div class="field-value">{% if application.unconditional_regard_acknowledgment %}Yes{% else %}No{% endif %}</div></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Edit Balances</h1>
+            <p class="text-muted mb-0">
+                {{ application.full_name }}{% if application.property %} · {{ application.property.name }}{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'landlord_resident_files' %}" class="btn btn-outline-dark">Back to Resident Files</a>
+    </div>
+
+    <div class="alert alert-warning">
+        Use this only for corrections. Recording an actual payment should still be done through Record Payment so receipts and payment history stay accurate.
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        {{ form.monthly_rent.label_tag }}
+                        {{ form.monthly_rent }}
+                        {{ form.monthly_rent.errors }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.balance.label_tag }}
+                        {{ form.balance }}
+                        {{ form.balance.errors }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.utility_monthly.label_tag }}
+                        {{ form.utility_monthly }}
+                        {{ form.utility_monthly.errors }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.utility_balance.label_tag }}
+                        {{ form.utility_balance }}
+                        {{ form.utility_balance.errors }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.deposit_required.label_tag }}
+                        {{ form.deposit_required }}
+                        {{ form.deposit_required.errors }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.deposit_paid.label_tag }}
+                        {{ form.deposit_paid }}
+                        {{ form.deposit_paid.errors }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.rent_due_day.label_tag }}
+                        {{ form.rent_due_day }}
+                        {{ form.rent_due_day.errors }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="{% url 'record_manual_payment' %}?application={{ application.id }}" class="btn btn-outline-primary">
+                        Record Payment Instead
+                    </a>
+                    <button type="submit" class="btn btn-primary">Save Balance Correction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

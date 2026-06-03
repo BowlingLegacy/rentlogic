@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.owner-shell {
+    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+    margin: -1rem;
+    padding: 1.25rem;
+    min-height: 100vh;
+    color: #15120b;
+    font-family: inherit;
+}
+.owner-header {
+    background: #111;
+    color: #e0bd61;
+    border: 1px solid #9a792d;
+    border-radius: 16px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
+}
+.owner-header p { color: #d9d0bc; }
+.summary-card,
+.property-folder,
+.activity-card {
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(188,150,45,.16);
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(65,45,10,.08);
+}
+.summary-card {
+    padding: 1rem;
+    height: 100%;
+}
+.summary-label {
+    color: #5c4a24;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 900;
+}
+.summary-value {
+    color: #15120b;
+    font-size: 1.55rem;
+    font-weight: 950;
+}
+.folder-header {
+    background: #111;
+    color: #f3d27a;
+    border-bottom: 2px solid #b89238;
+    border-radius: 16px 16px 0 0;
+    padding: 1rem 1.15rem;
+}
+.folder-body { padding: 1rem; }
+.fin-section {
+    background: #fffaf0;
+    border: 1px solid rgba(184,146,56,.28);
+    border-radius: 14px;
+    padding: .85rem;
+    height: 100%;
+}
+.fin-title {
+    color: #15120b;
+    font-weight: 950;
+    font-size: .95rem;
+    margin-bottom: .7rem;
+}
+.metric-btn {
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+    width: 100%;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid rgba(184,146,56,.28);
+    border-radius: 11px;
+    color: #15120b;
+    padding: .68rem .75rem;
+    margin-bottom: .55rem;
+    font-weight: 800;
+}
+.metric-btn:hover {
+    background: #fff7e8;
+    color: #15120b;
+}
+.metric-label { color: #302814; }
+.metric-value { font-weight: 950; white-space: nowrap; }
+.btn-owner {
+    background: #c2a04a;
+    color: #111;
+    border: 1px solid #806116;
+    border-radius: 10px;
+    font-weight: 900;
+    padding: .6rem .9rem;
+    text-decoration: none;
+}
+.btn-owner:hover { background: #ae8d38; color: #111; }
+.btn-dark-soft {
+    background: #111;
+    color: #f3d27a;
+    border: 1px solid #b89238;
+    border-radius: 10px;
+    font-weight: 800;
+    padding: .55rem .85rem;
+    text-decoration: none;
+}
+.btn-dark-soft:hover { background: #2a2a2a; color: #e0bd61; }
+.activity-card { padding: 1rem; }
+.activity-item {
+    border-bottom: 1px solid rgba(143,106,24,.25);
+    padding: .7rem 0;
+}
+.activity-item:last-child { border-bottom: none; }
+.empty-state {
+    background: rgba(255,255,255,.9);
+    border: 1px dashed #b89238;
+    border-radius: 16px;
+    padding: 1.25rem;
+}
+.owner-actions {
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(188,150,45,.16);
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(65,45,10,.08);
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+</style>
+
+<div class="owner-shell">
+    <div class="owner-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="fw-bold mb-1">Property Owner Dashboard</h1>
+            <p class="mb-0">Portfolio view organized by property financial folders.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if request.user.is_superuser or request.user.role == "admin" %}
+                <a href="{% url 'superadmin_dashboard' %}" class="btn-dark-soft">Back to Super Admin</a>
+            {% endif %}
+            <a href="{% url 'property_blog_manager' %}" class="btn-dark-soft">Property Blogs</a>
+            <a href="{% url 'landlord_dashboard' %}" class="btn-dark-soft">Landlord Operations</a>
+            <a href="{% url 'rent_roll' %}" class="btn-owner">Monthly Rent Roll</a>
+        </div>
+    </div>
+
+    <div class="owner-actions">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="h4 fw-bold mb-1">Owner Actions</h2>
+                <p class="text-muted mb-0">Add properties, assign a landlord, bring current residents into setup, and upload financial source files.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'owner_property_create' %}" class="btn-owner">Add Property</a>
+                <a href="{% url 'owner_landlord_invite' %}" class="btn-dark-soft">Invite Landlord</a>
+                <a href="{% url 'owner_financial_upload' %}" class="btn-dark-soft">Upload Financial Documents</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Properties</div><div class="summary-value">{{ total_properties }}</div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Residents</div><div class="summary-value">{{ total_residents }}</div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Scheduled Rent</div><div class="summary-value">${{ portfolio_monthly_rent }}</div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Collected</div><div class="summary-value">${{ portfolio_collected }}</div></div></div>
+    </div>
+
+    <div class="mb-3">
+        <h2 class="fw-bold mb-1">Property Financials</h2>
+        <p class="text-muted mb-0">Open each property folder to review snapshot, expenses/debt position, and performance. Each item is a reporting button.</p>
+    </div>
+
+    {% if property_cards %}
+        {% for card in property_cards %}
+        <details class="property-folder mb-4" {% if forloop.first %}open{% endif %}>
+            <summary class="folder-header" style="cursor:pointer; list-style:none;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1">{{ card.property.name }}</h4>
+                        <small style="color:#d9d0bc;">{{ card.property.address|default:"No address entered" }}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">${{ card.monthly_rent }}</div>
+                        <small style="color:#d9d0bc;">Scheduled Monthly Rent</small>
+                    </div>
+                </div>
+            </summary>
+
+            <div class="folder-body">
+                <div class="row g-3">
+                    <div class="col-lg-4">
+                        <div class="fin-section">
+                            <div class="fin-title">Property Snapshot</div>
+                            <a class="metric-btn" href="{% url 'rent_roll' %}"><span class="metric-label">Units / Residents</span><span class="metric-value">{{ card.resident_count }}</span></a>
+                            <a class="metric-btn" href="{% url 'rent_roll' %}"><span class="metric-label">Total Scheduled Rent</span><span class="metric-value">${{ card.monthly_rent }}</span></a>
+                            <a class="metric-btn" href="{% url 'payment_log' %}"><span class="metric-label">Total Collected Rent</span><span class="metric-value">${{ card.total_collected }}</span></a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="fin-section">
+                            <div class="fin-title">Expenses & Debt Position</div>
+                            <a class="metric-btn" href="{% url 'property_financials' card.property.name %}"><span class="metric-label">Operating Expenses</span><span class="metric-value">Open</span></a>
+                            <a class="metric-btn" href="{% url 'property_financials' card.property.name %}"><span class="metric-label">Debt Service</span><span class="metric-value">Open</span></a>
+                            <a class="metric-btn" href="{% url 'property_financials' card.property.name %}"><span class="metric-label">Capital Expenses</span><span class="metric-value">Open</span></a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="fin-section">
+                            <div class="fin-title">Performance</div>
+                            <a class="metric-btn" href="{% url 't12_report' %}?property_id={{ card.property.id }}"><span class="metric-label">NOI</span><span class="metric-value">Open</span></a>
+                            <a class="metric-btn" href="{% url 't12_report' %}?property_id={{ card.property.id }}"><span class="metric-label">Cash Flow After Debt</span><span class="metric-value">Open</span></a>
+                            <a class="metric-btn" href="{% url 'property_financials' card.property.name %}"><span class="metric-label">Occupancy / Collection %</span><span class="metric-value">Open</span></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <a href="{% url 'property_financials' card.property.name %}" class="btn-owner">Open {{ card.property.name }} Financials</a>
+                    <a href="{% url 'custom_reports' %}?property_id={{ card.property.id }}" class="btn-dark-soft">Custom Reports</a>
+                    <a href="{% url 'owner_property_onboarding_documents' card.property.id %}" class="btn-dark-soft">Onboarding Files</a>
+                    <a href="{% url 'existing_resident_intake' card.property.id %}" class="btn-dark-soft">Current Resident Setup Link</a>
+                    <a href="{% url 'property_detail' card.property.id %}" class="btn-dark-soft">Public Property Page</a>
+                    <a href="{% url 'landlord_dashboard' %}" class="btn-dark-soft">Open Landlord Operations</a>
+                </div>
+            </div>
+        </details>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state mb-4">
+            <h4 class="fw-bold">No properties are connected to this owner yet.</h4>
+            <p class="text-muted mb-0">Set the property owner email to match this user's login email, or log in as an admin to view all properties.</p>
+        </div>
+    {% endif %}
+
+    <div class="activity-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <h3 class="fw-bold mb-0">Recent Resident Activity</h3>
+            <a href="{% url 'landlord_dashboard' %}" class="btn-dark-soft">View Inbox</a>
+        </div>
+        {% for item in recent_messages %}
+            <div class="activity-item">
+                <strong>{{ item.subject }}</strong>
+                <div class="text-muted small">{{ item.application.property.name }} · {{ item.application.full_name }} · {{ item.get_message_type_display }}</div>
+            </div>
+        {% empty %}
+            <p class="text-muted mb-0">No recent resident messages or requests.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

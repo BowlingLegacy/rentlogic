@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.doc-shell {
+    max-width: 920px;
+    margin: 0 auto;
+}
+.doc-card {
+    background: #fffaf0;
+    border: 1px solid rgba(169,130,38,.35);
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+    overflow: hidden;
+}
+.doc-header {
+    background: #090909;
+    color: #f3d27a;
+    padding: 1.5rem;
+}
+.doc-body {
+    padding: 1.5rem;
+}
+.signature-panel {
+    background: #f4ead2;
+    border: 1px solid rgba(169,130,38,.35);
+    border-radius: 12px;
+    padding: 1rem;
+}
+@media print {
+    .footer,
+    .no-print {
+        display: none !important;
+    }
+    .doc-card {
+        border-radius: 0;
+        box-shadow: none;
+    }
+}
+</style>
+
+<div class="doc-shell">
+    <div class="d-flex justify-content-end gap-2 mb-3 no-print">
+        <a href="{% url 'tenant_dashboard' %}" class="btn btn-outline-dark">Back to Dashboard</a>
+        <button type="button" onclick="window.print()" class="btn btn-dark">Print</button>
+    </div>
+
+    <div class="doc-card">
+        <div class="doc-header">
+            <h1 class="fw-bold mb-1">{{ signed_document.title }}</h1>
+            <div class="text-white-50">
+                {{ signed_document.resident_name }} | {{ signed_document.property_name }} | {{ signed_document.room_space }}
+            </div>
+        </div>
+
+        <div class="doc-body">
+            {% if signed_document.locked %}
+                <div class="alert alert-success">
+                    This document has been signed and filed. It is viewable but no longer editable.
+                </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'submit_onboarding_document' signed_document.id %}">
+                {% csrf_token %}
+                <fieldset {% if signed_document.locked %}disabled{% endif %}>
+
+                {% if signed_document.document_type == "emergency_contact" %}
+                    <h3 class="fw-bold mb-3">Emergency Contact</h3>
+                    <p class="text-muted">
+                        This information is kept in the resident file so management can contact the right person in an emergency.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Emergency Contact Name</label>
+                        <input type="text" name="emergency_contact_name" class="form-control"
+                               value="{{ signed_document.emergency_contact_name }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Emergency Contact Phone</label>
+                        <input type="text" name="emergency_contact_phone" class="form-control"
+                               value="{{ signed_document.emergency_contact_phone }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Relationship</label>
+                        <input type="text" name="emergency_contact_relationship" class="form-control"
+                               value="{{ signed_document.emergency_contact_relationship }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Medical / Emergency Notes</label>
+                        <textarea name="emergency_medical_notes" class="form-control" rows="4">{{ signed_document.emergency_medical_notes }}</textarea>
+                    </div>
+                {% else %}
+                    <h3 class="fw-bold mb-3">Who We Are</h3>
+                    <p>
+                        The Painted Lady Inn is a Bowling Legacy community built around stable housing, personal
+                        responsibility, sobriety, respect, and unconditional regard for each resident.
+                    </p>
+                    <p>
+                        Residents agree to treat the home, other residents, management, and guests with respect.
+                        The community is intended to be safe, clean, recovery-supportive, and accountable.
+                    </p>
+                    <p>
+                        By signing below, the resident acknowledges receiving and understanding this onboarding
+                        acknowledgment and agrees to participate in the community in good faith.
+                    </p>
+                {% endif %}
+
+                <div class="signature-panel mt-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Resident Signature</label>
+                        <input type="text" name="resident_signature" class="form-control"
+                               value="{{ signed_document.resident_signature }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Landlord Signature:</strong><br>
+                        {{ signed_document.landlord_signature }}
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" name="signature_agreement"
+                               id="signatureAgreement" {% if signed_document.signature_agreement %}checked{% endif %} required>
+                        <label class="form-check-label" for="signatureAgreement">
+                            I agree that my typed name constitutes my electronic signature.
+                        </label>
+                    </div>
+
+                    {% if not signed_document.locked %}
+                        <button type="submit" class="btn btn-dark rounded-pill px-4">
+                            Sign & Submit
+                        </button>
+                    {% endif %}
+                </div>
+
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if request.GET.print %}
+<script>
+window.addEventListener("load", function () {
+    window.print();
+});
+</script>
+{% endif %}
+
+{% endblock %}

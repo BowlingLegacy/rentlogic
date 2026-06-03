@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .application-frame {
+        background: #080808;
+        border: 2px solid #c59a32;
+        border-radius: 26px;
+        padding: 1rem;
+        box-shadow: 0 18px 44px rgba(0,0,0,.18);
+    }
+
+    .application-paper {
+        background: rgba(255,255,255,.95);
+        border-radius: 20px;
+        padding: 1.5rem;
+    }
+
+    .application-kicker {
+        color: #a57c18;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        font-size: .72rem;
+        font-weight: 900;
+    }
+
+    .application-title {
+        font-family: Georgia, serif;
+        color: #111;
+        font-size: clamp(2rem, 4vw, 3.35rem);
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .application-notice {
+        background: #fbf7ee;
+        border: 1px solid rgba(197,154,50,.28);
+        border-left: 6px solid #c59a32;
+        border-radius: 16px;
+        padding: 1.2rem;
+        color: #333;
+        line-height: 1.65;
+    }
+
+    .app-section {
+        background: #fff;
+        border: 1px solid rgba(188,150,45,.18);
+        border-radius: 18px;
+        padding: 1.25rem;
+        margin-top: 1.25rem;
+        box-shadow: 0 8px 18px rgba(0,0,0,.04);
+    }
+
+    .app-section-title {
+        font-family: Georgia, serif;
+        color: #1c1c1c;
+        font-size: 1.45rem;
+        margin-bottom: .35rem;
+    }
+
+    .app-section-note {
+        color: #666;
+        font-size: .95rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-label, label {
+        color: #6f5411;
+        font-weight: 800;
+        margin-bottom: .35rem;
+    }
+
+    .check-card {
+        background: #fbf7ee;
+        border: 1px solid rgba(197,154,50,.22);
+        border-radius: 14px;
+        padding: .9rem;
+        margin-top: .75rem;
+    }
+
+    .check-card label {
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .errorlist {
+        color: #b02a37;
+        font-weight: 700;
+        margin-top: .35rem;
+    }
+
+    .submit-panel {
+        background: #080808;
+        border: 1px solid rgba(197,154,50,.55);
+        border-radius: 18px;
+        padding: 1.25rem;
+        color: #fff4dc;
+        margin-top: 1.25rem;
+    }
+</style>
+
+<div class="application-frame">
+    <div class="application-paper">
+
+        <div class="text-center mb-4">
+            <div class="application-kicker">Operated by Bowling Legacy LLC</div>
+            <h1 class="application-title mb-2">Painted Lady Inn Room Application</h1>
+            <p class="text-muted mb-0">A stability-focused, drug- and alcohol-free shared housing community.</p>
+        </div>
+
+        <div class="application-notice mb-4">
+            <p>
+                The Painted Lady Inn is a drug- and alcohol-free home for people who need safe, stable housing,
+                including people at risk of homelessness, people rebuilding from addiction, and people seeking a respectful community environment.
+            </p>
+            <p class="mb-0">
+                House rules are required for the safety and stability of all residents. Our primary rule is
+                <strong>Unconditional Positive Regard for others</strong>. These questions help us understand housing needs,
+                support needs, and whether this community is a good fit.
+            </p>
+        </div>
+
+        {% if property %}
+            {% if property.charges_application_fee or property.requires_background_check %}
+                <div class="alert alert-warning mb-4">
+                    {% if property.charges_application_fee %}
+                        Application fee: ${{ property.application_fee_amount }}.
+                    {% endif %}
+                    {% if property.requires_background_check %}
+                        Background check may be required{% if property.background_check_fee_amount > 0 %} and costs ${{ property.background_check_fee_amount }}{% endif %}.
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if property %}
+                <input type="hidden" name="property" value="{{ property.id }}">
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <section class="app-section">
+                <h2 class="app-section-title">Applicant Information</h2>
+                <p class="app-section-note">Basic contact information for application review.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full Name</label>
+                        {{ form.full_name }}
+                        {{ form.full_name.errors }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Age</label>
+                        {{ form.age }}
+                        {{ form.age.errors }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Phone Number</label>
+                        {{ form.phone }}
+                        {{ form.phone.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email Address</label>
+                        {{ form.email }}
+                        {{ form.email.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Current Address</label>
+                        {{ form.current_address }}
+                        {{ form.current_address.errors }}
+                    </div>
+                </div>
+            </section>
+
+            <section class="app-section">
+                <h2 class="app-section-title">Housing Needs</h2>
+                <p class="app-section-note">Tell us what kind of housing support and room placement you need.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">How long have you been at your current address?</label>
+                        {{ form.current_address_length }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Housing Need / Accessibility / Move-In Notes</label>
+                        {{ form.housing_need }}
+                        {{ form.housing_need.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Previous Housing / Shared Housing Experience</label>
+                        {{ form.previous_address_1 }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Reason for Leaving Previous Housing</label>
+                        {{ form.previous_address_1_length }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Previous Evictions / Housing Barriers</label>
+                        {{ form.previous_evictions }}
+                    </div>
+                </div>
+            </section>
+
+            <section class="app-section">
+                <h2 class="app-section-title">Income & Stability</h2>
+                <p class="app-section-note">This helps determine whether the room is financially sustainable.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Monthly Income</label>
+                        {{ form.monthly_income }}
+                        {{ form.monthly_income.errors }}
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Source(s) of Income</label>
+                        {{ form.income_source }}
+                        {{ form.income_source.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Employer / Program / Benefit Source Optional</label>
+                        {{ form.employer_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">How long has this income been stable?</label>
+                        {{ form.employment_length }}
+                    </div>
+                </div>
+            </section>
+
+            <section class="app-section">
+                <h2 class="app-section-title">Identification</h2>
+                <p class="app-section-note">Identification may be uploaded now or collected later during onboarding.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Driver License Number Optional</label>
+                        {{ form.drivers_license_number }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Oregon ID Number Optional</label>
+                        {{ form.oregon_id_number }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Upload ID Optional</label>
+                        {{ form.id_upload }}
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="check-card w-100">
+                            {{ form.has_valid_odl }}
+                            <label for="{{ form.has_valid_odl.id_for_label }}">I have a valid Oregon driver license or Oregon ID.</label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="app-section">
+                <h2 class="app-section-title">Health, Wellness & Community Fit</h2>
+                <p class="app-section-note">These questions help us understand support needs and community fit.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="check-card">
+                            {{ form.in_recovery }}
+                            <label for="{{ form.in_recovery.id_for_label }}">Do you now or have you in the past struggled with drug or alcohol addiction?</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">If yes, what support would help you rebuild stability?</label>
+                        {{ form.drug_of_choice }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Additional wellness, mobility, medical, or shared-living notes</label>
+                        {{ form.additional_notes }}
+                    </div>
+                </div>
+            </section>
+
+            <section class="app-section">
+                <h2 class="app-section-title">Justice System Information</h2>
+                <p class="app-section-note">
+                    Parole, probation, pending court matters, or felony history do not automatically disqualify an applicant.
+                    This information helps us understand how best to support stability.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="check-card">
+                            {{ form.on_parole }}
+                            <label for="{{ form.on_parole.id_for_label }}">Currently on parole, probation, or involved in a pending case?</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="check-card">
+                            {{ form.odoc_time_served }}
+                            <label for="{{ form.odoc_time_served.id_for_label }}">Have you served time with ODOC?</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Officer / Contact Name Optional</label>
+                        {{ form.parole_officer_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Officer / Contact Phone Optional</label>
+                        {{ form.parole_officer_phone }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Please explain anything we should understand</label>
+                        {{ form.felony_history }}
+                    </div>
+                </div>
+            </section>
+
+            <section class="app-section">
+                <h2 class="app-section-title">References Optional but Helpful</h2>
+
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Reference 1 Name</label>{{ form.reference_1_name }}</div>
+                    <div class="col-md-4"><label class="form-label">Relationship</label>{{ form.reference_1_relationship }}</div>
+                    <div class="col-md-4"><label class="form-label">Phone</label>{{ form.reference_1_phone }}</div>
+                    <div class="col-md-4"><label class="form-label">Reference 2 Name</label>{{ form.reference_2_name }}</div>
+                    <div class="col-md-4"><label class="form-label">Relationship</label>{{ form.reference_2_relationship }}</div>
+                    <div class="col-md-4"><label class="form-label">Phone</label>{{ form.reference_2_phone }}</div>
+                </div>
+            </section>
+
+            <section class="app-section">
+                <h2 class="app-section-title">Program & Conduct Expectations</h2>
+                <p class="app-section-note">
+                    Painted Lady Inn maintains a drug- and alcohol-free environment with house rules, quiet expectations,
+                    respect for staff/residents/property, and cleanliness in shared spaces.
+                </p>
+
+                <div class="check-card">
+                    {{ form.sobriety_acknowledgment }}
+                    <label for="{{ form.sobriety_acknowledgment.id_for_label }}">
+                        I understand and agree to comply with the drug- and alcohol-free housing environment and house rules.
+                    </label>
+                </div>
+
+                <div class="check-card">
+                    {{ form.unconditional_regard_acknowledgment }}
+                    <label for="{{ form.unconditional_regard_acknowledgment.id_for_label }}">
+                        I understand the primary house rule is Unconditional Positive Regard for others.
+                    </label>
+                </div>
+            </section>
+
+            <div class="submit-panel">
+                <div class="row g-3 align-items-center">
+                    <div class="col-lg-8">
+                        <h3 class="card-title mb-2" style="color:#fff4dc;">Applicant Certification</h3>
+                        <p class="mb-0">
+                            By submitting, I certify the information provided is true and complete to the best of my knowledge.
+                            I understand false information may result in denial of housing.
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <button type="submit" class="gold-btn w-100">Submit Application</button>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card shadow-sm mb-4" style="border-radius:22px;">
+    <div class="card-body p-4">
+
+        <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-secondary rounded-pill mb-3">
+            Back to Landlord Dashboard
+        </a>
+
+        <h2 class="fw-bold" style="color:#1e3a5f;">Resident Communication</h2>
+        <p class="text-muted mb-4">Secure resident file message / request record</p>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <p><strong>Resident:</strong> {{ application.full_name }}</p>
+                <p><strong>Phone:</strong> {{ application.phone }}</p>
+                <p><strong>Email:</strong> {{ application.email }}</p>
+            </div>
+
+            <div class="col-md-6">
+                <p><strong>Property:</strong> {% if application.property %}{{ application.property.name }}{% else %}No Property{% endif %}</p>
+                <p><strong>Room / Space:</strong> {{ application.space_type }} {{ application.space_label }}</p>
+                <p><strong>Date Filed:</strong> {{ resident_message.created_at }}</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <h5 class="fw-bold">Type</h5>
+        <p>{{ resident_message.get_message_type_display }}</p>
+
+        <h5 class="fw-bold">Subject</h5>
+        <p>{{ resident_message.subject }}</p>
+
+        <h5 class="fw-bold">Full Message</h5>
+        <div class="p-4 bg-light border rounded mb-4" style="white-space: pre-wrap;">
+{{ resident_message.message }}
+        </div>
+
+        <h5 class="fw-bold">Secure Replies</h5>
+        <div class="mb-4">
+            {% for reply in resident_message.replies.all %}
+                <div class="p-3 border rounded mb-2 bg-white">
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <strong>
+                            {% if reply.sender %}
+                                {{ reply.sender.get_full_name|default:reply.sender.username }}
+                            {% else %}
+                                System
+                            {% endif %}
+                        </strong>
+                        <span class="text-muted small">{{ reply.created_at|date:"M j, Y g:i A" }}</span>
+                    </div>
+                    <div class="mt-2" style="white-space: pre-wrap;">{{ reply.body }}</div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No replies yet.</p>
+            {% endfor %}
+        </div>
+
+        <form method="POST" class="card p-3 bg-light border-0 mb-4" style="border-radius:18px;">
+            {% csrf_token %}
+            <label class="form-label fw-bold">Reply to Resident</label>
+            <textarea name="reply_body" class="form-control mb-3" rows="4" placeholder="Write a secure portal reply..."></textarea>
+            <button type="submit" class="btn btn-primary rounded-pill">
+                Send Reply
+            </button>
+        </form>
+
+        <form method="POST" class="card p-3 bg-light border-0" style="border-radius:18px;">
+            {% csrf_token %}
+
+            <label class="form-label fw-bold">Status</label>
+            <select name="status" class="form-select mb-3">
+                <option value="submitted" {% if resident_message.status == "submitted" %}selected{% endif %}>Submitted / New</option>
+                <option value="reviewed" {% if resident_message.status == "reviewed" %}selected{% endif %}>Reviewed</option>
+                <option value="closed" {% if resident_message.status == "closed" %}selected{% endif %}>Closed</option>
+            </select>
+
+            <button type="submit" class="btn btn-primary rounded-pill">
+                Save Status
+            </button>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

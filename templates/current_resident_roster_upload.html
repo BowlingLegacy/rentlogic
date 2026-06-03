@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load formatting %}
+{% block content %}
+
+<div class="soft-card p-4 p-md-5">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="section-title mb-1">Approved Current Resident List</h1>
+            <p class="text-muted mb-0">
+                Upload this before residents use the setup form. Automatic setup codes are only sent when the submitted profile matches this list.
+            </p>
+        </div>
+        <a href="{% url 'landlord_attention' %}" class="message-btn">Needs Attention</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="alert alert-info">
+        Accepted CSV headers include: <strong>first_name, last_name, email, phone, room_unit_label</strong>.
+        Common headers like Name, Resident, Room, Unit, and Phone Number are also accepted.
+        Uploading a corrected list replaces the active approved list for that property.
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="mb-4">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">{{ form.property.label }}</label>
+                {{ form.property }}
+                {{ form.property.errors }}
+            </div>
+            <div class="col-md-8">
+                <label class="form-label fw-bold">{{ form.file.label }}</label>
+                {{ form.file }}
+                {{ form.file.errors }}
+                <div class="form-text">{{ form.file.help_text }}</div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mt-3">
+            <button type="submit" class="gold-btn">Upload Approved List</button>
+        </div>
+    </form>
+
+    <h2 class="h4 fw-bold mb-3">Current Approved Residents</h2>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Resident</th>
+                    <th>Room / Unit</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in roster_entries %}
+                    <tr>
+                        <td>{{ entry.property.name }}</td>
+                        <td>{{ entry.full_name }}</td>
+                        <td>{{ entry.room_unit_label|default:"-" }}</td>
+                        <td>{{ entry.email|default:"-" }}</td>
+                        <td>{{ entry.phone|phone_format|default:"-" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-muted">No approved current resident list has been uploaded yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

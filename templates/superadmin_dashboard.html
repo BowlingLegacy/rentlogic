@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.admin-hero {
+    background: #080808;
+    border: 2px solid #c59a32;
+    border-radius: 24px;
+    padding: 1rem;
+    box-shadow: 0 16px 38px rgba(0,0,0,.16);
+    margin-bottom: 1.5rem;
+}
+.admin-hero-inner {
+    background: rgba(255,255,255,.94);
+    border-radius: 18px;
+    padding: 1.6rem;
+}
+.admin-kicker {
+    color: #a57c18;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-size: .72rem;
+    font-weight: 800;
+}
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.admin-card {
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(188,150,45,.16);
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+    padding: 1rem;
+}
+.admin-card-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .85rem;
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(188,150,45,.18);
+    border-radius: 12px;
+    padding: .8rem .9rem;
+    color: #17130a;
+    text-decoration: none;
+    margin-bottom: .55rem;
+}
+.admin-card-link:hover {
+    background: #fff7e8;
+    color: #17130a;
+}
+.admin-label {
+    color: #a57c18;
+    font-weight: 800;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.admin-value {
+    font-family: Georgia, serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111;
+}
+.admin-card-link h2 {
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: .08rem;
+}
+.workspace-section-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.workspace-section {
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(188,150,45,.16);
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+    padding: 1rem;
+}
+.workspace-section h2 {
+    font-family: Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-bottom: .85rem;
+}
+.workspace-section p {
+    font-size: .9rem;
+}
+.link-arrow {
+    color: #a57c18;
+    font-weight: 900;
+    white-space: nowrap;
+}
+@media (max-width: 992px) {
+    .admin-grid, .workspace-section-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 576px) {
+    .admin-grid, .workspace-section-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="admin-hero">
+    <div class="admin-hero-inner">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="admin-kicker">Platform Mission Control</div>
+                <h1 class="section-title mb-1">Super Admin Control Center</h1>
+                <p class="text-muted mb-0">
+                    Inspect owners, properties, resident files, payments, dashboards, and system tools from one clean command screen.
+                </p>
+            </div>
+            <span class="badge text-bg-dark p-3">Super Admin Access</span>
+        </div>
+    </div>
+</div>
+
+<div class="admin-grid">
+    <div class="admin-card">
+        <div class="admin-label">Owners</div>
+        <div class="admin-value">{{ owner_groups|length }}</div>
+        <div class="text-muted">Property owner groups</div>
+    </div>
+    <div class="admin-card">
+        <div class="admin-label">Properties</div>
+        <div class="admin-value">{{ properties.count }}</div>
+        <div class="text-muted">Public and managed properties</div>
+    </div>
+    <div class="admin-card">
+        <div class="admin-label">Resident Files</div>
+        <div class="admin-value">{{ applications.count }}</div>
+        <div class="text-muted">Applications / resident records</div>
+    </div>
+    <div class="admin-card">
+        <div class="admin-label">Site Payments</div>
+        <div class="admin-value">${{ site_payment_total }}</div>
+        <div class="text-muted">Completed payments recorded</div>
+    </div>
+</div>
+
+<h2 class="section-title mb-3">Workspaces</h2>
+
+<div class="workspace-section-grid">
+    <section class="workspace-section">
+        <h2>People & Properties</h2>
+        <a href="{% url 'superadmin_owners' %}" class="admin-card-link">
+            <span><strong>Owners & Properties</strong><br><span class="text-muted">Open owners and drill into properties.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'superadmin_owner_intakes' %}" class="admin-card-link">
+            <span><strong>Owner Intake Inbox</strong><br><span class="text-muted">Questionnaires and setup codes.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'superadmin_residents' %}" class="admin-card-link">
+            <span><strong>Resident Inspection</strong><br><span class="text-muted">Open any tenant dashboard.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'landlord_dashboard' %}" class="admin-card-link">
+            <span><strong>Landlord Operations</strong><br><span class="text-muted">Applications, files, messages, payments.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+    </section>
+
+    <section class="workspace-section">
+        <h2>Money Matters</h2>
+        <a href="{% url 'payment_log' %}" class="admin-card-link">
+            <span><strong>Payment Log</strong><br><span class="text-muted">Site, manual, and printed receipts.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'record_manual_payment' %}" class="admin-card-link">
+            <span><strong>Record Payment</strong><br><span class="text-muted">Cash, check, ACH, transfer, Cash App.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'rent_roll' %}" class="admin-card-link">
+            <span><strong>Rent Roll</strong><br><span class="text-muted">Rent, utilities, deposits, balances.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 't12_report' %}" class="admin-card-link">
+            <span><strong>T-12 Report</strong><br><span class="text-muted">Income, expenses, debt, NOI.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'custom_reports' %}" class="admin-card-link">
+            <span><strong>Custom Reports</strong><br><span class="text-muted">Printable lists and filtered reports.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+    </section>
+
+    <section class="workspace-section">
+        <h2>Accounting</h2>
+        <a href="{% url 'accounting_receipts' %}" class="admin-card-link">
+            <span><strong>Receipt Accounting</strong><br><span class="text-muted">Upload, categorize, approve ledger rows.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'financial_upload' %}" class="admin-card-link">
+            <span><strong>Accounting Imports</strong><br><span class="text-muted">Upload accounting exports and summaries.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'landlord_rent_setup' %}" class="admin-card-link">
+            <span><strong>Room Rent Setup</strong><br><span class="text-muted">Set room rent and utilities.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+    </section>
+
+    <section class="workspace-section">
+        <h2>Communication</h2>
+        <a href="{% url 'company_mailbox' %}" class="admin-card-link">
+            <span><strong>Company Inbox</strong><br><span class="text-muted">{{ mailbox_email|default:"Connected mailbox" }}</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'group_resident_message' %}" class="admin-card-link">
+            <span><strong>Resident Messages</strong><br><span class="text-muted">Send secure group messages.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'property_blog_manager' %}" class="admin-card-link">
+            <span><strong>Property Blogs</strong><br><span class="text-muted">Property updates and comments.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+    </section>
+
+    <section class="workspace-section">
+        <h2>Public & Owner View</h2>
+        <a href="{% url 'property_owner_dashboard' %}" class="admin-card-link">
+            <span><strong>Owner Dashboard</strong><br><span class="text-muted">Portfolio financial review.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+        <a href="{% url 'properties_list' %}" class="admin-card-link">
+            <span><strong>Public Properties</strong><br><span class="text-muted">Review public property pages.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+    </section>
+
+    <section class="workspace-section">
+        <h2>System</h2>
+        <a href="/admin/" class="admin-card-link">
+            <span><strong>Django Admin</strong><br><span class="text-muted">Fallback raw record access.</span></span>
+            <span class="link-arrow">Open</span>
+        </a>
+    </section>
+</div>
+
+{% endblock %}

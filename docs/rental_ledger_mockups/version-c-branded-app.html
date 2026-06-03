@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rental Ledger Pro - Branded Property App</title>
+    <style>
+        :root {
+            --ink: #18212b;
+            --paper: #f5f1e8;
+            --panel: #fff;
+            --muted: #5f6a73;
+            --gold: #c1963d;
+            --green: #4b725f;
+            --blue: #315b7d;
+            --rose: #8f4f52;
+            --line: #dfd2ba;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+
+        .hero {
+            min-height: 90vh;
+            background:
+                linear-gradient(rgba(20, 25, 30, .72), rgba(20, 25, 30, .34)),
+                url("https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1800&q=82") center/cover;
+            color: #fff;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 34px;
+        }
+
+        .brand { font-weight: 900; font-size: 1.2rem; }
+        .nav a { color: #fff; text-decoration: none; font-weight: 900; margin-left: 18px; font-size: .9rem; }
+        .nav .outline { border: 1px solid rgba(255,255,255,.62); border-radius: 6px; padding: 10px 14px; }
+        .hero-body { width: min(1120px, calc(100% - 32px)); margin: 0 auto; display: grid; align-items: end; padding: 70px 0 52px; }
+        .kicker { color: #f4cd78; text-transform: uppercase; font-size: .8rem; font-weight: 900; letter-spacing: .18em; }
+        h1 { max-width: 920px; margin: 10px 0 18px; font-size: clamp(2.45rem, 5.8vw, 5.6rem); line-height: .96; letter-spacing: 0; }
+        .lead { max-width: 720px; color: #f3efe5; font-size: 1.12rem; line-height: 1.58; }
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+        .button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 12px 18px; border-radius: 6px; font-weight: 900; text-decoration: none; }
+        .primary { background: var(--gold); color: #151515; }
+        .secondary { background: rgba(255,255,255,.13); color: #fff; border: 1px solid rgba(255,255,255,.62); }
+
+        .section { width: min(1120px, calc(100% - 32px)); margin: 46px auto; }
+        .split { display: grid; grid-template-columns: .9fr 1.1fr; gap: 30px; align-items: center; }
+        h2 { margin: 0 0 12px; font-size: clamp(1.85rem, 3.5vw, 3.2rem); line-height: 1.05; letter-spacing: 0; }
+        p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+        .phone-zone {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .phone {
+            background: #111820;
+            border-radius: 28px;
+            padding: 12px;
+            min-height: 520px;
+            box-shadow: 0 18px 42px rgba(20, 25, 30, .18);
+        }
+
+        .screen {
+            background: #faf8f2;
+            border-radius: 20px;
+            min-height: 496px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.16);
+        }
+
+        .screen-hero {
+            height: 128px;
+            padding: 14px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            background:
+                linear-gradient(rgba(20, 25, 30, .25), rgba(20, 25, 30, .55)),
+                url("https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=900&q=82") center/cover;
+        }
+
+        .screen.blue .screen-hero {
+            background:
+                linear-gradient(rgba(22, 44, 58, .18), rgba(22, 44, 58, .62)),
+                url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=82") center/cover;
+        }
+
+        .screen.green .screen-hero {
+            background:
+                linear-gradient(rgba(32, 67, 51, .18), rgba(32, 67, 51, .62)),
+                url("https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=900&q=82") center/cover;
+        }
+
+        .property-name { font-weight: 900; font-size: 1.1rem; }
+        .powered { font-size: .72rem; color: #f0d38a; margin-top: 3px; }
+        .screen-body { padding: 14px; display: grid; gap: 10px; }
+        .app-card { background: #fff; border: 1px solid #e3d9c7; border-radius: 8px; padding: 12px; }
+        .app-card b { display: block; margin-bottom: 4px; }
+        .app-card span { color: var(--muted); font-size: .84rem; }
+        .amount { font-size: 1.55rem; font-weight: 900; color: var(--green); }
+
+        .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .feature { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 18px; min-height: 160px; }
+        .feature h3 { margin: 0 0 8px; font-size: 1.05rem; }
+        .feature p { font-size: .94rem; }
+        .band { background: var(--ink); color: #fff; padding: 46px 0; }
+        .band p { color: #dce2e7; }
+
+        @media (max-width: 940px) {
+            .nav { padding: 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+            .nav a { margin: 0 14px 0 0; display: inline-flex; }
+            .hero { min-height: 82vh; }
+            .split, .phone-zone, .feature-grid { grid-template-columns: 1fr; }
+            .phone { min-height: 430px; }
+            .screen { min-height: 406px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <nav class="nav">
+            <div class="brand">Rental Ledger Pro</div>
+            <div>
+                <a href="#">Platform</a>
+                <a href="#">Property App</a>
+                <a class="outline" href="#">Start Demo</a>
+            </div>
+        </nav>
+        <div class="hero-body">
+            <div>
+                <div class="kicker">One App, Many Property Identities</div>
+                <h1>The property app that changes to match the property.</h1>
+                <p class="lead">Residents download one Rental Ledger Pro app, enter their address, and see their property name, photos, notices, payments, documents, and communication tools.</p>
+                <div class="actions">
+                    <a class="button primary" href="#">Preview the App</a>
+                    <a class="button secondary" href="#">See Owner Setup</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section split">
+            <div>
+                <div class="kicker" style="color:var(--gold)">Adaptive Experience</div>
+                <h2>Same system. Different property face.</h2>
+                <p>Owners and landlords keep one operating platform. Residents experience the property they live in, with property-specific branding, announcements, utility setup tasks, documents, and payment rules.</p>
+            </div>
+            <div class="phone-zone" aria-label="Mobile app previews">
+                <div class="phone">
+                    <div class="screen">
+                        <div class="screen-hero">
+                            <div class="property-name">Cedar Ridge Apartments</div>
+                            <div class="powered">Powered by Rental Ledger Pro</div>
+                        </div>
+                        <div class="screen-body">
+                            <div class="app-card"><b>Balance</b><div class="amount">$0.00</div><span>Rent and utilities current</span></div>
+                            <div class="app-card"><b>Inbox</b><span>1 lease update needs signature</span></div>
+                            <div class="app-card"><b>Community Notice</b><span>Window project update posted</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="phone">
+                    <div class="screen blue">
+                        <div class="screen-hero">
+                            <div class="property-name">Hillview Commons</div>
+                            <div class="powered">Powered by Rental Ledger Pro</div>
+                        </div>
+                        <div class="screen-body">
+                            <div class="app-card"><b>Balance</b><div class="amount">$1,250</div><span>Rent due June 1</span></div>
+                            <div class="app-card"><b>Utility Setup</b><span>Power account still needed</span></div>
+                            <div class="app-card"><b>Maintenance</b><span>Request received</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="phone">
+                    <div class="screen green">
+                        <div class="screen-hero">
+                            <div class="property-name">Evergreen Flats</div>
+                            <div class="powered">Powered by Rental Ledger Pro</div>
+                        </div>
+                        <div class="screen-body">
+                            <div class="app-card"><b>Balance</b><div class="amount">$55</div><span>Shared utility charge</span></div>
+                            <div class="app-card"><b>Documents</b><span>Emergency contact complete</span></div>
+                            <div class="app-card"><b>Message</b><span>Landlord replied today</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="feature-grid">
+                <article class="feature">
+                    <h3>Address-based onboarding</h3>
+                    <p>The app can route residents to the correct property experience after they enter their address or setup code.</p>
+                </article>
+                <article class="feature">
+                    <h3>Property-specific setup</h3>
+                    <p>Each property can show the right utility vendors, lease documents, move-in costs, renters insurance, and communication rules.</p>
+                </article>
+                <article class="feature">
+                    <h3>Small product signature</h3>
+                    <p>The resident sees the property first, with a quiet "Powered by Rental Ledger Pro" line where appropriate.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="band">
+            <div class="section split" style="margin-block:0">
+                <div>
+                    <div class="kicker">Platform Strategy</div>
+                    <h2>Make every property feel like it has its own app.</h2>
+                </div>
+                <p>This direction is strongest if the long-term goal is a phone app that stands apart from other property platforms by giving each property its own resident-facing identity.</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

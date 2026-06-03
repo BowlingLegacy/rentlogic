@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rental Ledger Pro - Combined Layout and Color Scheme</title>
+    <style>
+        :root {
+            --charcoal: #18222b;
+            --slate: #2f4858;
+            --ledger-green: #4f6f5f;
+            --trust-blue: #35677d;
+            --brass: #b98f3c;
+            --paper: #f6f1e7;
+            --white: #fffdfa;
+            --mist: #edf2ef;
+            --line: #d9ccb4;
+            --muted: #5d6871;
+            --warning: #a56531;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--charcoal);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .topbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 34px;
+            color: #fff;
+        }
+
+        .brand {
+            font-weight: 950;
+            font-size: 1.22rem;
+        }
+
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 850;
+            font-size: .9rem;
+        }
+
+        .nav .nav-cta {
+            border: 1px solid rgba(255,255,255,.68);
+            border-radius: 6px;
+            padding: 10px 14px;
+        }
+
+        .hero {
+            min-height: 92vh;
+            color: #fff;
+            background:
+                linear-gradient(90deg, rgba(19, 28, 36, .88), rgba(19, 28, 36, .42)),
+                url("https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1900&q=82") center/cover;
+            display: grid;
+            align-items: end;
+            padding: 110px 34px 58px;
+        }
+
+        .hero-inner {
+            width: min(1160px, 100%);
+            margin: 0 auto;
+        }
+
+        .kicker {
+            color: #f0cb78;
+            font-size: .8rem;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            font-weight: 950;
+        }
+
+        h1 {
+            font-size: clamp(2.6rem, 5.8vw, 5.8rem);
+            max-width: 950px;
+            line-height: .96;
+            letter-spacing: 0;
+            margin: 12px 0 18px;
+        }
+
+        .hero-copy {
+            max-width: 720px;
+            color: #f4efe5;
+            font-size: 1.12rem;
+            line-height: 1.58;
+            margin: 0;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            border-radius: 6px;
+            padding: 12px 18px;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .primary { background: var(--brass); color: #151515; }
+        .secondary { color: #fff; border: 1px solid rgba(255,255,255,.62); background: rgba(255,255,255,.12); }
+        .dark { background: var(--charcoal); color: #fff; }
+
+        .section {
+            width: min(1160px, calc(100% - 32px));
+            margin: 52px auto;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            align-items: end;
+            margin-bottom: 22px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: clamp(1.8rem, 3.2vw, 3.1rem);
+            line-height: 1.05;
+            letter-spacing: 0;
+        }
+
+        .section-head p,
+        .split p,
+        .card p,
+        .panel p {
+            color: var(--muted);
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        .pillars {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .pillar {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            min-height: 292px;
+            overflow: hidden;
+        }
+
+        .pillar-top {
+            height: 118px;
+            padding: 16px;
+            color: #fff;
+            display: flex;
+            align-items: end;
+            background: var(--charcoal);
+        }
+
+        .pillar:nth-child(1) .pillar-top { background: linear-gradient(135deg, var(--charcoal), var(--trust-blue)); }
+        .pillar:nth-child(2) .pillar-top { background: linear-gradient(135deg, var(--charcoal), var(--ledger-green)); }
+        .pillar:nth-child(3) .pillar-top { background: linear-gradient(135deg, var(--charcoal), #795f89); }
+
+        .pillar h3 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .pillar-body {
+            padding: 18px;
+        }
+
+        .pillar-body ul {
+            padding: 0;
+            margin: 14px 0 0;
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .pillar-body li {
+            color: #3f4d55;
+            font-size: .93rem;
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: .92fr 1.08fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .panel {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 16px 42px rgba(24, 34, 43, .12);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--line);
+            padding: 14px 16px;
+        }
+
+        .tag {
+            background: var(--mist);
+            color: var(--ledger-green);
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-weight: 950;
+            font-size: .76rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .87rem;
+        }
+
+        th, td {
+            padding: 10px 11px;
+            border-bottom: 1px solid #eadfcd;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        th:first-child, td:first-child { text-align: left; }
+        th { background: #efe4d0; color: #5c4c36; text-transform: uppercase; font-size: .72rem; }
+        .positive { color: var(--ledger-green); font-weight: 950; }
+
+        .ops-list {
+            display: grid;
+            gap: 10px;
+            padding: 16px;
+        }
+
+        .ops-row {
+            display: grid;
+            grid-template-columns: 44px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #edf0ed;
+        }
+
+        .unit {
+            background: var(--mist);
+            color: var(--ledger-green);
+            border-radius: 6px;
+            padding: 9px 0;
+            text-align: center;
+            font-weight: 950;
+        }
+
+        .name { font-weight: 950; }
+        .meta { color: var(--muted); font-size: .82rem; margin-top: 3px; }
+        .status { color: var(--warning); background: #f4e7d6; border-radius: 999px; padding: 6px 9px; font-weight: 950; font-size: .76rem; }
+        .status.good { color: var(--ledger-green); background: #e5f0eb; }
+
+        .app-preview {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .phone {
+            background: #101820;
+            border-radius: 26px;
+            padding: 11px;
+            min-height: 430px;
+        }
+
+        .screen {
+            background: #faf7ef;
+            min-height: 408px;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .screen-hero {
+            height: 118px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            color: #fff;
+            background:
+                linear-gradient(rgba(25, 32, 38, .2), rgba(25, 32, 38, .6)),
+                url("https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=700&q=82") center/cover;
+        }
+
+        .phone:nth-child(2) .screen-hero {
+            background:
+                linear-gradient(rgba(25, 32, 38, .2), rgba(25, 32, 38, .6)),
+                url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=700&q=82") center/cover;
+        }
+
+        .phone:nth-child(3) .screen-hero {
+            background:
+                linear-gradient(rgba(25, 32, 38, .2), rgba(25, 32, 38, .6)),
+                url("https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=700&q=82") center/cover;
+        }
+
+        .property { font-weight: 950; }
+        .powered { color: #f0cb78; font-size: .72rem; margin-top: 3px; }
+        .screen-body { display: grid; gap: 10px; padding: 12px; }
+        .app-card { background: #fff; border: 1px solid #e3d9c7; border-radius: 8px; padding: 11px; }
+        .app-card b { display: block; margin-bottom: 4px; }
+        .app-card span { color: var(--muted); font-size: .82rem; }
+
+        .palette {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .swatch {
+            min-height: 92px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,.08);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            color: #fff;
+            font-weight: 900;
+            font-size: .78rem;
+        }
+
+        .swatch.light { color: var(--charcoal); }
+
+        .cta-band {
+            background: var(--charcoal);
+            color: #fff;
+            padding: 48px 0;
+        }
+
+        .cta-band p { color: #dce5e9; }
+
+        @media (max-width: 920px) {
+            .topbar { position: static; background: var(--charcoal); padding: 16px; align-items: flex-start; flex-direction: column; gap: 12px; }
+            .hero { min-height: 78vh; padding: 50px 18px; }
+            .section-head, .split { grid-template-columns: 1fr; display: grid; align-items: start; }
+            .pillars, .app-preview, .palette { grid-template-columns: 1fr; }
+            .nav { gap: 12px; }
+            table { font-size: .76rem; }
+            th, td { padding: 8px 7px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="topbar">
+        <div class="brand">Rental Ledger Pro</div>
+        <div class="nav">
+            <a href="#financial">Financial Command</a>
+            <a href="#operations">Operations Hub</a>
+            <a href="#app">Property App</a>
+            <a class="nav-cta" href="#demo">Try Demo</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-inner">
+            <div class="kicker">Commercial Multifamily Management</div>
+            <h1>The operating ledger for rent, records, reports, and residents.</h1>
+            <p class="hero-copy">Rental Ledger Pro combines serious property accounting, daily landlord operations, and a resident experience that can adapt to each property.</p>
+            <div class="actions">
+                <a class="button primary" href="#demo">Try the Demo</a>
+                <a class="button secondary" href="#financial">See the Platform</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="section-head">
+                <div>
+                    <div class="kicker" style="color:var(--brass)">Product Pillars</div>
+                    <h2>Three strengths, one homepage.</h2>
+                </div>
+                <p style="max-width:430px">The homepage should introduce the full platform, then send visitors deeper into connected pages for reports, operations, and the branded resident app.</p>
+            </div>
+
+            <div class="pillars">
+                <article class="pillar">
+                    <div class="pillar-top"><h3>Financial Command</h3></div>
+                    <div class="pillar-body">
+                        <p>For owners, lenders, buyers, and operators who need reliable numbers.</p>
+                        <ul>
+                            <li>T-12 and NOI reporting</li>
+                            <li>Rent roll and payment ledger</li>
+                            <li>Receipt-backed expenses</li>
+                            <li>Valuation estimate support</li>
+                        </ul>
+                    </div>
+                </article>
+                <article class="pillar">
+                    <div class="pillar-top"><h3>Operations Hub</h3></div>
+                    <div class="pillar-body">
+                        <p>For landlords managing residents, messages, documents, and rent status.</p>
+                        <ul>
+                            <li>Resident files and onboarding</li>
+                            <li>Messages and announcements</li>
+                            <li>Applications and documents</li>
+                            <li>Unit-level rent setup</li>
+                        </ul>
+                    </div>
+                </article>
+                <article class="pillar">
+                    <div class="pillar-top"><h3>Branded Property App</h3></div>
+                    <div class="pillar-body">
+                        <p>For a resident experience that feels tied to the property, not generic software.</p>
+                        <ul>
+                            <li>Property-specific identity</li>
+                            <li>Resident payments and inbox</li>
+                            <li>Utility setup guidance</li>
+                            <li>Powered by Rental Ledger Pro</li>
+                        </ul>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section split" id="financial">
+            <div>
+                <div class="kicker" style="color:var(--brass)">Financial Command</div>
+                <h2>Reports that speak the language of property ownership.</h2>
+                <p>Rent roll, T-12, NOI, cash flow after debt, deposit liability, vendor expense reports, valuation estimates, and payment history should all share the same data foundation.</p>
+                <div class="actions">
+                    <a class="button dark" href="#">Financial Command Page</a>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <strong>T-12 Snapshot</strong>
+                    <span class="tag">Printable</span>
+                </div>
+                <table>
+                    <thead><tr><th>Line</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th></tr></thead>
+                    <tbody>
+                        <tr><td>Income</td><td>$10,105</td><td>$9,737</td><td>$10,605</td><td>$10,705</td><td>$10,030</td></tr>
+                        <tr><td>Expenses</td><td>$4,854</td><td>$4,640</td><td>$3,662</td><td>$4,296</td><td>$3,418</td></tr>
+                        <tr><td>NOI</td><td class="positive">$5,251</td><td class="positive">$5,097</td><td class="positive">$6,943</td><td class="positive">$6,409</td><td class="positive">$6,612</td></tr>
+                        <tr><td>Debt</td><td>$4,000</td><td>$4,000</td><td>$4,000</td><td>$4,000</td><td>$4,000</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section split" id="operations">
+            <div class="panel">
+                <div class="panel-header">
+                    <strong>Cedar Ridge Apartments</strong>
+                    <span class="tag">June Watch</span>
+                </div>
+                <div class="ops-list">
+                    <div class="ops-row">
+                        <div class="unit">B</div>
+                        <div><div class="name">Grady Bradley</div><div class="meta">Rent and utilities recorded</div></div>
+                        <span class="status good">Clear</span>
+                    </div>
+                    <div class="ops-row">
+                        <div class="unit">N</div>
+                        <div><div class="name">Hero Lowe</div><div class="meta">Rent not recorded</div></div>
+                        <span class="status">Open</span>
+                    </div>
+                    <div class="ops-row">
+                        <div class="unit">Q</div>
+                        <div><div class="name">Chris Honey</div><div class="meta">Deposit balance remains</div></div>
+                        <span class="status">Balance</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="kicker" style="color:var(--brass)">Operations Hub</div>
+                <h2>A dashboard that gives landlords the next action.</h2>
+                <p>The daily workflow should show what needs attention without burying the user in every report at once. Messages, documents, profile setups, payments, and rent issues should be easy to identify and act on.</p>
+                <div class="actions">
+                    <a class="button dark" href="#">Operations Hub Page</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="app">
+            <div class="section-head">
+                <div>
+                    <div class="kicker" style="color:var(--brass)">Branded Property App</div>
+                    <h2>One platform that can feel local to every property.</h2>
+                </div>
+                <p style="max-width:430px">This is the long-term differentiator: tenants see their property identity, while owners and landlords stay on one consistent system.</p>
+            </div>
+            <div class="app-preview">
+                <div class="phone">
+                    <div class="screen">
+                        <div class="screen-hero"><div class="property">Cedar Ridge</div><div class="powered">Powered by Rental Ledger Pro</div></div>
+                        <div class="screen-body">
+                            <div class="app-card"><b>Balance</b><span>$0.00 current</span></div>
+                            <div class="app-card"><b>Inbox</b><span>Lease update needs signature</span></div>
+                            <div class="app-card"><b>Notice</b><span>Community announcement posted</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="phone">
+                    <div class="screen">
+                        <div class="screen-hero"><div class="property">Hillview Commons</div><div class="powered">Powered by Rental Ledger Pro</div></div>
+                        <div class="screen-body">
+                            <div class="app-card"><b>Rent</b><span>Due June 1</span></div>
+                            <div class="app-card"><b>Utilities</b><span>Setup checklist open</span></div>
+                            <div class="app-card"><b>Message</b><span>Landlord replied today</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="phone">
+                    <div class="screen">
+                        <div class="screen-hero"><div class="property">Evergreen Flats</div><div class="powered">Powered by Rental Ledger Pro</div></div>
+                        <div class="screen-body">
+                            <div class="app-card"><b>Documents</b><span>Emergency contact complete</span></div>
+                            <div class="app-card"><b>Insurance</b><span>Renters insurance link available</span></div>
+                            <div class="app-card"><b>Maintenance</b><span>Request received</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head">
+                <div>
+                    <div class="kicker" style="color:var(--brass)">Color Scheme</div>
+                    <h2>Professional, financial, and property-focused.</h2>
+                </div>
+                <p style="max-width:430px">This palette avoids looking like Bowling Legacy, avoids an all-blue SaaS feel, and gives reports, operations, and resident app screens their own clear accents.</p>
+            </div>
+            <div class="palette">
+                <div class="swatch" style="background:var(--charcoal)">Charcoal<br>#18222B</div>
+                <div class="swatch" style="background:var(--slate)">Slate<br>#2F4858</div>
+                <div class="swatch" style="background:var(--ledger-green)">Ledger Green<br>#4F6F5F</div>
+                <div class="swatch" style="background:var(--trust-blue)">Trust Blue<br>#35677D</div>
+                <div class="swatch" style="background:var(--brass)">Brass<br>#B98F3C</div>
+                <div class="swatch light" style="background:var(--paper)">Paper<br>#F6F1E7</div>
+                <div class="swatch light" style="background:var(--mist)">Mist<br>#EDF2EF</div>
+                <div class="swatch light" style="background:var(--white)">White<br>#FFFDFA</div>
+            </div>
+        </section>
+
+        <section class="cta-band" id="demo">
+            <div class="section split" style="margin-block:0">
+                <div>
+                    <div class="kicker">Recommended Layout</div>
+                    <h2>Homepage first, detail pages second.</h2>
+                </div>
+                <p>The homepage should sell the whole vision. The three connected pages should each go deep into financial reports, daily operations, and the branded app experience.</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.create-shell {
+    background: #efe2c2;
+    min-height: 100vh;
+    margin: -1rem;
+    padding: 1.5rem;
+    color: #17130a;
+}
+.create-card {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #f7efd9;
+    border: 1px solid #a98226;
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.10);
+    overflow: hidden;
+}
+.create-header {
+    background: #090909;
+    color: #f3d27a;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid #a98226;
+}
+.section-title {
+    font-weight: 900;
+    color: #17130a;
+    border-bottom: 1px solid rgba(169,130,38,.35);
+    padding-bottom: .5rem;
+    margin: 1rem 0;
+}
+.btn-gold {
+    background: #c8a24a;
+    color: #111;
+    border: 1px solid #8f6a18;
+    border-radius: 10px;
+    font-weight: 900;
+    padding: .7rem 1rem;
+}
+.btn-gold:hover { background: #b79238; color: #111; }
+</style>
+
+<div class="create-shell">
+    <div class="create-card">
+        <div class="create-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1 class="fw-bold mb-1">Create Tenant / Resident</h1>
+                <div class="text-white-50">Create portal login, resident file, rent setup, deposit, utilities, and lease start date.</div>
+            </div>
+            <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-warning rounded-3 fw-bold">Back to Dashboard</a>
+        </div>
+
+        <form method="post" class="p-4">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <h4 class="section-title">Portal Login</h4>
+            <div class="row g-3">
+                <div class="col-md-4">{{ form.username.label_tag }}{{ form.username }}{{ form.username.errors }}</div>
+                <div class="col-md-4">{{ form.temporary_password.label_tag }}{{ form.temporary_password }}{{ form.temporary_password.errors }}</div>
+                <div class="col-md-4">{{ form.email.label_tag }}{{ form.email }}{{ form.email.errors }}</div>
+            </div>
+
+            <h4 class="section-title">Resident Information</h4>
+            <div class="row g-3">
+                <div class="col-md-6">{{ form.full_name.label_tag }}{{ form.full_name }}{{ form.full_name.errors }}</div>
+                <div class="col-md-3">{{ form.phone.label_tag }}{{ form.phone }}{{ form.phone.errors }}</div>
+                <div class="col-md-3">{{ form.age.label_tag }}{{ form.age }}{{ form.age.errors }}</div>
+            </div>
+
+            <h4 class="section-title">Property / Unit</h4>
+            <div class="row g-3">
+                <div class="col-md-4">{{ form.property.label_tag }}{{ form.property }}{{ form.property.errors }}</div>
+                <div class="col-md-4">{{ form.space_type.label_tag }}{{ form.space_type }}{{ form.space_type.errors }}</div>
+                <div class="col-md-4">{{ form.space_label.label_tag }}{{ form.space_label }}{{ form.space_label.errors }}</div>
+            </div>
+
+            <h4 class="section-title">Rent / Deposit / Utilities</h4>
+            <div class="row g-3">
+                <div class="col-md-3">{{ form.monthly_rent.label_tag }}{{ form.monthly_rent }}{{ form.monthly_rent.errors }}</div>
+                <div class="col-md-3">{{ form.balance.label_tag }}{{ form.balance }}{{ form.balance.errors }}</div>
+                <div class="col-md-3">{{ form.rent_due_day.label_tag }}{{ form.rent_due_day }}{{ form.rent_due_day.errors }}</div>
+                <div class="col-md-3">{{ form.lease_start_date.label_tag }}{{ form.lease_start_date }}{{ form.lease_start_date.errors }}</div>
+                <div class="col-md-3">{{ form.deposit_required.label_tag }}{{ form.deposit_required }}{{ form.deposit_required.errors }}</div>
+                <div class="col-md-3">{{ form.deposit_paid.label_tag }}{{ form.deposit_paid }}{{ form.deposit_paid.errors }}</div>
+                <div class="col-md-3">{{ form.deposit_payment_plan.label_tag }}{{ form.deposit_payment_plan }}{{ form.deposit_payment_plan.errors }}</div>
+                <div class="col-md-3">{{ form.utility_monthly.label_tag }}{{ form.utility_monthly }}{{ form.utility_monthly.errors }}</div>
+                <div class="col-md-3">{{ form.utility_balance.label_tag }}{{ form.utility_balance }}{{ form.utility_balance.errors }}</div>
+            </div>
+
+            <h4 class="section-title">Internal Notes</h4>
+            <div class="row g-3">
+                <div class="col-md-4">{{ form.income_source.label_tag }}{{ form.income_source }}{{ form.income_source.errors }}</div>
+                <div class="col-md-4">{{ form.monthly_income.label_tag }}{{ form.monthly_income }}{{ form.monthly_income.errors }}</div>
+                <div class="col-md-12">{{ form.housing_need.label_tag }}{{ form.housing_need }}{{ form.housing_need.errors }}</div>
+                <div class="col-md-12">{{ form.additional_notes.label_tag }}{{ form.additional_notes }}{{ form.additional_notes.errors }}</div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-dark rounded-3 fw-bold">Cancel</a>
+                <button type="submit" class="btn-gold">Create Resident</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

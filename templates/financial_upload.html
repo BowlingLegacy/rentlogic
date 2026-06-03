@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Upload | Bowling Legacy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-light bg-white shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">Bowling Legacy Housing</a>
+
+        <div class="d-flex gap-2">
+            <a href="{% url 'rent_roll' %}" class="btn btn-outline-primary btn-sm">Rent Roll</a>
+            <a href="{% url 't12_report' %}" class="btn btn-outline-primary btn-sm">T-12</a>
+            <a href="{% url 'accounting_receipts' %}" class="btn btn-outline-primary btn-sm">Receipts</a>
+            <a href="/admin/" class="btn btn-outline-secondary btn-sm">Admin</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container my-5">
+
+    <h1 class="fw-bold mb-2">Accounting Data Import</h1>
+    <p class="text-muted mb-4">
+        Bring in rent rolls, income ledgers, expense exports, bank activity, and accounting reports from QuickBooks,
+        Google Sheets exports, property management software, bank portals, or other commercial property systems.
+    </p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4 class="fw-bold mb-2">Upload Source File</h4>
+            <p class="text-muted">
+                Use this intake point for CSV, Excel, Google Sheets exports, QuickBooks reports, rent rolls,
+                owner statements, and other accounting-system exports. Imported data should be reviewed before it is
+                treated as final books. Choose Property Ledger for Painted Lady income/expenses, Company Ledger for
+                Bowling Legacy expenses, or Bank Activity for bank downloads that need classification.
+            </p>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+
+                <button type="submit" class="btn btn-primary">
+                    Upload For Review
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">Receipt Upload & Review</h4>
+                <p class="text-muted mb-0">Upload receipts one at a time, create categories as you go, then approve clean entries into the ledger.</p>
+            </div>
+            <a href="{% url 'accounting_receipts' %}" class="btn btn-primary">
+                Open Receipts
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h4 class="fw-bold mb-3">Import History</h4>
+
+            {% if uploads %}
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Ledger</th>
+                                <th>Uploaded</th>
+                                <th>Reviewed</th>
+                                <th>Entries</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for upload in uploads %}
+                                <tr>
+                                    <td>{{ upload.name }}</td>
+                                    <td>{{ upload.get_ledger_scope_display }}</td>
+                                    <td>{{ upload.uploaded_at }}</td>
+                                    <td>{{ upload.parsed_at|default:"Not parsed" }}</td>
+                                    <td>{{ upload.entries.count }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No accounting imports yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

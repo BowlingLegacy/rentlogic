@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+    color: #1f1f1f;
+}
+
+.page-shell {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.fin-wrap {
+    padding-bottom: 2rem;
+}
+
+.fin-hero {
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(188,150,45,0.12);
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fin-eyebrow {
+    color: #a57c18;
+    letter-spacing: 5px;
+    font-size: .72rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: .4rem;
+}
+
+.fin-title {
+    font-family: Georgia, serif;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: #1c1c1c;
+    line-height: 1;
+    margin-bottom: .35rem;
+}
+
+.fin-text {
+    color: #555;
+    font-size: 1.05rem;
+}
+
+.soft-card {
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(188,150,45,0.12);
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+.metric-card {
+    padding: 1.2rem;
+    height: 100%;
+}
+
+.metric-label {
+    color: #a57c18;
+    letter-spacing: 3px;
+    font-size: .68rem;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.metric-value {
+    font-family: Georgia, serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111;
+    margin-top: .35rem;
+}
+
+.section-card {
+    padding: 1.4rem;
+}
+
+.section-title {
+    font-family: Georgia, serif;
+    font-size: 1.8rem;
+    color: #1c1c1c;
+    margin-bottom: 1rem;
+}
+
+.report-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: #f7f1e2;
+    border: 1px solid rgba(197,154,50,0.28);
+    border-radius: 14px;
+    padding: .85rem 1rem;
+    color: #2c2414;
+    text-decoration: none;
+    margin-bottom: .8rem;
+    font-weight: 700;
+}
+
+.report-btn:hover {
+    background: #efe2bf;
+    color: #2c2414;
+}
+
+.report-value {
+    font-family: Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.gold-btn {
+    background: linear-gradient(135deg, #c48f22, #d8ab3b);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    justify-content: center;
+}
+
+.gold-btn:hover { color: white; filter: brightness(.96); }
+
+.message-btn {
+    background: transparent;
+    border: 1px solid #c59a32;
+    border-radius: 12px;
+    padding: .75rem 1rem;
+    color: #a57c18;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    justify-content: center;
+}
+
+.message-btn:hover { color: #7d5c0b; background: rgba(197,154,50,0.08); }
+
+@media (max-width: 768px) {
+    .fin-title {
+        font-size: 2rem;
+    }
+}
+</style>
+
+<div class="fin-wrap">
+
+    <section class="fin-hero">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="fin-eyebrow">Property Financials</div>
+                <h1 class="fin-title">{{ property_name }}</h1>
+                <p class="fin-text mb-0">Financial reporting, debt position, operating performance, and rent collection metrics.</p>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'payment_log' %}" class="message-btn">Payment Log</a>
+                <a href="{% url 'rent_roll' %}" class="message-btn">Rent Roll</a>
+                <a href="{% url 'custom_reports' %}" class="message-btn">Custom Reports</a>
+                <a href="{% url 'accounting_receipts' %}" class="message-btn">Receipts</a>
+                <a href="{% url 't12_report' %}" class="gold-btn">T-12 Report</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="soft-card metric-card">
+                <div class="metric-label">Units / Residents</div>
+                <div class="metric-value">{{ total_units }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="soft-card metric-card">
+                <div class="metric-label">Scheduled Rent</div>
+                <div class="metric-value">${{ total_rent }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="soft-card metric-card">
+                <div class="metric-label">Collected Rent</div>
+                <div class="metric-value">${{ total_collected }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-4">
+            <div class="soft-card section-card h-100">
+                <h3 class="section-title">Property Snapshot</h3>
+
+                <a href="{% url 'rent_roll' %}" class="report-btn">
+                    <span>Units / Residents</span>
+                    <span class="report-value">{{ total_units }}</span>
+                </a>
+
+                <a href="{% url 'rent_roll' %}" class="report-btn">
+                    <span>Total Scheduled Rent</span>
+                    <span class="report-value">${{ total_rent }}</span>
+                </a>
+
+                <a href="{% url 'payment_log' %}" class="report-btn">
+                    <span>Total Collected Rent</span>
+                    <span class="report-value">${{ total_collected }}</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="soft-card section-card h-100">
+                <h3 class="section-title">Expenses & Debt Position</h3>
+
+                <a href="{% url 'financial_upload' %}" class="report-btn">
+                    <span>Operating Expenses</span>
+                    <span class="report-value">${{ operating_expenses }}</span>
+                </a>
+
+                <a href="{% url 'financial_upload' %}" class="report-btn">
+                    <span>Debt Service</span>
+                    <span class="report-value">${{ debt_service }}</span>
+                </a>
+
+                <a href="{% url 'financial_upload' %}" class="report-btn">
+                    <span>Capital Expenses</span>
+                    <span class="report-value">${{ capital_expenses }}</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="soft-card section-card h-100">
+                <h3 class="section-title">Performance</h3>
+
+                <a href="{% url 't12_report' %}" class="report-btn">
+                    <span>NOI</span>
+                    <span class="report-value">${{ noi }}</span>
+                </a>
+
+                <a href="{% url 't12_report' %}" class="report-btn">
+                    <span>Cash Flow After Debt</span>
+                    <span class="report-value">${{ cash_flow }}</span>
+                </a>
+
+                <a href="{% url 'payment_log' %}" class="report-btn">
+                    <span>Rent Collection %</span>
+                    <span class="report-value">{{ rent_collection_percent }}%</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

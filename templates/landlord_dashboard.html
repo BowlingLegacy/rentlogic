@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+    color: #1f1f1f;
+}
+.page-shell {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+.ops-wrap { padding-bottom: 2rem; }
+.ops-shell {
+    display: grid;
+    grid-template-columns: 255px minmax(0, 1fr);
+    gap: 1.5rem;
+}
+.ops-sidebar {
+    background: rgba(24,24,24,.96);
+    border: 1px solid rgba(197,154,50,.34);
+    border-radius: 20px;
+    padding: 1.2rem;
+    min-height: calc(100vh - 160px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+.ops-logo {
+    text-align: center;
+    border-bottom: 1px solid rgba(197,154,50,.35);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+.ops-logo img { width: 118px; height: 118px; object-fit: contain; }
+.ops-logo-title {
+    font-family: Georgia, serif;
+    color: #f6ead1;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-top: .6rem;
+}
+.ops-logo-subtitle {
+    color: #c59a32;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-size: .68rem;
+}
+.ops-nav-label {
+    color: #c59a32;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-size: .68rem;
+    font-weight: 700;
+    margin: 1rem .55rem .4rem;
+}
+.ops-nav a {
+    display: block;
+    color: #f7f0df;
+    text-decoration: none;
+    padding: .72rem .85rem;
+    border-radius: 12px;
+    font-weight: 700;
+    margin-bottom: .25rem;
+    border: 1px solid transparent;
+}
+.ops-nav a:hover,
+.ops-nav a.active {
+    border-color: rgba(197,154,50,.65);
+    background: rgba(197,154,50,.12);
+    color: #fff;
+}
+.ops-main { min-width: 0; }
+.ops-hero,
+.soft-card,
+.workspace-card {
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(188,150,45,.15);
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+}
+.ops-hero {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.ops-eyebrow {
+    color: #a57c18;
+    letter-spacing: 5px;
+    font-size: .72rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: .4rem;
+}
+.ops-title {
+    font-family: Georgia, serif;
+    color: #1c1c1c;
+    font-size: 2.7rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: .35rem;
+}
+.ops-text { color: #555; font-size: 1.05rem; }
+.metric-grid,
+.workspace-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.metric-grid { grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); }
+.metric-card {
+    background: #fff;
+    border: 1px solid rgba(188,150,45,.18);
+    border-radius: 18px;
+    padding: 1rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,.05);
+}
+.metric-label {
+    color: #a57c18;
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.metric-value {
+    font-family: Georgia, serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111;
+}
+.workspace-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.workspace-card {
+    display: block;
+    min-height: 165px;
+    padding: 1.1rem;
+    text-decoration: none;
+    color: #17130a;
+}
+.workspace-card:hover { background: #fff7e8; color: #17130a; }
+.workspace-card h2 {
+    font-family: Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: .45rem;
+}
+.badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    background: #111;
+    color: #f3d27a;
+    font-weight: 900;
+    margin-bottom: .65rem;
+}
+.collection-watch {
+    padding: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+.collection-table {
+    margin-bottom: 0;
+}
+.collection-table th {
+    color: #6f5411;
+    background: #f3ead7;
+    border-bottom: none;
+    font-size: .82rem;
+}
+.collection-table td {
+    vertical-align: middle;
+}
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: .28rem .65rem;
+    background: #fff0d6;
+    color: #8a5b00;
+    font-weight: 900;
+    font-size: .78rem;
+}
+.small-action {
+    color: #a57c18;
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+@media (max-width: 992px) {
+    .ops-shell { grid-template-columns: 1fr; }
+    .ops-sidebar { min-height: auto; }
+    .metric-grid, .workspace-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 576px) {
+    .metric-grid, .workspace-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="ops-wrap">
+    <div class="ops-shell">
+        <aside class="ops-sidebar">
+            <div class="ops-logo">
+                <img src="/static/images/bl-logo.png" alt="Bowling Legacy Logo">
+                <div class="ops-logo-title">Bowling Legacy</div>
+                <div class="ops-logo-subtitle">Rental Ledger Pro</div>
+            </div>
+
+            <nav class="ops-nav">
+                <div class="ops-nav-label">Operations</div>
+                <a href="{% url 'landlord_dashboard' %}" class="active">Dashboard</a>
+                <a href="{% url 'landlord_attention' %}">Needs Attention</a>
+                <a href="{% url 'landlord_resident_files' %}">Resident Files</a>
+
+                <div class="ops-nav-label">Money Matters</div>
+                <a href="{% url 'payment_log' %}">Payment Log</a>
+                <a href="{% url 'record_manual_payment' %}">Record Payment</a>
+                <a href="{% url 'rent_roll' %}">Rent Roll</a>
+                <a href="{% url 'custom_reports' %}">Custom Reports</a>
+                <a href="{% url 'accounting_receipts' %}">Receipt Upload</a>
+                <a href="{% url 'financial_upload' %}">Expense Imports</a>
+
+                <div class="ops-nav-label">Account</div>
+                {% if request.user.is_superuser or request.user.role == "admin" %}
+                    <a href="{% url 'superadmin_dashboard' %}">Back to Super Admin</a>
+                {% endif %}
+                <a href="{% url 'logout' %}">Logout</a>
+            </nav>
+        </aside>
+
+        <main class="ops-main">
+            <section class="ops-hero">
+                <div class="ops-eyebrow">Landlord Operations</div>
+                <h1 class="ops-title">Welcome back, {{ user.username }}</h1>
+                <p class="ops-text mb-0">Choose a workspace below. Each item opens its own page so the dashboard stays clean.</p>
+            </section>
+
+            <div class="metric-grid">
+                <div class="metric-card"><div class="metric-label">Needs Attention</div><div class="metric-value">{{ attention_count }}</div></div>
+                <div class="metric-card"><div class="metric-label">New Applications</div><div class="metric-value">{{ new_application_count }}</div></div>
+                <div class="metric-card"><div class="metric-label">New Messages</div><div class="metric-value">{{ new_message_count }}</div></div>
+                <div class="metric-card"><div class="metric-label">Resident Files</div><div class="metric-value">{{ applications.count }}</div></div>
+                <div class="metric-card"><div class="metric-label">Unpaid This Month</div><div class="metric-value">{{ collection_watch_count }}</div></div>
+            </div>
+
+            <section class="soft-card collection-watch">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <h2 class="mb-1" style="font-family: Georgia, serif; font-size: 1.6rem; font-weight: 800;">Monthly Collection Watch</h2>
+                        <p class="text-muted mb-0">
+                            Residents missing rent or utilities for {{ collection_watch_month|date:"F Y" }}.
+                        </p>
+                    </div>
+                    <a href="{% url 'payment_log' %}" class="small-action">Open Payment Log</a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table collection-table">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Resident</th>
+                                <th>Room / Unit</th>
+                                <th>Missing</th>
+                                <th>Rent Paid</th>
+                                <th>Utilities Paid</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in collection_watch_rows %}
+                                <tr>
+                                    <td>{{ row.property }}</td>
+                                    <td>{{ row.application.full_name }}</td>
+                                    <td>{{ row.unit }}</td>
+                                    <td><span class="status-pill">{{ row.missing }}</span></td>
+                                    <td>${{ row.rent_paid }} / ${{ row.rent_expected }}</td>
+                                    <td>
+                                        {% if row.utility_expected > 0 %}
+                                            ${{ row.utility_paid }} / ${{ row.utility_expected }}
+                                        {% else %}
+                                            Not used
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'record_manual_payment' %}?application={{ row.application.id }}" class="small-action">
+                                            Record Payment
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-muted p-3">
+                                        Everyone visible to this dashboard has paid the current month's rent and applicable utilities.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div class="workspace-grid">
+                <a href="{% url 'landlord_attention' %}" class="workspace-card">
+                    <div class="badge-count">{{ attention_count }}</div>
+                    <h2>Needs Attention</h2>
+                    <p class="text-muted mb-0">New applications, current resident setups, messages, and incoming documents.</p>
+                </a>
+
+                <a href="{% url 'group_resident_message' %}" class="workspace-card">
+                    <h2>Group Message</h2>
+                    <p class="text-muted mb-0">Send one secure portal message to all residents in a property.</p>
+                </a>
+
+                <a href="{% url 'landlord_resident_files' %}" class="workspace-card">
+                    <div class="badge-count">{{ applications.count }}</div>
+                    <h2>Resident Files</h2>
+                    <p class="text-muted mb-0">Applications, balances, rooms, and tenant dashboard inspection.</p>
+                </a>
+
+                <a href="{% url 'landlord_rent_setup' %}" class="workspace-card">
+                    <h2>June Rent Setup</h2>
+                    <p class="text-muted mb-0">Set each resident's exact monthly rent and current rent balance before portal login.</p>
+                </a>
+
+                <a href="{% url 'payment_log' %}" class="workspace-card">
+                    <h2>Rent Payment Matters</h2>
+                    <p class="text-muted mb-0">Stripe payments, manual payments, receipts, bank transfers, and Cash App tracking.</p>
+                </a>
+
+                <a href="{% url 'record_manual_payment' %}" class="workspace-card">
+                    <h2>Record Payment</h2>
+                    <p class="text-muted mb-0">Enter payments received outside Stripe and print receipts.</p>
+                </a>
+
+                <a href="{% url 'financial_upload' %}" class="workspace-card">
+                    <h2>Operating / Capital Expenses</h2>
+                    <p class="text-muted mb-0">Upload accounting exports and source documents.</p>
+                </a>
+
+                <a href="{% url 'accounting_receipts' %}" class="workspace-card">
+                    <h2>Receipt Upload</h2>
+                    <p class="text-muted mb-0">Store receipts, add simple expense details, and approve them into the ledger.</p>
+                </a>
+
+                <a href="{% url 'custom_reports' %}" class="workspace-card">
+                    <h2>Custom Reports</h2>
+                    <p class="text-muted mb-0">Build printable phone lists, resident rosters, payment summaries, and expense reports.</p>
+                </a>
+
+                <a href="{% url 'property_blog_manager' %}" class="workspace-card">
+                    <h2>Property Blogs</h2>
+                    <p class="text-muted mb-0">Post property updates and approve comments.</p>
+                </a>
+            </div>
+        </main>
+    </div>
+</div>
+
+{% endblock %}

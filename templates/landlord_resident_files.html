@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Resident Files</h1>
+            <p class="text-muted mb-0">Resident records, applications, balances, and portal access.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'landlord_rent_setup' %}" class="btn btn-primary">June Rent Setup</a>
+            <a href="{% url 'current_resident_roster_upload' %}" class="btn btn-outline-primary">Update Resident List</a>
+            <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-dark">Back to Landlord Menu</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Resident</th>
+                            <th>Property</th>
+                            <th>Unit</th>
+                            <th>Rent</th>
+                            <th>Balance</th>
+                            <th>Portal</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for resident in applications %}
+                        <tr>
+                            <td><strong>{{ resident.full_name }}</strong><br><span class="text-muted small">{{ resident.email }}</span></td>
+                            <td>{{ resident.property.name|default:"No Property" }}</td>
+                            <td>{{ resident.space_type }} {{ resident.space_label }}</td>
+                            <td>${{ resident.monthly_rent }}</td>
+                            <td>${{ resident.balance }}</td>
+                            <td>{% if resident.user %}Linked{% else %}No Login{% endif %}</td>
+                            <td class="d-flex gap-2 flex-wrap">
+                                <a href="{% url 'application_detail' resident.id %}" class="btn btn-outline-secondary btn-sm">Open</a>
+                                <a href="{% url 'transfer_resident_room' resident.id %}" class="btn btn-outline-primary btn-sm">Move Room</a>
+                                <a href="{% url 'edit_resident_balances' resident.id %}" class="btn btn-outline-primary btn-sm">Edit Balances</a>
+                                <a href="{% url 'printable_application' resident.id %}" class="btn btn-outline-secondary btn-sm">Print</a>
+                                <a href="{% url 'record_manual_payment' %}?application={{ resident.id }}" class="btn btn-outline-primary btn-sm">Record Payment</a>
+                                {% if request.user.is_superuser or request.user.role == "admin" %}
+                                    <a href="{% url 'tenant_dashboard' %}?resident={{ resident.id }}" class="btn btn-dark btn-sm">Inspect Tenant Dashboard</a>
+                                {% endif %}
+                                {% if not resident.user %}
+                                    <a href="{% url 'landlord_create_tenant' %}?application={{ resident.id }}" class="btn btn-primary btn-sm">Create File</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="7" class="text-muted">No resident files found.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

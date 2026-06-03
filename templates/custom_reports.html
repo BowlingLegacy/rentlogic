@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% load formatting %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+    color: #1f1f1f;
+}
+
+.page-shell {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.report-shell {
+    padding-bottom: 2rem;
+}
+
+.soft-card {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(188,150,45,0.12);
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+.report-title {
+    font-family: Georgia, serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1c1c1c;
+}
+
+.section-title {
+    font-family: Georgia, serif;
+    font-size: 1.55rem;
+    color: #1c1c1c;
+}
+
+.gold-btn {
+    background: linear-gradient(135deg, #c48f22, #d8ab3b);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.message-btn {
+    background: transparent;
+    border: 1px solid #c59a32;
+    border-radius: 12px;
+    padding: .75rem 1rem;
+    color: #a57c18;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.report-table th {
+    color: #6f5411;
+    background: #f3ead7;
+}
+
+.totals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: .8rem;
+}
+
+.total-box {
+    background: #f7f1e2;
+    border: 1px solid rgba(197,154,50,0.28);
+    border-radius: 12px;
+    padding: .85rem 1rem;
+}
+
+.total-label {
+    color: #7d5c0b;
+    font-size: .75rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.total-value {
+    font-family: Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+@media print {
+    @page {
+        size: landscape;
+        margin: .35in;
+    }
+
+    nav,
+    footer,
+    .site-header,
+    .report-controls,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        font-size: 9px !important;
+    }
+
+    .soft-card {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .page-shell {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .report-shell {
+        padding: 0 !important;
+    }
+
+    .table-responsive {
+        overflow: visible !important;
+    }
+
+    .report-table {
+        width: 100% !important;
+        table-layout: fixed;
+    }
+
+    .report-table th,
+    .report-table td {
+        font-size: 8px !important;
+        padding: 3px 4px !important;
+        white-space: normal !important;
+        word-break: break-word;
+    }
+}
+</style>
+
+<div class="report-shell">
+    <section class="soft-card p-4 mb-4 report-controls">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+            <div>
+                <div class="text-uppercase fw-bold text-muted small">Custom Reports</div>
+                <h1 class="report-title mb-1">Report Builder</h1>
+                <p class="text-muted mb-0">Create focused resident, payment, and expense reports from the records already in the system.</p>
+            </div>
+            <button type="button" class="message-btn" onclick="window.print()">Print Report</button>
+        </div>
+
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-3">
+                <label class="form-label fw-bold">Report Type</label>
+                {{ form.report_type }}
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label fw-bold">Property</label>
+                {{ form.property_id }}
+            </div>
+            <div class="col-lg-2">
+                <label class="form-label fw-bold">Start Date</label>
+                {{ form.start_date }}
+            </div>
+            <div class="col-lg-2">
+                <label class="form-label fw-bold">End Date</label>
+                {{ form.end_date }}
+            </div>
+            <div class="col-lg-2">
+                <button type="submit" class="gold-btn w-100">Generate</button>
+            </div>
+
+            <div class="col-12">
+                <div class="fw-bold mb-2">Financial Entry Types</div>
+                <div class="d-flex flex-wrap gap-3">
+                    {% for checkbox in form.financial_entry_types %}
+                        <label class="form-check-label">
+                            {{ checkbox.tag }} {{ checkbox.choice_label }}
+                        </label>
+                    {% endfor %}
+                </div>
+                <div class="small text-muted mt-2">
+                    These choices apply to Financial Entries / Expenses reports.
+                </div>
+            </div>
+        </form>
+    </section>
+
+    {% if generated %}
+        <section class="soft-card p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                <div>
+                    <h2 class="section-title mb-1">{{ report_title }}</h2>
+                    <p class="text-muted mb-0">
+                        {% if selected_property %}{{ selected_property.name }}{% else %}All accessible properties{% endif %}
+                        | {{ row_count }} matching record{{ row_count|pluralize }}
+                    </p>
+                </div>
+                <div class="text-muted small">
+                    Generated {{ generated_at|date:"M j, Y" }}
+                </div>
+            </div>
+
+            {% if totals %}
+                <div class="totals-grid mb-4">
+                    {% for label, value in totals.items %}
+                            <div class="total-box">
+                                <div class="total-label">{{ label }}</div>
+                            <div class="total-value">${{ value|floatformat:2 }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle report-table bg-white">
+                    <thead>
+                        <tr>
+                            {% for column in report_columns %}
+                                <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in report_rows %}
+                            <tr>
+                                {% for value in row %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="{{ report_columns|length }}" class="text-muted p-4">
+                                    No records matched this report.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    {% else %}
+        <section class="soft-card p-4">
+            <h2 class="section-title">Start With A Report Type</h2>
+            <p class="text-muted mb-0">
+                Use Resident Phone List for quick contact sheets, Resident Roster for operating snapshots,
+                Payment Summary for rent collection review, and Financial Entries / Expenses for mixed operating
+                expense reports from uploaded accounting data.
+            </p>
+        </section>
+    {% endif %}
+</div>
+
+{% endblock %}

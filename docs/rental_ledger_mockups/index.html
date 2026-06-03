@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rental Ledger Pro Mockups</title>
+    <style>
+        :root {
+            --ink: #17202a;
+            --paper: #f5f2ea;
+            --line: #d7c7a7;
+            --gold: #b58d35;
+            --green: #486b57;
+            --blue: #2e5878;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        header {
+            min-height: 42vh;
+            background:
+                linear-gradient(rgba(20, 24, 28, .56), rgba(20, 24, 28, .42)),
+                url("https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1800&q=82") center/cover;
+            color: #fff;
+            display: grid;
+            align-items: end;
+            padding: 36px;
+        }
+
+        .kicker {
+            color: #f2cc78;
+            font-size: .82rem;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        h1 {
+            font-size: clamp(2.25rem, 5vw, 4.8rem);
+            margin: 8px 0 10px;
+            line-height: .98;
+            letter-spacing: 0;
+        }
+
+        .subtitle {
+            max-width: 760px;
+            font-size: 1.08rem;
+            line-height: 1.55;
+        }
+
+        main {
+            width: min(1120px, calc(100% - 32px));
+            margin: 34px auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .option {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .option img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            display: block;
+        }
+
+        .option-body {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.22rem;
+        }
+
+        p {
+            margin: 0;
+            color: #53616d;
+            line-height: 1.5;
+        }
+
+        .button {
+            margin-top: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            background: var(--ink);
+            color: #fff;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .notes {
+            margin-top: 28px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 18px;
+        }
+
+        @media (max-width: 820px) {
+            header { padding: 24px 18px; min-height: 48vh; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <div class="kicker">Rental Ledger Pro</div>
+            <h1>Homepage Direction Mockups</h1>
+            <p class="subtitle">Three visual directions for the public product site. These are separate from Bowling Legacy and are only for choosing the look and message before building the real Rental Ledger Pro site.</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="grid" aria-label="Mockup options">
+            <article class="option">
+                <img src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=84" alt="Luxury apartment interior and building concept">
+                <div class="option-body">
+                    <h2>Version D: Dynamic Command</h2>
+                    <p>The boldest direction: dark command base, electric accents, app/product panels, and a more obvious Rental Ledger Pro identity.</p>
+                    <a class="button" href="version-d-dynamic-command.html">Open Version D</a>
+                </div>
+            </article>
+
+            <article class="option">
+                <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=82" alt="Modern apartment community">
+                <div class="option-body">
+                    <h2>Combined Layout + Color Scheme</h2>
+                    <p>Recommended structure that brings Financial Command, Operations Hub, and Branded Property App together on one homepage.</p>
+                    <a class="button" href="combined-layout-color-scheme.html">Open Combined Direction</a>
+                </div>
+            </article>
+
+            <article class="option">
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=82" alt="Modern multifamily building exterior">
+                <div class="option-body">
+                    <h2>Version A: Financial Command</h2>
+                    <p>Most serious and lender-friendly. Leads with T-12, rent roll, payment ledger, NOI, valuation, and audit-ready records.</p>
+                    <a class="button" href="version-a-financial-command.html">Open Version A</a>
+                </div>
+            </article>
+
+            <article class="option">
+                <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=82" alt="Apartment building with balconies">
+                <div class="option-body">
+                    <h2>Version B: Operations Hub</h2>
+                    <p>Best for showing daily landlord workflow: resident files, rent status, messages, documents, work orders, and owner dashboards.</p>
+                    <a class="button" href="version-b-operations-hub.html">Open Version B</a>
+                </div>
+            </article>
+
+            <article class="option">
+                <img src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1200&q=82" alt="Contemporary residential building">
+                <div class="option-body">
+                    <h2>Version C: Branded Property App</h2>
+                    <p>Most product-forward. Focuses on one app that adapts to each property with its colors, residents, owners, and documents.</p>
+                    <a class="button" href="version-c-branded-app.html">Open Version C</a>
+                </div>
+            </article>
+        </section>
+
+        <section class="notes">
+            <h2>How to Choose</h2>
+            <p>Pick the version that feels closest to the company you want Rental Ledger Pro to become. We can then merge the strongest parts into one final homepage.</p>
+        </section>
+    </main>
+</body>
+</html>

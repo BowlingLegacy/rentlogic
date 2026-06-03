@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rental Ledger Pro - Dynamic Command</title>
+    <style>
+        :root {
+            --night: #10151f;
+            --midnight: #172233;
+            --ink: #202a38;
+            --panel: #f8fbf7;
+            --paper: #fff7e9;
+            --cyan: #10c7c2;
+            --lime: #a9d95b;
+            --amber: #ffb342;
+            --coral: #ff6f61;
+            --violet: #7664ff;
+            --blue: #2f83e6;
+            --line: rgba(255,255,255,.18);
+            --muted: #6a7480;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--night);
+            color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 34px;
+            background: rgba(16, 21, 31, .82);
+            border-bottom: 1px solid rgba(255,255,255,.12);
+            backdrop-filter: blur(14px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 950;
+            letter-spacing: 0;
+            font-size: 1.15rem;
+        }
+
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background:
+                linear-gradient(135deg, var(--cyan), var(--lime) 45%, var(--amber));
+            display: grid;
+            place-items: center;
+            color: #10151f;
+            font-weight: 950;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .nav-links a {
+            color: #dce7ef;
+            text-decoration: none;
+            font-weight: 850;
+            font-size: .88rem;
+        }
+
+        .nav-links .demo {
+            background: var(--amber);
+            color: #111;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-weight: 950;
+        }
+
+        .hero {
+            min-height: 100vh;
+            position: relative;
+            display: grid;
+            align-items: center;
+            padding: 104px 34px 56px;
+            isolation: isolate;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -2;
+            background:
+                linear-gradient(120deg, rgba(16, 21, 31, .96) 0%, rgba(16, 21, 31, .78) 42%, rgba(16, 21, 31, .38) 100%),
+                url("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1900&q=84") center/cover;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background:
+                linear-gradient(100deg, transparent 0 54%, rgba(16, 199, 194, .26) 54% 64%, transparent 64%),
+                linear-gradient(112deg, transparent 0 66%, rgba(255, 179, 66, .34) 66% 72%, transparent 72%),
+                linear-gradient(126deg, transparent 0 77%, rgba(118, 100, 255, .30) 77% 83%, transparent 83%);
+        }
+
+        .hero-inner {
+            width: min(1220px, 100%);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: .92fr 1.08fr;
+            align-items: center;
+            gap: 36px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            color: #10151f;
+            background: var(--lime);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            font-weight: 950;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 6.8vw, 7rem);
+            line-height: .88;
+            letter-spacing: 0;
+            margin: 18px 0;
+            max-width: 760px;
+        }
+
+        .hero-copy {
+            color: #e4edf2;
+            font-size: 1.14rem;
+            line-height: 1.6;
+            max-width: 640px;
+            margin: 0;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .button {
+            min-height: 48px;
+            border-radius: 7px;
+            padding: 13px 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-weight: 950;
+        }
+
+        .primary { background: var(--amber); color: #111; }
+        .secondary { border: 1px solid rgba(255,255,255,.5); color: #fff; background: rgba(255,255,255,.1); }
+
+        .hero-stack {
+            position: relative;
+            min-height: 630px;
+        }
+
+        .command-panel {
+            position: absolute;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(248,251,247,.94);
+            color: var(--night);
+            box-shadow: 0 24px 80px rgba(0,0,0,.38);
+            overflow: hidden;
+        }
+
+        .main-panel {
+            inset: 58px 0 auto 70px;
+            width: min(720px, calc(100% - 70px));
+            min-height: 430px;
+        }
+
+        .phone-panel {
+            right: 28px;
+            bottom: 0;
+            width: 236px;
+            min-height: 420px;
+            background: #111923;
+            padding: 10px;
+            border-radius: 26px;
+        }
+
+        .signal-panel {
+            left: 0;
+            top: 0;
+            width: 255px;
+            min-height: 170px;
+            background: rgba(16, 21, 31, .95);
+            color: #fff;
+        }
+
+        .panel-head {
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(16,21,31,.12);
+            font-weight: 950;
+        }
+
+        .chip {
+            font-size: .72rem;
+            border-radius: 999px;
+            padding: 6px 9px;
+            background: rgba(16,199,194,.14);
+            color: #087a78;
+            font-weight: 950;
+        }
+
+        .dash-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            padding: 14px;
+        }
+
+        .mini-card {
+            background: #fff;
+            border: 1px solid #e4e7e2;
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 92px;
+        }
+
+        .mini-card span {
+            display: block;
+            color: var(--muted);
+            font-size: .78rem;
+            margin-bottom: 8px;
+            font-weight: 850;
+        }
+
+        .mini-card b {
+            font-size: 1.55rem;
+            line-height: 1;
+        }
+
+        .wide {
+            grid-column: span 3;
+            background: #fff;
+            border: 1px solid #e4e7e2;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .82rem;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #edf0ed;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        th:first-child, td:first-child { text-align: left; }
+        th { background: #f0f5f2; color: #53616d; text-transform: uppercase; font-size: .68rem; }
+        .good { color: #317052; font-weight: 950; }
+        .warn { color: #a2562b; font-weight: 950; }
+
+        .signal-body {
+            padding: 14px 16px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .signal-number {
+            font-size: 2rem;
+            font-weight: 950;
+            color: var(--cyan);
+        }
+
+        .signal-label {
+            color: #c7d4dc;
+            font-size: .88rem;
+        }
+
+        .phone-screen {
+            background: #f7f5ed;
+            min-height: 398px;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .phone-hero {
+            height: 118px;
+            background:
+                linear-gradient(rgba(16,21,31,.14), rgba(16,21,31,.66)),
+                url("https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=700&q=82") center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            padding: 12px;
+            color: #fff;
+        }
+
+        .phone-property { font-weight: 950; }
+        .powered { color: var(--amber); font-size: .72rem; margin-top: 3px; }
+        .phone-body { display: grid; gap: 9px; padding: 11px; }
+        .phone-card { background: #fff; border: 1px solid #e4e0d4; border-radius: 8px; padding: 10px; }
+        .phone-card b { display: block; margin-bottom: 4px; }
+        .phone-card span { color: var(--muted); font-size: .78rem; }
+
+        .section {
+            width: min(1180px, calc(100% - 32px));
+            margin: 70px auto;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-size: clamp(2rem, 4vw, 4rem);
+            line-height: .95;
+            margin: 0;
+            letter-spacing: 0;
+        }
+
+        .section-head p,
+        .feature p,
+        .palette-note {
+            color: #b8c7d2;
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        .power-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .feature {
+            position: relative;
+            background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 12px;
+            padding: 22px;
+            min-height: 250px;
+            overflow: hidden;
+        }
+
+        .feature::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--cyan);
+        }
+
+        .feature:nth-child(2)::before { background: var(--amber); }
+        .feature:nth-child(3)::before { background: var(--violet); }
+        .feature h3 { margin: 0 0 12px; font-size: 1.45rem; }
+        .feature ul { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; color: #e3ebf0; font-weight: 800; }
+
+        .palette-wrap {
+            background: #f7f6ef;
+            color: var(--night);
+            padding: 56px 0;
+        }
+
+        .palette-wrap .section { margin-block: 0; }
+        .palette-wrap .section-head p { color: #56626d; }
+
+        .palette {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .swatch {
+            min-height: 116px;
+            border-radius: 10px;
+            padding: 11px;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            font-size: .78rem;
+            font-weight: 950;
+            color: #fff;
+            box-shadow: 0 10px 28px rgba(16,21,31,.10);
+        }
+
+        .swatch.light { color: var(--night); }
+
+        .layout-map {
+            display: grid;
+            grid-template-columns: 1fr 1.25fr;
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .map-copy {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .map-copy p { color: #c4d1da; line-height: 1.58; }
+
+        .map-stack {
+            display: grid;
+            gap: 10px;
+        }
+
+        .map-row {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .map-label {
+            background: var(--amber);
+            color: #111;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 950;
+            display: grid;
+            align-items: center;
+        }
+
+        .map-block {
+            min-height: 76px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.18);
+            background: linear-gradient(110deg, rgba(16,199,194,.22), rgba(118,100,255,.20));
+            padding: 14px;
+            color: #eaf2f5;
+            font-weight: 850;
+        }
+
+        @media (max-width: 980px) {
+            .nav { position: static; flex-direction: column; align-items: flex-start; padding: 16px; }
+            .hero { padding: 34px 16px 48px; min-height: auto; }
+            .hero-inner, .layout-map { grid-template-columns: 1fr; }
+            .hero-stack { min-height: 950px; }
+            .main-panel { left: 0; width: 100%; top: 190px; }
+            .signal-panel { left: 0; top: 0; width: 100%; }
+            .phone-panel { right: auto; left: 50%; transform: translateX(-50%); bottom: 0; }
+            .section-head { display: grid; align-items: start; }
+            .power-grid, .palette { grid-template-columns: 1fr; }
+            .dash-grid { grid-template-columns: 1fr; }
+            .wide { grid-column: span 1; }
+            .map-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="brand"><span class="brand-mark">RL</span> Rental Ledger Pro</div>
+        <div class="nav-links">
+            <a href="#platform">Platform</a>
+            <a href="#palette">Color</a>
+            <a href="#layout">Layout</a>
+            <a class="demo" href="{% url 'demo_entry' %}">Launch Demo</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-inner">
+            <div>
+                <div class="eyebrow">The property operating system</div>
+                <h1>Command the property. Own the numbers.</h1>
+                <p class="hero-copy">A bold product direction for Rental Ledger Pro: financial command, landlord operations, and a branded resident app in one unmistakable platform.</p>
+                <div class="actions">
+                    <a class="button primary" href="#platform">See the System</a>
+                    <a class="button secondary" href="#palette">View Color Scheme</a>
+                </div>
+            </div>
+
+            <div class="hero-stack" aria-label="Rental Ledger Pro product preview">
+                <section class="command-panel signal-panel">
+                    <div class="panel-head">Portfolio Pulse <span class="chip">Live</span></div>
+                    <div class="signal-body">
+                        <div>
+                            <div class="signal-number">$51,688</div>
+                            <div class="signal-label">Year-to-date income tracked</div>
+                        </div>
+                        <div>
+                            <div class="signal-number">17</div>
+                            <div class="signal-label">Units sorted by property and room</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="command-panel main-panel">
+                    <div class="panel-head">Financial Command <span class="chip">T-12 Ready</span></div>
+                    <div class="dash-grid">
+                        <div class="mini-card"><span>NOI</span><b>$30.8k</b></div>
+                        <div class="mini-card"><span>Cash Flow</span><b>$10.8k</b></div>
+                        <div class="mini-card"><span>Open Rent</span><b>$550</b></div>
+                        <div class="wide">
+                            <table>
+                                <thead><tr><th>Unit</th><th>Resident</th><th>Rent</th><th>Utilities</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <tr><td>B</td><td>Grady Bradley</td><td>$506</td><td>$58</td><td class="good">Clear</td></tr>
+                                    <tr><td>N</td><td>Hero Lowe</td><td>$550</td><td>$0</td><td class="warn">Rent Open</td></tr>
+                                    <tr><td>R</td><td>Aaron Brown</td><td>$650</td><td>$58</td><td class="good">Clear</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="command-panel phone-panel">
+                    <div class="phone-screen">
+                        <div class="phone-hero">
+                            <div class="phone-property">Cedar Ridge</div>
+                            <div class="powered">Powered by Rental Ledger Pro</div>
+                        </div>
+                        <div class="phone-body">
+                            <div class="phone-card"><b>Balance</b><span>$0.00 current</span></div>
+                            <div class="phone-card"><b>Inbox</b><span>Lease update ready</span></div>
+                            <div class="phone-card"><b>Notice</b><span>Community post sent</span></div>
+                            <div class="phone-card"><b>Maintenance</b><span>Request tracked</span></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section" id="platform">
+            <div class="section-head">
+                <div>
+                    <div class="eyebrow">Three pillars, one brand</div>
+                    <h2>The homepage should feel like a command deck.</h2>
+                </div>
+                <p style="max-width:460px">This direction keeps all three ideas, but gives them a sharper, more memorable visual system.</p>
+            </div>
+
+            <div class="power-grid">
+                <article class="feature">
+                    <h3>Financial Command</h3>
+                    <p>Lead with a serious financial promise: T-12, rent roll, NOI, cash flow, receipt-backed expenses, valuation support, and owner reports.</p>
+                    <ul>
+                        <li>Bank-ready reporting</li>
+                        <li>Payment ledger accuracy</li>
+                        <li>Property valuation support</li>
+                    </ul>
+                </article>
+                <article class="feature">
+                    <h3>Operations Hub</h3>
+                    <p>Show the daily landlord advantage: resident files, documents, applications, messages, maintenance, and rent watch lists.</p>
+                    <ul>
+                        <li>Resident files</li>
+                        <li>Needs-attention workflow</li>
+                        <li>Property-separated data</li>
+                    </ul>
+                </article>
+                <article class="feature">
+                    <h3>Branded Property App</h3>
+                    <p>Make the future obvious: one resident app that changes personality, colors, notices, setup tasks, and documents by property.</p>
+                    <ul>
+                        <li>Address-based routing</li>
+                        <li>Property identity</li>
+                        <li>Powered by Rental Ledger Pro</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <section class="palette-wrap" id="palette">
+            <div class="section">
+                <div class="section-head">
+                    <div>
+                        <div class="eyebrow">Color system</div>
+                        <h2>Dark command base. Electric operating accents.</h2>
+                    </div>
+                    <p style="max-width:450px">This palette is intentionally bolder than Bowling Legacy. It reads modern, technical, financial, and app-ready.</p>
+                </div>
+                <div class="palette">
+                    <div class="swatch" style="background:#10151f">Night<br>#10151F</div>
+                    <div class="swatch" style="background:#172233">Midnight<br>#172233</div>
+                    <div class="swatch" style="background:#10c7c2">Signal Cyan<br>#10C7C2</div>
+                    <div class="swatch light" style="background:#a9d95b">Ledger Lime<br>#A9D95B</div>
+                    <div class="swatch light" style="background:#ffb342">Command Amber<br>#FFB342</div>
+                    <div class="swatch" style="background:#ff6f61">Alert Coral<br>#FF6F61</div>
+                    <div class="swatch" style="background:#7664ff">App Violet<br>#7664FF</div>
+                    <div class="swatch" style="background:#2f83e6">Trust Blue<br>#2F83E6</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="layout">
+            <div class="layout-map">
+                <div class="map-copy">
+                    <div class="eyebrow">Recommended page layout</div>
+                    <h2 style="font-size:clamp(2rem,3.8vw,3.5rem); margin-top:14px">A more decisive homepage structure.</h2>
+                    <p>The page should open with a high-impact command hero, then present the three pillars as one unified system. Each pillar gets a connected deeper page, but the homepage makes the choice feel obvious.</p>
+                </div>
+                <div class="map-stack">
+                    <div class="map-row">
+                        <div class="map-label">Hero</div>
+                        <div class="map-block">Command the property. Own the numbers. Product panels, resident app preview, bold apartment imagery.</div>
+                    </div>
+                    <div class="map-row">
+                        <div class="map-label">Pillars</div>
+                        <div class="map-block">Financial Command, Operations Hub, Branded Property App presented as one operating system.</div>
+                    </div>
+                    <div class="map-row">
+                        <div class="map-label">Proof</div>
+                        <div class="map-block">Report previews, rent roll, T-12, watch list, receipt-backed expenses, message workflow.</div>
+                    </div>
+                    <div class="map-row">
+                        <div class="map-label">Demo</div>
+                        <div class="map-block">Clear public demo path with fake properties, sample owners, sample tenants, and sample reports.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
