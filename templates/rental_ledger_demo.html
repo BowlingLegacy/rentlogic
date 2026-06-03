@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rental Ledger Pro Demo</title>
+    <style>
+        :root {
+            --night: #10151f;
+            --midnight: #172233;
+            --panel: #f8fbf7;
+            --cyan: #10c7c2;
+            --lime: #a9d95b;
+            --amber: #ffb342;
+            --violet: #7664ff;
+            --muted: #66727d;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--night);
+            color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 34px;
+            background: rgba(16, 21, 31, .88);
+            border-bottom: 1px solid rgba(255,255,255,.12);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 950;
+            font-size: 1.1rem;
+        }
+
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--cyan), var(--lime) 45%, var(--amber));
+            color: #10151f;
+            display: grid;
+            place-items: center;
+            font-weight: 950;
+        }
+
+        .nav a {
+            color: #dce7ef;
+            text-decoration: none;
+            font-weight: 850;
+        }
+
+        .hero {
+            min-height: 60vh;
+            display: grid;
+            align-items: end;
+            padding: 80px 34px 48px;
+            background:
+                linear-gradient(110deg, rgba(16, 21, 31, .94), rgba(16, 21, 31, .56)),
+                url("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1900&q=84") center/cover;
+        }
+
+        .inner {
+            width: min(1160px, 100%);
+            margin: 0 auto;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            background: var(--lime);
+            color: #111;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            font-weight: 950;
+        }
+
+        h1 {
+            max-width: 860px;
+            font-size: clamp(2.5rem, 5vw, 5rem);
+            line-height: .94;
+            letter-spacing: 0;
+            margin: 18px 0;
+        }
+
+        p {
+            color: #d7e1e8;
+            line-height: 1.58;
+            margin: 0;
+        }
+
+        .hero p { max-width: 680px; font-size: 1.1rem; }
+
+        .section {
+            width: min(1160px, calc(100% - 32px));
+            margin: 44px auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 12px;
+            padding: 22px;
+            min-height: 230px;
+        }
+
+        .card h2 {
+            margin: 0 0 10px;
+            font-size: 1.45rem;
+        }
+
+        .metric {
+            display: inline-flex;
+            margin-bottom: 16px;
+            background: rgba(16, 199, 194, .16);
+            color: var(--cyan);
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-weight: 950;
+            font-size: .78rem;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+            border-radius: 7px;
+            padding: 13px 18px;
+            text-decoration: none;
+            font-weight: 950;
+        }
+
+        .primary { background: var(--amber); color: #111; }
+        .secondary { border: 1px solid rgba(255,255,255,.48); color: #fff; background: rgba(255,255,255,.08); }
+
+        .preview {
+            background: var(--panel);
+            color: var(--night);
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.18);
+        }
+
+        .preview-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #dde5df;
+            font-weight: 950;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5ece7;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        th:first-child, td:first-child { text-align: left; }
+        th { color: #596772; background: #eef5f1; text-transform: uppercase; font-size: .72rem; }
+        .good { color: #317052; font-weight: 950; }
+        .warn { color: #a2562b; font-weight: 950; }
+
+        @media (max-width: 860px) {
+            .nav { padding: 16px; flex-direction: column; align-items: flex-start; }
+            .hero { padding: 54px 18px 38px; }
+            .grid { grid-template-columns: 1fr; }
+            table { font-size: .78rem; }
+            th, td { padding: 9px 7px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="brand"><span class="brand-mark">RL</span> Rental Ledger Pro</div>
+        <a href="{% url 'rental_ledger_pro_home' %}">Back to Home</a>
+    </nav>
+
+    <header class="hero">
+        <div class="inner">
+            <div class="eyebrow">Demo Preview</div>
+            <h1>See how Rental Ledger Pro connects reports, operations, and residents.</h1>
+            <p>This public preview shows the product flow without exposing real resident or property data. The interactive demo environment can be connected after the Rental Ledger Pro demo database is fully configured.</p>
+            <div class="actions">
+                <a class="button primary" href="#preview">View Sample Data</a>
+                {% if interactive_demo_enabled %}
+                    <a class="button secondary" href="{% url 'demo_entry' %}">Open Interactive Demo</a>
+                {% else %}
+                    <a class="button secondary" href="#preview">Interactive Demo Coming Soon</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section grid">
+            <article class="card">
+                <span class="metric">Financial Command</span>
+                <h2>Owner-grade reports</h2>
+                <p>T-12, NOI, cash flow, valuation support, receipt-backed expenses, payment logs, and rent roll reports stay tied to the property ledger.</p>
+            </article>
+            <article class="card">
+                <span class="metric" style="color:var(--amber);background:rgba(255,179,66,.16)">Operations Hub</span>
+                <h2>Daily work queue</h2>
+                <p>Resident files, messages, documents, applications, onboarding, rent setup, and monthly collection watch lists live in one operating workspace.</p>
+            </article>
+            <article class="card">
+                <span class="metric" style="color:var(--violet);background:rgba(118,100,255,.16)">Property App</span>
+                <h2>Local resident identity</h2>
+                <p>Residents see their property name, notices, setup steps, payments, documents, and inbox while the system remains powered by Rental Ledger Pro.</p>
+            </article>
+        </section>
+
+        <section class="section preview" id="preview">
+            <div class="preview-head">
+                <span>Cedar Ridge Apartments</span>
+                <span>June Watch</span>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Unit</th><th>Resident</th><th>Rent</th><th>Utilities</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>B</td><td>Grady Bradley</td><td>$506</td><td>$58</td><td class="good">Clear</td></tr>
+                    <tr><td>N</td><td>Hero Lowe</td><td>$550</td><td>$0</td><td class="warn">Rent Open</td></tr>
+                    <tr><td>Q</td><td>Chris Honey</td><td>$625</td><td>$55</td><td class="warn">Deposit Balance</td></tr>
+                    <tr><td>R</td><td>Aaron Brown</td><td>$650</td><td>$58</td><td class="good">Clear</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>

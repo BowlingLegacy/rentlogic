@@ -1082,6 +1082,12 @@ def rental_ledger_pro_home(request):
     return render(request, "rental_ledger_pro_home.html")
 
 
+def rental_ledger_demo(request):
+    return render(request, "rental_ledger_demo.html", {
+        "interactive_demo_enabled": getattr(settings, "DEMO_MODE", False),
+    })
+
+
 def demo_entry(request):
     if not getattr(settings, "DEMO_MODE", False):
         return HttpResponse(
