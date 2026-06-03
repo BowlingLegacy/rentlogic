@@ -30,6 +30,8 @@ ALLOWED_HOSTS = [
     "www.bowlinglegacy.com",
     "rentalledgerpro.com",
     "www.rentalledgerpro.com",
+    "rentlogic-1.onrender.com",
+    "rentlogic-cly7.onrender.com",
 ]
 ALLOWED_HOSTS.extend([
     host.strip()
