@@ -219,28 +219,31 @@
                 {% if interactive_demo_enabled %}
                     <a class="button secondary" href="{% url 'demo_entry' %}">Open Interactive Demo</a>
                 {% else %}
-                    <a class="button secondary" href="#preview">Interactive Demo Coming Soon</a>
+                    <a class="button secondary" href="#reports">View Demo Reports</a>
                 {% endif %}
             </div>
         </div>
     </header>
 
     <main>
-        <section class="section grid">
+        <section class="section grid" id="reports">
             <article class="card">
                 <span class="metric">Financial Command</span>
                 <h2>Owner-grade reports</h2>
                 <p>T-12, NOI, cash flow, valuation support, receipt-backed expenses, payment logs, and rent roll reports stay tied to the property ledger.</p>
+                <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'financial-command' %}">Open Financial Command</a></div>
             </article>
             <article class="card">
                 <span class="metric" style="color:var(--amber);background:rgba(255,179,66,.16)">Operations Hub</span>
                 <h2>Daily work queue</h2>
                 <p>Resident files, messages, documents, applications, onboarding, rent setup, and monthly collection watch lists live in one operating workspace.</p>
+                <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'operations-hub' %}">Open Operations Hub</a></div>
             </article>
             <article class="card">
                 <span class="metric" style="color:var(--violet);background:rgba(118,100,255,.16)">Property App</span>
                 <h2>Local resident identity</h2>
                 <p>Residents see their property name, notices, setup steps, payments, documents, and inbox while the system remains powered by Rental Ledger Pro.</p>
+                <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'property-app' %}">Open Property App</a></div>
             </article>
         </section>
 
@@ -260,6 +263,16 @@
                     <tr><td>R</td><td>Aaron Brown</td><td>$650</td><td>$58</td><td class="good">Clear</td></tr>
                 </tbody>
             </table>
+        </section>
+
+        <section class="section grid">
+            {% for slug, report in reports.items %}
+                <a class="card" href="{% url 'rental_ledger_demo_report' slug %}" style="text-decoration:none;color:#fff;">
+                    <span class="metric">{{ report.eyebrow }}</span>
+                    <h2>{{ report.title }}</h2>
+                    <p>{{ report.summary }}</p>
+                </a>
+            {% endfor %}
         </section>
     </main>
 </body>

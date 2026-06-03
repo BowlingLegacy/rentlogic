@@ -492,6 +492,9 @@
         <div class="brand"><span class="brand-mark">RL</span> Rental Ledger Pro</div>
         <div class="nav-links">
             <a href="#platform">Platform</a>
+            <a href="{% url 'rental_ledger_product_page' 'financial-command' %}">Financial</a>
+            <a href="{% url 'rental_ledger_product_page' 'operations-hub' %}">Operations</a>
+            <a href="{% url 'rental_ledger_product_page' 'property-app' %}">Property App</a>
             <a href="#palette">Color</a>
             <a href="#layout">Layout</a>
             <a class="demo" href="{% url 'rental_ledger_demo' %}">Launch Demo</a>
@@ -581,6 +584,7 @@
                         <li>Payment ledger accuracy</li>
                         <li>Property valuation support</li>
                     </ul>
+                    <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'financial-command' %}">Open Financial Command</a></div>
                 </article>
                 <article class="feature">
                     <h3>Operations Hub</h3>
@@ -590,6 +594,7 @@
                         <li>Needs-attention workflow</li>
                         <li>Property-separated data</li>
                     </ul>
+                    <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'operations-hub' %}">Open Operations Hub</a></div>
                 </article>
                 <article class="feature">
                     <h3>Branded Property App</h3>
@@ -599,6 +604,7 @@
                         <li>Property identity</li>
                         <li>Powered by Rental Ledger Pro</li>
                     </ul>
+                    <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'property-app' %}">Open Property App</a></div>
                 </article>
             </div>
         </section>

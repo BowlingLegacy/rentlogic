@@ -1078,13 +1078,158 @@ def home(request):
     })
 
 
+RENTAL_LEDGER_PRODUCT_PAGES = {
+    "financial-command": {
+        "eyebrow": "Financial Command",
+        "title": "Reports that make property performance clear.",
+        "lead": "Rental Ledger Pro is built around the reports owners, lenders, buyers, and operators ask for: T-12, rent roll, NOI, cash flow after debt, payment ledger, valuation estimate, and receipt-backed expenses.",
+        "accent": "cyan",
+        "features": [
+            ("T-12 and NOI", "Monthly income, operating expenses, debt service, cash flow, and year-to-date totals."),
+            ("Rent roll and payment ledger", "Resident/unit rent status, service month tracking, payment methods, balances, and printable history."),
+            ("Receipt-backed expenses", "Phone or desktop receipt upload with category review and proof attached to the property ledger."),
+            ("Valuation support", "NOI-based valuation estimates using cap-rate scenarios and property performance trends."),
+        ],
+    },
+    "operations-hub": {
+        "eyebrow": "Operations Hub",
+        "title": "One work queue for the daily landlord job.",
+        "lead": "The operations hub keeps resident files, applications, onboarding documents, messages, maintenance requests, rent setup, and monthly collection watch lists in one property-aware workspace.",
+        "accent": "amber",
+        "features": [
+            ("Resident files", "Applications, leases, emergency contacts, documents, payments, profile photos, and notes stay attached to the resident."),
+            ("Needs-attention workflow", "New messages, documents, setup requests, applications, and unpaid balances surface without digging through pages."),
+            ("Unit-level rent setup", "Rent, utilities, deposit rules, due dates, and room/unit labels stay consistent across reports and dashboards."),
+            ("Property separation", "Owners and landlords see only the properties, residents, reports, and messages they are allowed to access."),
+        ],
+    },
+    "property-app": {
+        "eyebrow": "Branded Property App",
+        "title": "One platform that can feel local to every property.",
+        "lead": "Residents should not feel like they are using generic software. Rental Ledger Pro can present the right property name, visuals, notices, documents, payments, utility setup steps, and communication tools for each property.",
+        "accent": "violet",
+        "features": [
+            ("Property identity", "Each property can carry its own name, photos, colors, notices, and resident instructions."),
+            ("Resident payments", "Rent, utilities, deposits, balance details, payment history, and receipts stay easy to find."),
+            ("Onboarding checklist", "Lease, emergency contact, property rules, utility vendor setup, and insurance links can guide new residents."),
+            ("Powered by Rental Ledger Pro", "The product brand can stay present without taking over the property experience."),
+        ],
+    },
+}
+
+
+RENTAL_LEDGER_DEMO_REPORTS = {
+    "t12": {
+        "title": "T-12 Performance Report",
+        "eyebrow": "Financial Command",
+        "summary": "A lender-ready operating view showing income, expenses, NOI, debt service, and cash flow by month.",
+        "columns": ["Line", "Jan", "Feb", "Mar", "Apr", "May", "YTD"],
+        "rows": [
+            ["Rental Income", "$10,105", "$9,737", "$10,605", "$10,705", "$10,030", "$51,182"],
+            ["Operating Expenses", "$4,854", "$4,640", "$3,662", "$4,296", "$3,418", "$20,870"],
+            ["NOI", "$5,251", "$5,097", "$6,943", "$6,409", "$6,612", "$30,312"],
+            ["Debt Service", "$4,000", "$4,000", "$4,000", "$4,000", "$4,000", "$20,000"],
+            ["Cash Flow", "$1,251", "$1,097", "$2,943", "$2,409", "$2,612", "$10,312"],
+        ],
+    },
+    "rent-roll": {
+        "title": "Rent Roll",
+        "eyebrow": "Operations Hub",
+        "summary": "A unit-sorted resident view showing scheduled rent, utilities, deposits, balances, and payment status.",
+        "columns": ["Unit", "Resident", "Rent", "Utilities", "Deposit Held", "Balance", "Status"],
+        "rows": [
+            ["B", "Grady Bradley", "$506", "$58", "$450", "$0", "Clear"],
+            ["C", "Steven Bruno", "$610", "$58", "$450", "$0", "Clear"],
+            ["N", "Hero Lowe", "$550", "$0", "$450", "$550", "Rent Open"],
+            ["Q", "Chris Honey", "$625", "$55", "$95", "$355", "Deposit Balance"],
+            ["R", "Aaron Brown", "$650", "$58", "$0", "$0", "Clear"],
+        ],
+    },
+    "payment-log": {
+        "title": "Payment Log",
+        "eyebrow": "Ledger Records",
+        "summary": "A month-filtered payment ledger for rent, utilities, deposits, manual payments, and card payments.",
+        "columns": ["Date", "Unit", "Resident", "Type", "Method", "Amount", "Service Month"],
+        "rows": [
+            ["May 27, 2026", "B", "Grady Bradley", "Rent", "Cash", "$506", "June 2026"],
+            ["May 26, 2026", "H", "Felicia Valdez", "Deposit", "Cash", "$450", "-"],
+            ["May 26, 2026", "H", "Felicia Valdez", "Rent", "Cash", "$105", "May 2026"],
+            ["May 26, 2026", "H", "Felicia Valdez", "Utilities", "Cash", "$9", "May 2026"],
+        ],
+    },
+    "valuation": {
+        "title": "Valuation Estimate",
+        "eyebrow": "Owner Reports",
+        "summary": "An estimate view using NOI and cap-rate scenarios to help owners understand potential valuation ranges.",
+        "columns": ["Scenario", "Cap Rate", "Annualized NOI", "Estimated Value", "Use Case"],
+        "rows": [
+            ["Conservative", "8.00%", "$72,749", "$909,363", "Higher-risk underwriting"],
+            ["Market", "7.00%", "$72,749", "$1,039,271", "Comparable stabilized assets"],
+            ["Aggressive", "6.25%", "$72,749", "$1,163,984", "Improved asset after upgrades"],
+        ],
+    },
+    "vendor-expense": {
+        "title": "Vendor Expense Report",
+        "eyebrow": "Accounting",
+        "summary": "A report that groups expenses by vendor/category so owners can see what is driving operating cost.",
+        "columns": ["Category", "Vendor", "Jan-May Total", "Receipts", "Review Status"],
+        "rows": [
+            ["Power", "Utility Provider", "$5,804", "5", "Filed"],
+            ["City Services", "City of Medford", "$2,584", "5", "Filed"],
+            ["Maintenance Supplies", "Multiple", "$264", "3", "Needs category review"],
+            ["Insurance", "Carrier", "$2,641", "3", "Filed"],
+        ],
+    },
+    "utility-trend": {
+        "title": "Utility Cost Trend",
+        "eyebrow": "Property Performance",
+        "summary": "A utility-focused trend report for power, gas, water, trash, internet, and shared utility recovery.",
+        "columns": ["Utility", "Jan", "Feb", "Mar", "Apr", "May", "Trend"],
+        "rows": [
+            ["Power", "$1,444", "$1,595", "$1,246", "$781", "$736", "Down"],
+            ["Gas", "$146", "$157", "$153", "$134", "$142", "Stable"],
+            ["Water", "$52", "$46", "$50", "$57", "$65", "Up"],
+            ["Trash", "$364", "$366", "$39", "$363", "$0", "Review"],
+        ],
+    },
+}
+
+
 def rental_ledger_pro_home(request):
-    return render(request, "rental_ledger_pro_home.html")
+    return render(request, "rental_ledger_pro_home.html", {
+        "product_pages": RENTAL_LEDGER_PRODUCT_PAGES,
+        "demo_reports": RENTAL_LEDGER_DEMO_REPORTS,
+    })
 
 
 def rental_ledger_demo(request):
     return render(request, "rental_ledger_demo.html", {
         "interactive_demo_enabled": getattr(settings, "DEMO_MODE", False),
+        "reports": RENTAL_LEDGER_DEMO_REPORTS,
+    })
+
+
+def rental_ledger_product_page(request, page_slug):
+    page = RENTAL_LEDGER_PRODUCT_PAGES.get(page_slug)
+    if not page:
+        raise Http404("Rental Ledger Pro page not found.")
+
+    return render(request, "rental_ledger_product_page.html", {
+        "page": page,
+        "page_slug": page_slug,
+        "reports": RENTAL_LEDGER_DEMO_REPORTS,
+    })
+
+
+def rental_ledger_demo_report(request, report_slug):
+    report = RENTAL_LEDGER_DEMO_REPORTS.get(report_slug)
+    if not report:
+        raise Http404("Rental Ledger Pro report not found.")
+
+    return render(request, "rental_ledger_demo_report.html", {
+        "report": report,
+        "report_slug": report_slug,
+        "reports": RENTAL_LEDGER_DEMO_REPORTS,
     })
 
 
