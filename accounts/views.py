@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
+from applications.models import HousingApplication
+
 from .models import InviteCode, Profile
 from .forms import InviteCodeEntryForm, CodeSignupForm, CreateUserInviteForm
 
@@ -115,10 +117,6 @@ def signup(request):
     return render(request, "accounts/signup.html", {"form": form, "invite": invite})
 
 
-def application_page(request):
-    return render(request, "accounts/application.html")
-
-
 @login_required
 def owner_dashboard(request):
     form = CreateUserInviteForm(request.POST or None)
@@ -136,10 +134,15 @@ def owner_dashboard(request):
         return redirect("owner_dashboard")
 
     invites = InviteCode.objects.filter(created_by=request.user).order_by("-created_at")
+    applications = HousingApplication.objects.select_related(
+        "property",
+        "onboarding_invite",
+    ).order_by("-created_at")
 
     return render(request, "accounts/owner_dashboard.html", {
         "form": form,
         "invites": invites,
+        "applications": applications,
     })
 
 

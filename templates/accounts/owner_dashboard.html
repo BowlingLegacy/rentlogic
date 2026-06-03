@@ -28,6 +28,46 @@
 
 <hr>
 
+<h2>Submitted Applications</h2>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+        <th>Applicant</th>
+        <th>Email</th>
+        <th>Property</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Action</th>
+    </tr>
+
+    {% for application in applications %}
+    <tr>
+        <td>{{ application.full_name }}</td>
+        <td>{{ application.email }}</td>
+        <td>
+            {% if application.property %}
+                {{ application.property.name }}
+            {% else %}
+                Not assigned
+            {% endif %}
+        </td>
+        <td>{{ application.get_status_display }}</td>
+        <td>{{ application.created_at }}</td>
+        <td>
+            <a href="{% url 'create_tenant' %}?application={{ application.id }}">
+                Approve / Create Invite
+            </a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="6">No applications submitted yet.</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<hr>
+
 <h2>Your Generated Renter Codes</h2>
 
 <table border="1" cellpadding="8" cellspacing="0">

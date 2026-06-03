@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RentLogic Application</title>
+</head>
+<body style="font-family: Tahoma; padding: 40px; background: #f6f1e8;">
+
+<h1>Rental Application</h1>
+
+{% for message in messages %}
+    <p style="color: green; font-weight: bold;">{{ message }}</p>
+{% endfor %}
+
+<form method="post" enctype="multipart/form-data" style="max-width: 760px;">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit" style="padding: 12px 22px; font-weight: bold;">
+        Submit Application
+    </button>
+</form>
+
+</body>
+</html>
