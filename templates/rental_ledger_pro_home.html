@@ -393,6 +393,69 @@
         .feature h3 { margin: 0 0 12px; font-size: 1.45rem; }
         .feature ul { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; color: #e3ebf0; font-weight: 800; }
 
+        .report-showcase {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .report-card {
+            background: rgba(248,251,247,.96);
+            color: var(--night);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,.16);
+            overflow: hidden;
+        }
+
+        .report-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 14px;
+            padding: 16px;
+            border-bottom: 1px solid #dfe7e2;
+        }
+
+        .report-card h3 {
+            margin: 6px 0 8px;
+            font-size: 1.35rem;
+        }
+
+        .report-card p {
+            color: #596772;
+            font-size: .9rem;
+            line-height: 1.45;
+        }
+
+        .report-count {
+            flex: 0 0 auto;
+            border-radius: 999px;
+            background: rgba(16,199,194,.14);
+            color: #087a78;
+            padding: 7px 10px;
+            font-size: .75rem;
+            font-weight: 950;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        .report-card table {
+            min-width: 650px;
+        }
+
+        .report-card .actions {
+            margin: 0;
+            padding: 14px 16px 16px;
+        }
+
+        .report-card .button.secondary {
+            color: var(--night);
+            border-color: #cad7d0;
+            background: #fff;
+        }
+
         .palette-wrap {
             background: #f7f6ef;
             color: var(--night);
@@ -480,7 +543,7 @@
             .signal-panel { left: 0; top: 0; width: 100%; }
             .phone-panel { right: auto; left: 50%; transform: translateX(-50%); bottom: 0; }
             .section-head { display: grid; align-items: start; }
-            .power-grid, .palette { grid-template-columns: 1fr; }
+            .power-grid, .palette, .report-showcase { grid-template-columns: 1fr; }
             .dash-grid { grid-template-columns: 1fr; }
             .wide { grid-column: span 1; }
             .map-row { grid-template-columns: 1fr; }
@@ -538,9 +601,11 @@
                             <table>
                                 <thead><tr><th>Unit</th><th>Resident</th><th>Rent</th><th>Utilities</th><th>Status</th></tr></thead>
                                 <tbody>
-                                    <tr><td>B</td><td>Grady Bradley</td><td>$506</td><td>$58</td><td class="good">Clear</td></tr>
-                                    <tr><td>N</td><td>Hero Lowe</td><td>$550</td><td>$0</td><td class="warn">Rent Open</td></tr>
-                                    <tr><td>R</td><td>Aaron Brown</td><td>$650</td><td>$58</td><td class="good">Clear</td></tr>
+                                    <tr><td>101</td><td>Marisol Vega</td><td>$1,175</td><td>$65</td><td class="good">Clear</td></tr>
+                                    <tr><td>105</td><td>Lena Morales</td><td>$1,310</td><td>$65</td><td class="warn">Partial Rent</td></tr>
+                                    <tr><td>F</td><td>Marcus Doyle</td><td>$1,125</td><td>$55</td><td class="warn">Rent Open</td></tr>
+                                    <tr><td>204</td><td>Iris Morgan</td><td>$1,525</td><td>$80</td><td class="warn">Utilities Open</td></tr>
+                                    <tr><td>3B</td><td>Olivia Grant</td><td>$1,750</td><td>$0</td><td class="good">Clear</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -606,6 +671,53 @@
                     </ul>
                     <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'property-app' %}">Open Property App</a></div>
                 </article>
+            </div>
+        </section>
+
+        <section class="section" id="proof">
+            <div class="section-head">
+                <div>
+                    <div class="eyebrow">Sample report depth</div>
+                    <h2>Show the range before they ever log in.</h2>
+                </div>
+                <p style="max-width:480px">The public demo now previews a fuller portfolio dataset: 4 properties, 174 units, 12 operating months, payment detail, vendor spend, compliance, capital work, and valuation support.</p>
+            </div>
+            <div class="report-showcase">
+                {% for slug, report in demo_reports.items %}
+                    <article class="report-card">
+                        <div class="report-card-head">
+                            <div>
+                                <div class="chip">{{ report.eyebrow }}</div>
+                                <h3>{{ report.title }}</h3>
+                                <p>{{ report.summary }}</p>
+                            </div>
+                            <span class="report-count">{{ report.rows|length }} rows</span>
+                        </div>
+                        <div class="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        {% for column in report.columns|slice:":5" %}
+                                            <th>{{ column }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in report.rows|slice:":4" %}
+                                        <tr>
+                                            {% for cell in row|slice:":5" %}
+                                                <td>{{ cell }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="actions">
+                            <a class="button secondary" href="{% url 'rental_ledger_demo_report' slug %}">Open Full Sample</a>
+                        </div>
+                    </article>
+                {% endfor %}
             </div>
         </section>
 

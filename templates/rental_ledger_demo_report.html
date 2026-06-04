@@ -127,10 +127,15 @@
             font-weight: 950;
         }
 
+        .table-scroll {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: .92rem;
+            min-width: 760px;
         }
 
         th, td {
@@ -165,7 +170,8 @@
             .hero { background: #fff; color: #000; padding: 0 0 16px; }
             .section { width: 100%; margin: 0; }
             .report { border: 0; }
-            table { font-size: 10px; }
+            .table-scroll { overflow: visible; }
+            table { font-size: 8px; min-width: 0; }
             th, td { padding: 6px; }
         }
 
@@ -199,27 +205,29 @@
     <main>
         <section class="section report">
             <div class="report-head">
-                <span>Cedar Ridge Apartments</span>
-                <span>Sample Demo Data</span>
+                <span>Rental Ledger Pro Portfolio</span>
+                <span>{{ report.rows|length }} sample rows</span>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        {% for column in report.columns %}
-                            <th>{{ column }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in report.rows %}
+            <div class="table-scroll">
+                <table>
+                    <thead>
                         <tr>
-                            {% for cell in row %}
-                                <td>{{ cell }}</td>
+                            {% for column in report.columns %}
+                                <th>{{ column }}</th>
                             {% endfor %}
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for row in report.rows %}
+                            <tr>
+                                {% for cell in row %}
+                                    <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <section class="section report-list">
