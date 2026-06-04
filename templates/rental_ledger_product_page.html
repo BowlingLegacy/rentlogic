@@ -134,6 +134,99 @@
             font-size: 1.35rem;
         }
 
+        .dashboard-showcase {
+            display: grid;
+            grid-template-columns: .82fr 1.18fr;
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .dashboard-copy,
+        .dashboard-panel {
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,.16);
+        }
+
+        .dashboard-copy {
+            background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+            padding: 24px;
+        }
+
+        .dashboard-copy h2 {
+            margin: 12px 0;
+            font-size: clamp(1.8rem, 3.2vw, 3rem);
+            line-height: 1;
+        }
+
+        .dashboard-panel {
+            background: var(--panel);
+            color: var(--night);
+            overflow: hidden;
+        }
+
+        .dashboard-panel-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #dfe7e2;
+            font-weight: 950;
+        }
+
+        .dashboard-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            padding: 14px;
+        }
+
+        .metric-card {
+            background: #fff;
+            border: 1px solid #e1e9e3;
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 84px;
+        }
+
+        .metric-card span {
+            color: var(--muted);
+            display: block;
+            font-size: .76rem;
+            font-weight: 850;
+            margin-bottom: 8px;
+        }
+
+        .metric-card strong {
+            display: block;
+            font-size: 1.45rem;
+        }
+
+        .table-scroll { overflow-x: auto; }
+
+        .dashboard-panel table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+            min-width: 680px;
+        }
+
+        th, td {
+            padding: 11px 12px;
+            border-bottom: 1px solid #e5ece7;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        th:first-child, td:first-child { text-align: left; }
+
+        th {
+            color: #596772;
+            background: #eef5f1;
+            text-transform: uppercase;
+            font-size: .72rem;
+        }
+
         .actions {
             display: flex;
             flex-wrap: wrap;
@@ -183,10 +276,17 @@
             font-size: 1.08rem;
         }
 
+        .report-card small {
+            display: block;
+            color: var(--muted);
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
         @media (max-width: 860px) {
             .nav { padding: 16px; align-items: flex-start; flex-direction: column; }
             .hero { padding: 54px 18px 38px; }
-            .feature-grid, .report-grid { grid-template-columns: 1fr; }
+            .feature-grid, .report-grid, .dashboard-showcase, .dashboard-metrics { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -223,6 +323,53 @@
             {% endfor %}
         </section>
 
+        <section class="section dashboard-showcase">
+            <div class="dashboard-copy">
+                <div class="eyebrow">{{ page.eyebrow }}</div>
+                <h2>{{ page.dashboard_title }}</h2>
+                <p>{{ page.dashboard_summary }}</p>
+                <div class="actions">
+                    <a class="button primary" href="{% url 'rental_ledger_demo' %}">Open Demo</a>
+                    <a class="button secondary" href="#reports">Related Reports</a>
+                </div>
+            </div>
+
+            <div class="dashboard-panel">
+                <div class="dashboard-panel-head">
+                    <span>{{ page.dashboard_title }}</span>
+                    <span>Sample Screen</span>
+                </div>
+                <div class="dashboard-metrics">
+                    {% for label, value in page.dashboard_metrics %}
+                        <div class="metric-card">
+                            <span>{{ label }}</span>
+                            <strong>{{ value }}</strong>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                {% for column in page.dashboard_columns %}
+                                    <th>{{ column }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in page.dashboard_rows %}
+                                <tr>
+                                    {% for cell in row %}
+                                        <td>{{ cell }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="reports">
             <div class="actions" style="margin-bottom:18px">
                 <a class="button secondary" href="{% url 'rental_ledger_pro_home' %}">Back to Homepage</a>
@@ -232,6 +379,7 @@
                     <a class="report-card" href="{% url 'rental_ledger_demo_report' slug %}">
                         <span>{{ report.eyebrow }}</span>
                         <strong>{{ report.title }}</strong>
+                        <small>{{ report.rows|length }} sample rows</small>
                     </a>
                 {% endfor %}
             </div>

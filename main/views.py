@@ -1084,6 +1084,22 @@ RENTAL_LEDGER_PRODUCT_PAGES = {
         "title": "Reports that make property performance clear.",
         "lead": "Rental Ledger Pro is built around the reports owners, lenders, buyers, and operators ask for: T-12, rent roll, NOI, cash flow after debt, payment ledger, valuation estimate, and receipt-backed expenses.",
         "accent": "cyan",
+        "dashboard_title": "Owner / Manager Portfolio View",
+        "dashboard_summary": "For owners and property managers with more than one property, the first screen should compare the portfolio, then let them drill into one property without mixing records.",
+        "dashboard_metrics": [
+            ("Portfolio Income", "$788.3k"),
+            ("NOI", "$424.0k"),
+            ("Cash Flow", "$196.6k"),
+            ("Occupancy", "98%"),
+        ],
+        "dashboard_columns": ["Property", "Units", "Occupancy", "NOI", "Watch"],
+        "dashboard_rows": [
+            ["Cedar Ridge", "48", "96%", "$89.2k", "1 rent open"],
+            ["Hillview Commons", "32", "97%", "$55.3k", "2 deposits"],
+            ["Evergreen Flats", "54", "98%", "$132.6k", "Capital review"],
+            ["Riverstone Court", "40", "100%", "$146.9k", "Water trend"],
+        ],
+        "report_slugs": ["t12", "rent-roll", "property-performance", "valuation", "vendor-expense", "utility-trend"],
         "features": [
             ("T-12 and NOI", "Monthly income, operating expenses, debt service, cash flow, and year-to-date totals."),
             ("Rent roll and payment ledger", "Resident/unit rent status, service month tracking, payment methods, balances, and printable history."),
@@ -1096,6 +1112,23 @@ RENTAL_LEDGER_PRODUCT_PAGES = {
         "title": "One work queue for the daily landlord job.",
         "lead": "The operations hub keeps resident files, applications, onboarding documents, messages, maintenance requests, rent setup, and monthly collection watch lists in one property-aware workspace.",
         "accent": "amber",
+        "dashboard_title": "Landlord Dashboard",
+        "dashboard_summary": "The landlord view should focus on what needs action today: unpaid balances, new messages, maintenance, documents, setup requests, and property-specific resident files.",
+        "dashboard_metrics": [
+            ("Needs Attention", "14"),
+            ("Open Rent", "$1,935"),
+            ("Open Utilities", "$200"),
+            ("New Messages", "6"),
+        ],
+        "dashboard_columns": ["Unit", "Resident", "Issue", "Amount", "Action"],
+        "dashboard_rows": [
+            ["103", "Diane Cole", "Utilities", "$65", "Send reminder"],
+            ["105", "Lena Morales", "Partial rent", "$390", "Record split pay"],
+            ["F", "Marcus Doyle", "Rent + utilities", "$1,180", "Call resident"],
+            ["204", "Iris Morgan", "Utilities", "$80", "Send reminder"],
+            ["2A", "Jamal Pierce", "Partial rent", "$420", "ACH follow-up"],
+        ],
+        "report_slugs": ["delinquency", "payment-log", "rent-roll", "vendor-expense", "capital-log", "insurance-compliance"],
         "features": [
             ("Resident files", "Applications, leases, emergency contacts, documents, payments, profile photos, and notes stay attached to the resident."),
             ("Needs-attention workflow", "New messages, documents, setup requests, applications, and unpaid balances surface without digging through pages."),
@@ -1108,6 +1141,23 @@ RENTAL_LEDGER_PRODUCT_PAGES = {
         "title": "One platform that can feel local to every property.",
         "lead": "Residents should not feel like they are using generic software. Rental Ledger Pro can present the right property name, visuals, notices, documents, payments, utility setup steps, and communication tools for each property.",
         "accent": "violet",
+        "dashboard_title": "Tenant Dashboard",
+        "dashboard_summary": "The resident view should be simple: what they owe, what documents need attention, how to message the property, and what property-specific setup steps remain.",
+        "dashboard_metrics": [
+            ("Current Balance", "$0"),
+            ("Inbox", "2"),
+            ("Setup Steps", "3 of 4"),
+            ("Maintenance", "1 open"),
+        ],
+        "dashboard_columns": ["Panel", "What Resident Sees", "Status", "Next Step"],
+        "dashboard_rows": [
+            ["Balance", "Rent, utilities, deposit detail", "Current", "Print receipt"],
+            ["Inbox", "Lease update and community notice", "Needs signature", "Open document"],
+            ["Messages", "Private thread with manager", "New reply", "Respond"],
+            ["Utilities", "Power and water setup links", "In progress", "Finish checklist"],
+            ["Insurance", "Suggested renters insurance link", "Optional", "Open provider"],
+        ],
+        "report_slugs": ["payment-log", "insurance-compliance", "utility-trend"],
         "features": [
             ("Property identity", "Each property can carry its own name, photos, colors, notices, and resident instructions."),
             ("Resident payments", "Rent, utilities, deposits, balance details, payment history, and receipts stay easy to find."),
@@ -1334,10 +1384,16 @@ def rental_ledger_product_page(request, page_slug):
     if not page:
         raise Http404("Rental Ledger Pro page not found.")
 
+    page_reports = {
+        slug: RENTAL_LEDGER_DEMO_REPORTS[slug]
+        for slug in page.get("report_slugs", [])
+        if slug in RENTAL_LEDGER_DEMO_REPORTS
+    }
+
     return render(request, "rental_ledger_product_page.html", {
         "page": page,
         "page_slug": page_slug,
-        "reports": RENTAL_LEDGER_DEMO_REPORTS,
+        "reports": page_reports,
     })
 
 
