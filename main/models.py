@@ -141,6 +141,23 @@ class Property(models.Model):
     requires_background_check = models.BooleanField(default=False)
     background_check_fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), blank=True)
     background_check_instructions = models.TextField(blank=True)
+    screening_provider_name = models.CharField(max_length=255, blank=True)
+    screening_provider_cost = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), blank=True)
+    screening_admin_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        blank=True,
+        help_text="Optional client-facing admin fee. Do not charge renters on Rental Ledger Pro's behalf.",
+    )
+    screening_criteria = models.TextField(
+        blank=True,
+        help_text="Written applicant screening criteria shown to owners and used for consistent review.",
+    )
+    screening_fee_disclosure = models.TextField(
+        blank=True,
+        help_text="Property-specific fee and screening disclosure shown before application submission.",
+    )
     renters_insurance_provider_name = models.CharField(max_length=255, blank=True, default="Progressive Renters Insurance")
     renters_insurance_url = models.URLField(blank=True, default="https://www.progressive.com/renters/")
     renters_insurance_notes = models.TextField(blank=True)
@@ -301,6 +318,38 @@ class HousingApplication(models.Model):
         ],
         default="not_required",
     )
+    screening_consent = models.BooleanField(default=False)
+    screening_consent_at = models.DateTimeField(blank=True, null=True)
+    screening_provider_name = models.CharField(max_length=255, blank=True)
+    background_report = models.FileField(upload_to="background_reports/", blank=True, null=True)
+    background_report_received_at = models.DateTimeField(blank=True, null=True)
+    screening_score = models.PositiveSmallIntegerField(blank=True, null=True)
+    screening_rating = models.CharField(
+        max_length=30,
+        choices=[
+            ("unrated", "Unrated"),
+            ("strong", "Strong Candidate"),
+            ("qualified", "Qualified"),
+            ("review", "Needs Review"),
+            ("high_risk", "High Risk"),
+            ("declined", "Decline Recommended"),
+        ],
+        default="unrated",
+    )
+    screening_review_summary = models.TextField(blank=True)
+    owner_final_decision = models.CharField(
+        max_length=30,
+        choices=[
+            ("pending", "Pending Owner Review"),
+            ("approved", "Approved"),
+            ("approved_conditions", "Approved With Conditions"),
+            ("declined", "Declined"),
+            ("withdrawn", "Withdrawn"),
+        ],
+        default="pending",
+    )
+    owner_decision_notes = models.TextField(blank=True)
+    owner_decision_at = models.DateTimeField(blank=True, null=True)
 
     current_address = models.CharField(max_length=255, blank=True)
     current_address_length = models.CharField(max_length=100, blank=True)
@@ -382,6 +431,9 @@ class ApplicantDocument(models.Model):
     DOCUMENT_TYPE_CHOICES = [
         ("lease", "Lease Agreement"),
         ("application_pdf", "Application PDF"),
+        ("screening_criteria", "Screening Criteria"),
+        ("background_report", "Background Report"),
+        ("adverse_action_notice", "Adverse Action Notice"),
         ("id", "Identification"),
         ("income", "Proof of Income"),
         ("bank", "Bank Statement / Deposit Verification"),
@@ -428,6 +480,39 @@ class ApplicantDocument(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.application.full_name})"
+
+
+class AdverseActionNotice(models.Model):
+    ACTION_CHOICES = [
+        ("declined", "Application Declined"),
+        ("approved_conditions", "Approved With Conditions"),
+        ("other", "Other Adverse Action"),
+    ]
+
+    application = models.ForeignKey(HousingApplication, on_delete=models.CASCADE, related_name="adverse_action_notices")
+    action_type = models.CharField(max_length=30, choices=ACTION_CHOICES, default="declined")
+    reasons = models.TextField()
+    screening_company_name = models.CharField(max_length=255, blank=True)
+    screening_company_contact = models.TextField(blank=True)
+    owner_landlord_name = models.CharField(max_length=255, blank=True)
+    owner_landlord_contact = models.TextField(blank=True)
+    notice_body = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_adverse_action_notices",
+    )
+    sent_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.application.full_name} - {self.get_action_type_display()}"
+
 
 class SignedDocument(models.Model):
     DOCUMENT_TYPE_CHOICES = [

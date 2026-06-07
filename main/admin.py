@@ -28,6 +28,7 @@ from .models import (
     ExistingResidentIntake,
     CurrentResidentRosterEntry,
     CompanyMailboxConnection,
+    AdverseActionNotice,
 )
 from django.utils import timezone
 
@@ -459,6 +460,20 @@ class PaymentInline(admin.TabularInline):
         return False
 
 
+class AdverseActionNoticeInline(admin.TabularInline):
+    model = AdverseActionNotice
+    extra = 0
+    readonly_fields = ("created_by", "sent_at", "created_at")
+    fields = (
+        "action_type",
+        "reasons",
+        "screening_company_name",
+        "owner_landlord_name",
+        "sent_at",
+        "created_at",
+    )
+
+
 class RentHistoryInline(admin.TabularInline):
     model = RentHistory
     extra = 0
@@ -483,6 +498,7 @@ class HousingApplicationAdmin(admin.ModelAdmin):
         SignedDocumentInline,
         ResidentMessageInline,
         PaymentInline,
+        AdverseActionNoticeInline,
         RentHistoryInline,
     ]
 
@@ -497,12 +513,16 @@ class HousingApplicationAdmin(admin.ModelAdmin):
         "deposit_paid",
         "application_fee_paid",
         "background_check_status",
+        "screening_rating",
+        "owner_final_decision",
     )
 
     list_filter = (
         "property",
         "space_type",
         "background_check_status",
+        "screening_rating",
+        "owner_final_decision",
     )
 
     search_fields = (
@@ -552,6 +572,17 @@ class HousingApplicationAdmin(admin.ModelAdmin):
                 "background_check_fee_amount",
                 "background_check_fee_paid",
                 "background_check_status",
+                "screening_consent",
+                "screening_consent_at",
+                "screening_provider_name",
+                "background_report",
+                "background_report_received_at",
+                "screening_score",
+                "screening_rating",
+                "screening_review_summary",
+                "owner_final_decision",
+                "owner_decision_notes",
+                "owner_decision_at",
             )
         }),
         ("Address History", {
@@ -751,6 +782,20 @@ class PaymentAdmin(admin.ModelAdmin):
 @admin.register(RentHistory)
 class RentHistoryAdmin(admin.ModelAdmin):
     list_display = ("application", "rent_amount", "effective_date")
+
+
+@admin.register(AdverseActionNotice)
+class AdverseActionNoticeAdmin(admin.ModelAdmin):
+    list_display = ("application", "action_type", "screening_company_name", "created_by", "created_at", "sent_at")
+    list_filter = ("action_type", "created_at", "sent_at")
+    search_fields = (
+        "application__full_name",
+        "application__email",
+        "reasons",
+        "screening_company_name",
+        "owner_landlord_name",
+    )
+    readonly_fields = ("created_at",)
 
 
 @admin.register(CompanyMailboxConnection)

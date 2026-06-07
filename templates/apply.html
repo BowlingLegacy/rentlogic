@@ -130,6 +130,9 @@
                     {% endif %}
                     {% if property.requires_background_check %}
                         Background check may be required{% if property.background_check_fee_amount > 0 %} and costs ${{ property.background_check_fee_amount }}{% endif %}.
+                        {% if property.screening_fee_disclosure %}
+                            <div class="mt-2">{{ property.screening_fee_disclosure|linebreaksbr }}</div>
+                        {% endif %}
                     {% endif %}
                 </div>
             {% endif %}
@@ -338,6 +341,20 @@
                     Painted Lady Inn maintains a drug- and alcohol-free environment with house rules, quiet expectations,
                     respect for staff/residents/property, and cleanliness in shared spaces.
                 </p>
+
+                {% if property.requires_background_check %}
+                <div class="check-card">
+                    {{ form.screening_consent }}
+                    <label for="{{ form.screening_consent.id_for_label }}">
+                        {{ form.screening_consent.label }}
+                    </label>
+                    <div class="text-muted small mt-2">{{ form.screening_consent.help_text }}</div>
+                    {% if property.screening_criteria %}
+                        <div class="mt-2 small"><strong>Screening criteria:</strong><br>{{ property.screening_criteria|linebreaksbr }}</div>
+                    {% endif %}
+                    {{ form.screening_consent.errors }}
+                </div>
+                {% endif %}
 
                 <div class="check-card">
                     {{ form.sobriety_acknowledgment }}

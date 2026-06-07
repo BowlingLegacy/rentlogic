@@ -16,6 +16,7 @@ from .models import (
     PropertyOwnerIntake,
     ExistingResidentIntake,
     LandlordIntake,
+    AdverseActionNotice,
 )
 
 
@@ -242,6 +243,11 @@ class OwnerPropertyForm(forms.ModelForm):
             "requires_background_check",
             "background_check_fee_amount",
             "background_check_instructions",
+            "screening_provider_name",
+            "screening_provider_cost",
+            "screening_admin_fee",
+            "screening_criteria",
+            "screening_fee_disclosure",
             "renters_insurance_provider_name",
             "renters_insurance_url",
             "renters_insurance_notes",
@@ -258,6 +264,11 @@ class OwnerPropertyForm(forms.ModelForm):
             "application_fee_amount": "Application Fee Amount",
             "requires_background_check": "Require Background Check",
             "background_check_fee_amount": "Background Check Fee Amount",
+            "screening_provider_name": "Screening Provider",
+            "screening_provider_cost": "Screening Provider Cost",
+            "screening_admin_fee": "Client Admin Fee",
+            "screening_criteria": "Written Screening Criteria",
+            "screening_fee_disclosure": "Applicant Fee / Screening Disclosure",
             "renters_insurance_provider_name": "Renters Insurance Provider",
             "renters_insurance_url": "Renters Insurance Link",
         }
@@ -282,6 +293,11 @@ class OwnerPropertyForm(forms.ModelForm):
             "requires_background_check": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "background_check_fee_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
             "background_check_instructions": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "screening_provider_name": forms.TextInput(attrs={"class": "form-control"}),
+            "screening_provider_cost": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "screening_admin_fee": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "screening_criteria": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
+            "screening_fee_disclosure": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
             "renters_insurance_provider_name": forms.TextInput(attrs={"class": "form-control"}),
             "renters_insurance_url": forms.URLInput(attrs={"class": "form-control"}),
             "renters_insurance_notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
@@ -1032,6 +1048,7 @@ class HousingApplicationForm(forms.ModelForm):
             "email",
             "age",
             "sms_opted_in",
+            "screening_consent",
             "current_address",
             "current_address_length",
             "previous_address_1",
@@ -1076,6 +1093,7 @@ class HousingApplicationForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"class": "form-control"}),
             "age": forms.NumberInput(attrs={"class": "form-control"}),
             "sms_opted_in": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "screening_consent": forms.CheckboxInput(attrs={"class": "form-check-input"}),
 
             "current_address": forms.TextInput(attrs={"class": "form-control"}),
             "current_address_length": forms.TextInput(attrs={"class": "form-control"}),
@@ -1122,9 +1140,66 @@ class HousingApplicationForm(forms.ModelForm):
         }
         labels = {
             "sms_opted_in": "Yes, I agree to receive text messages from Bowling Legacy",
+            "screening_consent": "I consent to applicant screening and background-check processing for this property",
         }
         help_texts = {
             "sms_opted_in": "Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not required to rent from Bowling Legacy.",
+            "screening_consent": "Consent allows the property owner or landlord to order and review applicant screening reports when required. Rental Ledger Pro stores the report workflow for the owner but does not make the final rental decision.",
+        }
+
+
+class ScreeningReviewForm(forms.ModelForm):
+    class Meta:
+        model = HousingApplication
+        fields = [
+            "background_check_status",
+            "background_report",
+            "screening_score",
+            "screening_rating",
+            "screening_review_summary",
+            "owner_final_decision",
+            "owner_decision_notes",
+        ]
+        widgets = {
+            "background_check_status": forms.Select(attrs={"class": "form-select"}),
+            "background_report": forms.ClearableFileInput(attrs={"class": "form-control"}),
+            "screening_score": forms.NumberInput(attrs={"class": "form-control", "min": "0", "max": "100"}),
+            "screening_rating": forms.Select(attrs={"class": "form-select"}),
+            "screening_review_summary": forms.Textarea(attrs={"class": "form-control", "rows": 6}),
+            "owner_final_decision": forms.Select(attrs={"class": "form-select"}),
+            "owner_decision_notes": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+        }
+        labels = {
+            "background_check_status": "Background Report Status",
+            "background_report": "Upload Background / Screening Report",
+            "screening_score": "Suggested Score",
+            "screening_rating": "Suggested Rating",
+            "screening_review_summary": "Screening Review Summary",
+            "owner_final_decision": "Owner / Landlord Decision",
+            "owner_decision_notes": "Owner / Landlord Decision Notes",
+        }
+
+
+class AdverseActionNoticeForm(forms.ModelForm):
+    class Meta:
+        model = AdverseActionNotice
+        fields = [
+            "action_type",
+            "reasons",
+            "screening_company_name",
+            "screening_company_contact",
+            "owner_landlord_name",
+            "owner_landlord_contact",
+            "notice_body",
+        ]
+        widgets = {
+            "action_type": forms.Select(attrs={"class": "form-select"}),
+            "reasons": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
+            "screening_company_name": forms.TextInput(attrs={"class": "form-control"}),
+            "screening_company_contact": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "owner_landlord_name": forms.TextInput(attrs={"class": "form-control"}),
+            "owner_landlord_contact": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "notice_body": forms.Textarea(attrs={"class": "form-control", "rows": 8}),
         }
 
 

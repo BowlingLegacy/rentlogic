@@ -14,7 +14,7 @@
         {% csrf_token %}
         <div class="row g-3">
             {% for field in form %}
-                <div class="{% if field.name == 'description' or field.name == 'tenant_utility_vendors' or field.name == 'renters_insurance_notes' or field.name == 'background_check_instructions' %}col-12{% else %}col-md-6{% endif %}">
+                <div class="{% if field.name == 'description' or field.name == 'tenant_utility_vendors' or field.name == 'renters_insurance_notes' or field.name == 'background_check_instructions' or field.name == 'screening_criteria' or field.name == 'screening_fee_disclosure' %}col-12{% else %}col-md-6{% endif %}">
                     <label class="form-label fw-bold">{{ field.label }}</label>
                     {{ field }}
                     {{ field.errors }}

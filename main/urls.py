@@ -121,6 +121,9 @@ urlpatterns = [
 
     path("application/<int:pk>/view/", views.printable_application, name="application_detail"),
     path("application/<int:pk>/print/", views.printable_application, name="printable_application"),
+    path("application/<int:pk>/screening/", views.application_screening_review, name="application_screening_review"),
+    path("application/<int:pk>/adverse-action/", views.create_adverse_action_notice, name="create_adverse_action_notice"),
+    path("adverse-action/<int:notice_id>/", views.adverse_action_notice_detail, name="adverse_action_notice_detail"),
 
     path("lease/sign/", views.lease_sign, name="lease_sign"),
     path("lease/submit/", views.submit_lease_signature, name="submit_lease_signature"),

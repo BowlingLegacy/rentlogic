@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4" style="max-width: 980px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted fw-bold small mb-1">Adverse Action Notice</p>
+            <h1 class="fw-bold mb-1">{{ application.full_name }}</h1>
+            <p class="text-muted mb-0">
+                Draft a notice for owner or landlord review before sending.
+            </p>
+        </div>
+        <a href="{% url 'application_screening_review' application.id %}" class="btn btn-outline-secondary">Back To Screening</a>
+    </div>
+
+    <form method="post" class="card shadow-sm">
+        {% csrf_token %}
+        <div class="card-body">
+            <div class="alert alert-warning">
+                Use this when an applicant is declined or approved with conditions based in whole or in part on screening information.
+                The property owner or landlord remains responsible for the final decision and delivery.
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Action</label>
+                    {{ form.action_type }}
+                    {{ form.action_type.errors }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Screening Company</label>
+                    {{ form.screening_company_name }}
+                    {{ form.screening_company_name.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Reasons</label>
+                    {{ form.reasons }}
+                    {{ form.reasons.errors }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Screening Company Contact</label>
+                    {{ form.screening_company_contact }}
+                    {{ form.screening_company_contact.errors }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Owner / Landlord Name</label>
+                    {{ form.owner_landlord_name }}
+                    {{ form.owner_landlord_name.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Owner / Landlord Contact</label>
+                    {{ form.owner_landlord_contact }}
+                    {{ form.owner_landlord_contact.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Notice Body</label>
+                    {{ form.notice_body }}
+                    {{ form.notice_body.errors }}
+                </div>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-end">
+            <button class="btn btn-danger" type="submit">Create Notice Draft</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

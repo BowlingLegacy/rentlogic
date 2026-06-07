@@ -54,6 +54,8 @@ from .forms import (
     GroupResidentMessageForm,
     CompanyEmailComposeForm,
     CompanyEmailReplyForm,
+    ScreeningReviewForm,
+    AdverseActionNoticeForm,
 )
 
 from .models import (
@@ -80,6 +82,7 @@ from .models import (
     ResidentUtilitySetup,
     LandlordIntake,
     CompanyMailboxConnection,
+    AdverseActionNotice,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
 from .templatetags.formatting import phone_format
@@ -1476,6 +1479,86 @@ def property_owner_intake_success(request):
     return render(request, "property_owner_intake_success.html")
 
 
+def calculate_screening_score(application):
+    score = 0
+    factors = []
+
+    if application.monthly_rent and application.monthly_income:
+        rent_ratio = application.monthly_income / application.monthly_rent if application.monthly_rent else Decimal("0")
+        if rent_ratio >= Decimal("3"):
+            score += 25
+            factors.append("Income is at least 3x the monthly rent.")
+        elif rent_ratio >= Decimal("2"):
+            score += 16
+            factors.append("Income is at least 2x the monthly rent.")
+        else:
+            score += 6
+            factors.append("Income is below 2x monthly rent and needs owner review.")
+    elif application.monthly_income:
+        score += 10
+        factors.append("Income was provided, but no rent amount is assigned yet.")
+
+    if application.current_address and application.current_address_length:
+        score += 10
+        factors.append("Current housing history is present.")
+
+    previous_housing_fields = [
+        application.previous_address_1,
+        application.previous_address_2,
+        application.previous_address_3,
+    ]
+    if any(previous_housing_fields):
+        score += 10
+        factors.append("Prior housing history was provided.")
+
+    eviction_text = (application.previous_evictions or "").strip().lower()
+    if eviction_text and eviction_text not in {"no", "none", "n/a", "na"}:
+        factors.append("Applicant disclosed prior evictions or housing barriers.")
+    else:
+        score += 12
+        factors.append("No prior eviction concern was disclosed.")
+
+    if application.has_valid_odl or application.oregon_id_number or application.drivers_license_number or application.id_upload:
+        score += 10
+        factors.append("Applicant provided identification information.")
+
+    if application.reference_1_name and application.reference_1_phone:
+        score += 8
+        factors.append("Primary reference is available.")
+
+    if application.reference_2_name and application.reference_2_phone:
+        score += 5
+        factors.append("Secondary reference is available.")
+
+    if application.background_check_status == "cleared":
+        score += 20
+        factors.append("Background report is marked cleared.")
+    elif application.background_check_status == "needs_review":
+        score += 6
+        factors.append("Background report needs owner review.")
+    elif application.background_check_status == "declined":
+        factors.append("Background report is marked declined.")
+    elif application.background_check_required:
+        factors.append("Background report is required but not cleared yet.")
+    else:
+        score += 8
+        factors.append("Background check is not required for this property.")
+
+    score = min(score, 100)
+    if score >= 85:
+        rating = "strong"
+    elif score >= 70:
+        rating = "qualified"
+    elif score >= 50:
+        rating = "review"
+    elif score >= 30:
+        rating = "high_risk"
+    else:
+        rating = "declined"
+
+    return score, rating, factors
+
+
 def apply(request):
     property_id = request.GET.get("property") or request.POST.get("property")
     property_obj = None
@@ -1492,12 +1575,21 @@ def apply(request):
                 if property_obj.charges_application_fee:
                     application.application_fee_amount = property_obj.application_fee_amount
                 if property_obj.requires_background_check:
+                    if not application.screening_consent:
+                        form.add_error("screening_consent", "Consent is required before this property can process applicant screening.")
+                        return render(request, "apply.html", {
+                            "form": form,
+                            "property": property_obj,
+                        })
                     application.background_check_required = True
                     application.background_check_fee_amount = property_obj.background_check_fee_amount
                     application.background_check_status = "pending"
+                    application.screening_provider_name = property_obj.screening_provider_name
             if application.sms_opted_in:
                 application.sms_opted_in_at = timezone.now()
                 application.communication_preference = "sms"
+            if application.screening_consent:
+                application.screening_consent_at = timezone.now()
             application.save()
             request.session["submitted_application_id"] = application.id
             return redirect("apply_success")
@@ -5493,6 +5585,128 @@ def printable_application(request, pk):
         application.landlord_reviewed_at = timezone.now()
         application.save(update_fields=["landlord_reviewed_at"])
     return render(request, "printable_application.html", {"application": application})
+
+
+@login_required
+@user_passes_test(staff_required)
+def application_screening_review(request, pk):
+    application = get_object_or_404(
+        HousingApplication.objects.select_related("property"),
+        pk=pk,
+        property__in=staff_managed_properties(request.user),
+    )
+    suggested_score, suggested_rating, score_factors = calculate_screening_score(application)
+    initial = {}
+
+    if application.screening_score is None:
+        initial["screening_score"] = suggested_score
+    if application.screening_rating == "unrated":
+        initial["screening_rating"] = suggested_rating
+    if not application.screening_review_summary:
+        initial["screening_review_summary"] = "\n".join(score_factors)
+
+    old_report_name = application.background_report.name if application.background_report else ""
+    old_decision = application.owner_final_decision
+    form = ScreeningReviewForm(request.POST or None, request.FILES or None, instance=application, initial=initial)
+
+    if request.method == "POST" and form.is_valid():
+        application = form.save(commit=False)
+
+        if application.background_report and application.background_report.name != old_report_name:
+            application.background_report_received_at = timezone.now()
+            if application.background_check_status in ["pending", "ordered", "not_required"]:
+                application.background_check_status = "needs_review"
+
+        if application.owner_final_decision != "pending" and application.owner_final_decision != old_decision:
+            application.owner_decision_at = timezone.now()
+
+        application.save()
+
+        if application.background_report:
+            ApplicantDocument.objects.get_or_create(
+                application=application,
+                document_type="background_report",
+                file=application.background_report.name,
+                defaults={
+                    "name": f"Background Screening Report - {application.full_name}",
+                    "status": "locked",
+                },
+            )
+
+        messages.success(request, "Screening review saved.")
+        return redirect("application_screening_review", pk=application.id)
+
+    adverse_notices = application.adverse_action_notices.all()
+    return render(request, "application_screening_review.html", {
+        "application": application,
+        "form": form,
+        "suggested_score": suggested_score,
+        "suggested_rating": suggested_rating,
+        "score_factors": score_factors,
+        "adverse_notices": adverse_notices,
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+def create_adverse_action_notice(request, pk):
+    application = get_object_or_404(
+        HousingApplication.objects.select_related("property"),
+        pk=pk,
+        property__in=staff_managed_properties(request.user),
+    )
+    property_obj = application.property
+    default_owner_contact = ""
+    if property_obj:
+        default_owner_contact = "\n".join(filter(None, [property_obj.owner_email, property_obj.landlord_email]))
+
+    initial = {
+        "screening_company_name": application.screening_provider_name or (property_obj.screening_provider_name if property_obj else ""),
+        "owner_landlord_name": property_obj.name if property_obj else "",
+        "owner_landlord_contact": default_owner_contact,
+        "notice_body": (
+            f"Dear {application.full_name},\n\n"
+            "After reviewing your rental application and screening information, the property owner or landlord has taken the action selected above.\n\n"
+            "If this decision was based in whole or in part on a consumer report or background screening report, you have rights under the Fair Credit Reporting Act. "
+            "The screening company did not make the rental decision and cannot explain the specific reason for the decision. "
+            "You may request a free copy of the report from the screening company and dispute inaccurate or incomplete information.\n\n"
+            "Sincerely,\n"
+            "Property Owner / Landlord"
+        ),
+    }
+    form = AdverseActionNoticeForm(request.POST or None, initial=initial)
+
+    if request.method == "POST" and form.is_valid():
+        notice = form.save(commit=False)
+        notice.application = application
+        notice.created_by = request.user
+        notice.save()
+
+        application.owner_final_decision = (
+            "approved_conditions" if notice.action_type == "approved_conditions" else "declined"
+        )
+        application.owner_decision_at = timezone.now()
+        application.owner_decision_notes = notice.reasons
+        application.save(update_fields=["owner_final_decision", "owner_decision_at", "owner_decision_notes"])
+
+        messages.success(request, "Adverse action notice drafted.")
+        return redirect("adverse_action_notice_detail", notice_id=notice.id)
+
+    return render(request, "adverse_action_notice_form.html", {
+        "application": application,
+        "form": form,
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+def adverse_action_notice_detail(request, notice_id):
+    notice = get_object_or_404(
+        AdverseActionNotice.objects.select_related("application", "application__property"),
+        id=notice_id,
+        application__property__in=staff_managed_properties(request.user),
+    )
+    return render(request, "adverse_action_notice_detail.html", {"notice": notice})
 
 
 def get_resident_signed_document(request, document_id):

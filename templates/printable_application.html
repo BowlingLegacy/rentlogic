@@ -190,6 +190,10 @@ body {
         Print Application
     </a>
 
+    <a href="{% url 'application_screening_review' application.id %}" class="dark-btn">
+        Screening Review
+    </a>
+
     {% if not application.user %}
     <a href="{% url 'landlord_create_tenant' %}?application={{ application.id }}" class="green-btn">
         Approve / Create Invite
@@ -243,6 +247,22 @@ body {
                 <div class="field-item"><div class="field-label">Deposit Paid</div><div class="field-value">${{ application.deposit_paid }}</div></div>
                 <div class="field-item"><div class="field-label">Utility Monthly</div><div class="field-value">${{ application.utility_monthly }}</div></div>
                 <div class="field-item"><div class="field-label">Utility Balance</div><div class="field-value">${{ application.utility_balance }}</div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Application Screening</h2>
+            <div class="field-grid">
+                <div class="field-item"><div class="field-label">Application Fee</div><div class="field-value">${{ application.application_fee_amount }} / Paid ${{ application.application_fee_paid }}</div></div>
+                <div class="field-item"><div class="field-label">Background Fee</div><div class="field-value">${{ application.background_check_fee_amount }} / Paid ${{ application.background_check_fee_paid }}</div></div>
+                <div class="field-item"><div class="field-label">Background Required</div><div class="field-value">{{ application.background_check_required|yesno:"Yes,No" }}</div></div>
+                <div class="field-item"><div class="field-label">Consent Recorded</div><div class="field-value">{% if application.screening_consent_at %}{{ application.screening_consent_at|date:"M j, Y g:i A" }}{% elif application.screening_consent %}Yes{% else %}No{% endif %}</div></div>
+                <div class="field-item"><div class="field-label">Background Status</div><div class="field-value">{{ application.get_background_check_status_display }}</div></div>
+                <div class="field-item"><div class="field-label">Screening Provider</div><div class="field-value">{{ application.screening_provider_name|default:"Not assigned" }}</div></div>
+                <div class="field-item"><div class="field-label">Score / Rating</div><div class="field-value">{{ application.screening_score|default_if_none:"Not scored" }}{% if application.screening_score %}/100{% endif %} | {{ application.get_screening_rating_display }}</div></div>
+                <div class="field-item"><div class="field-label">Owner Decision</div><div class="field-value">{{ application.get_owner_final_decision_display }}</div></div>
+                <div class="field-item field-wide"><div class="field-label">Screening Review Summary</div><div class="field-value">{{ application.screening_review_summary|default:"Not provided" }}</div></div>
+                <div class="field-item field-wide"><div class="field-label">Owner Decision Notes</div><div class="field-value">{{ application.owner_decision_notes|default:"Not provided" }}</div></div>
             </div>
         </div>
 

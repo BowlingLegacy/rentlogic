@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+@media print {
+    .navbar,
+    .footer,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: #fff !important;
+    }
+
+    .notice-paper {
+        box-shadow: none !important;
+        border: none !important;
+    }
+}
+</style>
+
+<div class="container py-4" style="max-width: 900px;">
+    <div class="no-print d-flex flex-wrap justify-content-between gap-2 mb-4">
+        <a href="{% url 'application_screening_review' notice.application.id %}" class="btn btn-outline-secondary">Back To Screening</a>
+        <button onclick="window.print()" class="btn btn-primary">Print Notice</button>
+    </div>
+
+    <article class="notice-paper card shadow-sm">
+        <div class="card-body p-4 p-md-5">
+            <p class="text-muted mb-1">{{ notice.created_at|date:"F j, Y" }}</p>
+            <h1 class="fw-bold mb-4">Adverse Action Notice</h1>
+
+            <p><strong>Applicant:</strong> {{ notice.application.full_name }}</p>
+            <p><strong>Property:</strong> {% if notice.application.property %}{{ notice.application.property.name }}{% else %}Not assigned{% endif %}</p>
+            <p><strong>Action:</strong> {{ notice.get_action_type_display }}</p>
+
+            <hr>
+
+            <h2 class="h5 fw-bold">Reason(s)</h2>
+            <p style="white-space: pre-line;">{{ notice.reasons }}</p>
+
+            <h2 class="h5 fw-bold mt-4">Notice</h2>
+            <p style="white-space: pre-line;">{{ notice.notice_body }}</p>
+
+            <div class="row g-4 mt-3">
+                <div class="col-md-6">
+                    <h2 class="h6 fw-bold">Screening Company</h2>
+                    <p class="mb-1">{{ notice.screening_company_name|default:"Not provided" }}</p>
+                    <p style="white-space: pre-line;">{{ notice.screening_company_contact|default:"Not provided" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="h6 fw-bold">Owner / Landlord Contact</h2>
+                    <p class="mb-1">{{ notice.owner_landlord_name|default:"Not provided" }}</p>
+                    <p style="white-space: pre-line;">{{ notice.owner_landlord_contact|default:"Not provided" }}</p>
+                </div>
+            </div>
+        </div>
+    </article>
+</div>
+
+{% endblock %}

@@ -82,6 +82,7 @@
                             <td>{{ application.created_at|date:"M j, g:i A" }}</td>
                             <td class="d-flex gap-2 flex-wrap">
                                 <a href="{% url 'application_detail' application.id %}" class="btn btn-outline-secondary btn-sm">Open</a>
+                                <a href="{% url 'application_screening_review' application.id %}" class="btn btn-outline-dark btn-sm">Screen</a>
                                 <a href="{% url 'landlord_create_tenant' %}?application={{ application.id }}" class="btn btn-primary btn-sm">Create File</a>
                             </td>
                         </tr>

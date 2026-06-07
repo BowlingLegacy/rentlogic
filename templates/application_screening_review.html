@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted fw-bold small mb-1">Applicant Screening</p>
+            <h1 class="fw-bold mb-1">{{ application.full_name }}</h1>
+            <p class="text-muted mb-0">
+                {% if application.property %}{{ application.property.name }}{% else %}No property assigned{% endif %}
+                {% if application.space_label %} | Unit {{ application.space_label }}{% endif %}
+            </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'application_detail' application.id %}" class="btn btn-outline-secondary">Application</a>
+            <a href="{% url 'create_adverse_action_notice' application.id %}" class="btn btn-outline-danger">Draft Adverse Notice</a>
+            <a href="{% url 'landlord_attention' %}" class="btn btn-dark">Back To Inbox</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 fw-bold">Suggested Rating</h2>
+                    <div class="display-6 fw-bold">{{ suggested_score }}/100</div>
+                    <p class="mb-3 text-capitalize">{{ suggested_rating|default:"unrated" }}</p>
+                    <ul class="small mb-0">
+                        {% for factor in score_factors %}
+                            <li>{{ factor }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 fw-bold">Property Criteria</h2>
+                    {% if application.property.screening_criteria %}
+                        <p class="small mb-0">{{ application.property.screening_criteria|linebreaksbr }}</p>
+                    {% else %}
+                        <p class="text-muted small mb-0">No written criteria saved for this property yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <form method="post" enctype="multipart/form-data" class="card shadow-sm">
+                {% csrf_token %}
+                <div class="card-body">
+                    <h2 class="h4 fw-bold">Owner / Landlord Review</h2>
+                    <p class="text-muted">
+                        The score is a review aid. The property owner or landlord must make and record the final decision.
+                    </p>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Background Status</label>
+                            {{ form.background_check_status }}
+                            {{ form.background_check_status.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Background Report</label>
+                            {{ form.background_report }}
+                            {{ form.background_report.errors }}
+                            {% if application.background_report %}
+                                <div class="small mt-2"><a href="{{ application.background_report.url }}">Open current report</a></div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Score</label>
+                            {{ form.screening_score }}
+                            {{ form.screening_score.errors }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Rating</label>
+                            {{ form.screening_rating }}
+                            {{ form.screening_rating.errors }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Final Decision</label>
+                            {{ form.owner_final_decision }}
+                            {{ form.owner_final_decision.errors }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Screening Review Summary</label>
+                            {{ form.screening_review_summary }}
+                            {{ form.screening_review_summary.errors }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Decision Notes</label>
+                            {{ form.owner_decision_notes }}
+                            {{ form.owner_decision_notes.errors }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-end">
+                    <button class="btn btn-primary" type="submit">Save Screening Review</button>
+                </div>
+            </form>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h2 class="h5 fw-bold">Adverse Action Notices</h2>
+                    {% for notice in adverse_notices %}
+                        <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-2">
+                            <div>
+                                <strong>{{ notice.get_action_type_display }}</strong><br>
+                                <span class="text-muted small">{{ notice.created_at|date:"M j, Y g:i A" }}</span>
+                            </div>
+                            <a href="{% url 'adverse_action_notice_detail' notice.id %}" class="btn btn-outline-secondary btn-sm">View / Print</a>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted mb-0">No adverse action notices drafted.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
