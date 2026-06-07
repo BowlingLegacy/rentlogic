@@ -77,6 +77,27 @@
                 url("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1900&q=84") center/cover;
         }
 
+        .page-financial-command .hero {
+            background:
+                linear-gradient(110deg, rgba(16, 21, 31, .98), rgba(16, 21, 31, .46)),
+                url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1900&q=84") center/cover;
+        }
+
+        .page-operations-hub .hero {
+            align-items: center;
+            background:
+                linear-gradient(90deg, rgba(16, 21, 31, .92), rgba(16, 21, 31, .68)),
+                url("https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=1900&q=84") center/cover;
+        }
+
+        .page-property-app .hero {
+            min-height: 64vh;
+            align-items: center;
+            background:
+                linear-gradient(120deg, rgba(16, 21, 31, .94), rgba(118, 100, 255, .42)),
+                url("https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1900&q=84") center/cover;
+        }
+
         .inner {
             width: min(1160px, 100%);
             margin: 0 auto;
@@ -93,6 +114,9 @@
             letter-spacing: .14em;
             font-weight: 950;
         }
+
+        .page-operations-hub .eyebrow { background: var(--amber); }
+        .page-property-app .eyebrow { background: var(--violet); color: #fff; }
 
         h1 {
             max-width: 880px;
@@ -283,14 +307,143 @@
             line-height: 1.4;
         }
 
+        .ops-layout {
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .ops-board {
+            background: var(--panel);
+            color: var(--night);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,.18);
+        }
+
+        .ops-columns {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .ops-column {
+            background: #eef5f1;
+            border: 1px solid #dfe7e2;
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 360px;
+        }
+
+        .ops-column h3 {
+            margin: 0 0 12px;
+            color: #596772;
+            font-size: .82rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .task-card {
+            background: #fff;
+            border: 1px solid #dfe7e2;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .task-card strong { display: block; margin-bottom: 6px; }
+        .task-card span { color: var(--muted); font-size: .84rem; line-height: 1.35; }
+
+        .ops-side {
+            display: grid;
+            gap: 14px;
+        }
+
+        .ops-alert {
+            background: linear-gradient(180deg, rgba(255,179,66,.18), rgba(255,255,255,.06));
+            border: 1px solid rgba(255,179,66,.28);
+            border-radius: 14px;
+            padding: 22px;
+        }
+
+        .ops-alert h2 { margin: 0 0 12px; }
+
+        .app-showcase {
+            display: grid;
+            grid-template-columns: .8fr 1.2fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .app-copy {
+            background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 14px;
+            padding: 26px;
+        }
+
+        .phone-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .phone {
+            background: #111923;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 28px;
+            padding: 10px;
+            min-height: 470px;
+            box-shadow: 0 20px 50px rgba(0,0,0,.28);
+        }
+
+        .phone-screen {
+            height: 100%;
+            background: #f8fbf7;
+            color: var(--night);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .phone-identity {
+            min-height: 150px;
+            padding: 18px;
+            color: #fff;
+            display: grid;
+            align-content: end;
+            background:
+                linear-gradient(180deg, rgba(16,21,31,.08), rgba(16,21,31,.78)),
+                url("https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=82") center/cover;
+        }
+
+        .phone:nth-child(2) .phone-identity {
+            background:
+                linear-gradient(180deg, rgba(16,21,31,.08), rgba(16,21,31,.76)),
+                url("https://images.unsplash.com/photo-1515263487990-61b07816b324?auto=format&fit=crop&w=900&q=82") center/cover;
+        }
+
+        .phone:nth-child(3) .phone-identity {
+            background:
+                linear-gradient(180deg, rgba(16,21,31,.08), rgba(16,21,31,.76)),
+                url("https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=82") center/cover;
+        }
+
+        .phone-identity strong { font-size: 1.05rem; }
+        .phone-body { padding: 12px; display: grid; gap: 9px; }
+        .phone-item { background: #fff; border: 1px solid #e1e9e3; border-radius: 8px; padding: 10px; }
+        .phone-item b { display: block; font-size: .9rem; }
+        .phone-item span { color: var(--muted); font-size: .78rem; }
+
         @media (max-width: 860px) {
             .nav { padding: 16px; align-items: flex-start; flex-direction: column; }
             .hero { padding: 54px 18px 38px; }
-            .feature-grid, .report-grid, .dashboard-showcase, .dashboard-metrics { grid-template-columns: 1fr; }
+            .feature-grid, .report-grid, .dashboard-showcase, .dashboard-metrics, .ops-layout, .ops-columns, .app-showcase, .phone-grid { grid-template-columns: 1fr; }
+            .phone { min-height: auto; }
         }
     </style>
 </head>
-<body>
+<body class="page-{{ page_slug }}">
     <nav class="nav">
         <a class="brand" href="{% url 'rental_ledger_pro_home' %}"><span class="brand-mark">RL</span> Rental Ledger Pro</a>
         <div class="nav-links">
@@ -314,61 +467,163 @@
     </header>
 
     <main>
-        <section class="section feature-grid">
-            {% for title, body in page.features %}
-                <article class="feature">
-                    <h2>{{ title }}</h2>
-                    <p>{{ body }}</p>
-                </article>
-            {% endfor %}
-        </section>
-
-        <section class="section dashboard-showcase">
-            <div class="dashboard-copy">
-                <div class="eyebrow">{{ page.eyebrow }}</div>
-                <h2>{{ page.dashboard_title }}</h2>
-                <p>{{ page.dashboard_summary }}</p>
-                <div class="actions">
-                    <a class="button primary" href="{% url 'rental_ledger_demo' %}">Open Demo</a>
-                    <a class="button secondary" href="#reports">Related Reports</a>
-                </div>
-            </div>
-
-            <div class="dashboard-panel">
-                <div class="dashboard-panel-head">
-                    <span>{{ page.dashboard_title }}</span>
-                    <span>Sample Screen</span>
-                </div>
-                <div class="dashboard-metrics">
-                    {% for label, value in page.dashboard_metrics %}
-                        <div class="metric-card">
-                            <span>{{ label }}</span>
-                            <strong>{{ value }}</strong>
+        {% if page_slug == "operations-hub" %}
+            <section class="section ops-layout">
+                <div class="ops-board">
+                    <div class="dashboard-panel-head" style="padding:0 0 14px;border-bottom:none;">
+                        <span>Daily Landlord Workflow</span>
+                        <span>Needs Attention</span>
+                    </div>
+                    <div class="ops-columns">
+                        <div class="ops-column">
+                            <h3>Incoming</h3>
+                            <div class="task-card"><strong>New application</strong><span>Unit 204, application fee pending, documents attached.</span></div>
+                            <div class="task-card"><strong>Resident message</strong><span>Room L maintenance note waiting for owner response.</span></div>
+                            <div class="task-card"><strong>Receipt review</strong><span>Lowes receipt needs category approval.</span></div>
                         </div>
-                    {% endfor %}
+                        <div class="ops-column">
+                            <h3>In Progress</h3>
+                            <div class="task-card"><strong>Lease package</strong><span>Two signatures complete, emergency contact still open.</span></div>
+                            <div class="task-card"><strong>Maintenance</strong><span>Sink repair scheduled, vendor receipt expected.</span></div>
+                            <div class="task-card"><strong>Rent watch</strong><span>Three utility balances outstanding this month.</span></div>
+                        </div>
+                        <div class="ops-column">
+                            <h3>Filed</h3>
+                            <div class="task-card"><strong>Signed lease</strong><span>Locked final in resident file with print access.</span></div>
+                            <div class="task-card"><strong>Payment receipt</strong><span>Cash rent recorded and attached to month ledger.</span></div>
+                            <div class="task-card"><strong>Owner notice</strong><span>Property update posted to residents and owner view.</span></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                {% for column in page.dashboard_columns %}
-                                    <th>{{ column }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in page.dashboard_rows %}
+                <div class="ops-side">
+                    <div class="ops-alert">
+                        <div class="eyebrow">{{ page.eyebrow }}</div>
+                        <h2>{{ page.dashboard_title }}</h2>
+                        <p>{{ page.dashboard_summary }}</p>
+                        <div class="actions">
+                            <a class="button primary" href="{% url 'rental_ledger_demo' %}">Open Demo</a>
+                            <a class="button secondary" href="#reports">Operational Reports</a>
+                        </div>
+                    </div>
+                    <div class="feature-grid" style="grid-template-columns:1fr;">
+                        {% for title, body in page.features %}
+                            <article class="feature">
+                                <h2>{{ title }}</h2>
+                                <p>{{ body }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+        {% elif page_slug == "property-app" %}
+            <section class="section app-showcase">
+                <div class="app-copy">
+                    <div class="eyebrow">{{ page.eyebrow }}</div>
+                    <h2>{{ page.dashboard_title }}</h2>
+                    <p>{{ page.dashboard_summary }}</p>
+                    <div class="actions">
+                        <a class="button primary" href="{% url 'rental_ledger_demo' %}">Open Demo</a>
+                        <a class="button secondary" href="#reports">Resident Reports</a>
+                    </div>
+                </div>
+                <div class="phone-grid">
+                    <div class="phone">
+                        <div class="phone-screen">
+                            <div class="phone-identity"><strong>Cedar Ridge</strong><span>Powered by Rental Ledger Pro</span></div>
+                            <div class="phone-body">
+                                <div class="phone-item"><b>Balance</b><span>Rent, utilities, and deposit status.</span></div>
+                                <div class="phone-item"><b>Inbox</b><span>Lease packet ready for signature.</span></div>
+                                <div class="phone-item"><b>Maintenance</b><span>Submit request with photo.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="phone">
+                        <div class="phone-screen">
+                            <div class="phone-identity"><strong>Hillview Commons</strong><span>Property colors and notices.</span></div>
+                            <div class="phone-body">
+                                <div class="phone-item"><b>Setup Tasks</b><span>Utilities, insurance, documents.</span></div>
+                                <div class="phone-item"><b>Community Blog</b><span>Private posts for residents only.</span></div>
+                                <div class="phone-item"><b>Pay Now</b><span>Clear monthly charges in one place.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="phone">
+                        <div class="phone-screen">
+                            <div class="phone-identity"><strong>Evergreen Flats</strong><span>Same app, different property identity.</span></div>
+                            <div class="phone-body">
+                                <div class="phone-item"><b>My File</b><span>Read-only signed documents.</span></div>
+                                <div class="phone-item"><b>Messages</b><span>Secure landlord replies.</span></div>
+                                <div class="phone-item"><b>Receipts</b><span>Printable payment history.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section feature-grid">
+                {% for title, body in page.features %}
+                    <article class="feature">
+                        <h2>{{ title }}</h2>
+                        <p>{{ body }}</p>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="section feature-grid">
+                {% for title, body in page.features %}
+                    <article class="feature">
+                        <h2>{{ title }}</h2>
+                        <p>{{ body }}</p>
+                    </article>
+                {% endfor %}
+            </section>
+
+            <section class="section dashboard-showcase">
+                <div class="dashboard-copy">
+                    <div class="eyebrow">{{ page.eyebrow }}</div>
+                    <h2>{{ page.dashboard_title }}</h2>
+                    <p>{{ page.dashboard_summary }}</p>
+                    <div class="actions">
+                        <a class="button primary" href="{% url 'rental_ledger_demo' %}">Open Demo</a>
+                        <a class="button secondary" href="#reports">Related Reports</a>
+                    </div>
+                </div>
+
+                <div class="dashboard-panel">
+                    <div class="dashboard-panel-head">
+                        <span>{{ page.dashboard_title }}</span>
+                        <span>Sample Screen</span>
+                    </div>
+                    <div class="dashboard-metrics">
+                        {% for label, value in page.dashboard_metrics %}
+                            <div class="metric-card">
+                                <span>{{ label }}</span>
+                                <strong>{{ value }}</strong>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
                                 <tr>
-                                    {% for cell in row %}
-                                        <td>{{ cell }}</td>
+                                    {% for column in page.dashboard_columns %}
+                                        <th>{{ column }}</th>
                                     {% endfor %}
                                 </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {% for row in page.dashboard_rows %}
+                                    <tr>
+                                        {% for cell in row %}
+                                            <td>{{ cell }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        {% endif %}
 
         <section class="section" id="reports">
             <div class="actions" style="margin-bottom:18px">
