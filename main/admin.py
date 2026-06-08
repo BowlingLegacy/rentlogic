@@ -29,6 +29,9 @@ from .models import (
     CurrentResidentRosterEntry,
     CompanyMailboxConnection,
     AdverseActionNotice,
+    RentalListing,
+    RentalListingPhoto,
+    RentalListingChannel,
 )
 from django.utils import timezone
 
@@ -176,6 +179,13 @@ class PropertyOnboardingDocumentInline(admin.TabularInline):
     extra = 0
 
 
+class RentalListingInline(admin.TabularInline):
+    model = RentalListing
+    extra = 0
+    fields = ("headline", "unit_label", "rent_amount", "status", "published_at", "updated_at")
+    readonly_fields = ("published_at", "updated_at")
+
+
 class PropertyRoomRentInline(admin.TabularInline):
     model = PropertyRoomRent
     extra = 0
@@ -188,7 +198,7 @@ class PropertyUtilityVendorInline(admin.TabularInline):
 
 @admin.register(Property)
 class PropertyAdmin(admin.ModelAdmin):
-    inlines = [PropertyImageInline, PropertyRoomRentInline, PropertyUtilityVendorInline, PropertyOnboardingDocumentInline]
+    inlines = [PropertyImageInline, RentalListingInline, PropertyRoomRentInline, PropertyUtilityVendorInline, PropertyOnboardingDocumentInline]
     list_display = ("name", "availability_status", "available_date", "owner_email", "landlord_email", "charges_application_fee", "requires_background_check")
     list_filter = ("availability_status", "charges_application_fee", "requires_background_check")
 
@@ -205,6 +215,24 @@ class PropertyUtilityVendorAdmin(admin.ModelAdmin):
     list_display = ("property", "service_type", "provider_name", "setup_url", "phone", "is_active", "sort_order")
     list_filter = ("property", "service_type", "is_active")
     search_fields = ("property__name", "service_type", "provider_name", "phone")
+
+
+class RentalListingPhotoInline(admin.TabularInline):
+    model = RentalListingPhoto
+    extra = 0
+
+
+class RentalListingChannelInline(admin.TabularInline):
+    model = RentalListingChannel
+    extra = 0
+
+
+@admin.register(RentalListing)
+class RentalListingAdmin(admin.ModelAdmin):
+    inlines = [RentalListingPhotoInline, RentalListingChannelInline]
+    list_display = ("headline", "property", "unit_label", "rent_amount", "status", "published_at", "updated_at")
+    list_filter = ("status", "property", "published_at")
+    search_fields = ("headline", "property__name", "unit_label", "listing_body", "amenities")
 
 
 @admin.register(ResidentUtilitySetup)

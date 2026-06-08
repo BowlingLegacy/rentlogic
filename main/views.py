@@ -56,6 +56,8 @@ from .forms import (
     CompanyEmailReplyForm,
     ScreeningReviewForm,
     AdverseActionNoticeForm,
+    RentalListingForm,
+    RentalListingChannelForm,
 )
 
 from .models import (
@@ -83,6 +85,9 @@ from .models import (
     LandlordIntake,
     CompanyMailboxConnection,
     AdverseActionNotice,
+    RentalListing,
+    RentalListingPhoto,
+    RentalListingChannel,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
 from .templatetags.formatting import phone_format
@@ -1612,6 +1617,59 @@ def apply_success(request):
     })
 
 
+def build_listing_copy(request, listing):
+    apply_url = request.build_absolute_uri(f"{reverse('apply')}?property={listing.property_id}")
+    public_url = request.build_absolute_uri(reverse("public_rental_listing", args=[listing.id]))
+    lines = [
+        listing.headline,
+        "",
+        f"Property: {listing.property.name}",
+    ]
+
+    if listing.unit_label:
+        lines.append(f"Unit: {listing.unit_label}")
+    if listing.rent_amount:
+        lines.append(f"Rent: ${listing.rent_amount}/month")
+    if listing.deposit_amount:
+        lines.append(f"Deposit: ${listing.deposit_amount}")
+    if listing.available_date:
+        lines.append(
+            f"Available: {calendar.month_name[listing.available_date.month]} {listing.available_date.day}, {listing.available_date.year}"
+        )
+    if listing.lease_terms:
+        lines.append(f"Terms: {listing.lease_terms}")
+    if listing.utilities_description:
+        lines.append(f"Utilities: {listing.utilities_description}")
+
+    lines.extend(["", listing.listing_body or listing.property.description])
+
+    if listing.property_benefits:
+        lines.extend(["", "Property benefits:", listing.property_benefits])
+    if listing.amenities:
+        lines.extend(["", "Amenities:", listing.amenities])
+    if listing.screening_summary:
+        lines.extend(["", "Application / screening:", listing.screening_summary])
+
+    lines.extend([
+        "",
+        f"Apply here: {apply_url}",
+        f"Listing page: {public_url}",
+    ])
+    return "\n".join(filter(lambda value: value is not None, lines))
+
+
+def public_rental_listing(request, listing_id):
+    listing = get_object_or_404(
+        RentalListing.objects.select_related("property").prefetch_related("photos"),
+        id=listing_id,
+        status="published",
+    )
+    return render(request, "rental_listing_public.html", {
+        "listing": listing,
+        "apply_url": f"{reverse('apply')}?property={listing.property_id}",
+    })
+
+
 def logout_view(request):
     logout(request)
     request.session.flush()
@@ -2038,6 +2096,157 @@ def landlord_attention(request):
 @user_passes_test(staff_required)
 def landlord_resident_files(request):
     return render(request, "landlord_resident_files.html", get_landlord_workspace_context(request.user))
+
+
+@login_required
+@user_passes_test(staff_required)
+def listing_center(request):
+    properties = staff_managed_properties(request.user).order_by("name")
+    listings = (
+        RentalListing.objects
+        .filter(property__in=properties)
+        .select_related("property", "created_by")
+        .prefetch_related("channels", "photos")
+        .order_by("-updated_at")
+    )
+    return render(request, "listing_center.html", {
+        "listings": listings,
+        "properties": properties,
+    })
+
+
+def ensure_listing_channels(listing):
+    for channel, _label in RentalListingChannel.CHANNEL_CHOICES:
+        RentalListingChannel.objects.get_or_create(listing=listing, channel=channel)
+
+
+@login_required
+@user_passes_test(staff_required)
+def rental_listing_create(request):
+    properties = staff_managed_properties(request.user).order_by("name")
+    initial = {}
+    property_id = request.GET.get("property")
+    if property_id:
+        property_obj = properties.filter(id=property_id).first()
+        if property_obj:
+            initial = {
+                "property": property_obj,
+                "headline": f"{property_obj.name} vacancy",
+                "rent_amount": property_obj.rent_amount or Decimal("0.00"),
+                "deposit_amount": property_obj.deposit_amount or Decimal("0.00"),
+                "utilities_description": property_obj.utilities_cost,
+                "lease_terms": property_obj.get_lease_type_display(),
+                "available_date": property_obj.available_date,
+                "property_benefits": property_obj.description,
+                "screening_summary": property_obj.screening_fee_disclosure or property_obj.background_check_instructions,
+            }
+
+    form = RentalListingForm(request.POST or None, request.FILES or None, properties=properties, initial=initial)
+
+    if request.method == "POST" and form.is_valid():
+        listing = form.save(commit=False)
+        listing.created_by = request.user
+        if listing.status == "published" and not listing.published_at:
+            listing.published_at = timezone.now()
+        listing.save()
+        for index, image in enumerate(form.cleaned_data.get("photos", []), start=1):
+            RentalListingPhoto.objects.create(listing=listing, image=image, sort_order=index)
+        ensure_listing_channels(listing)
+        messages.success(request, "Rental listing saved.")
+        return redirect("rental_listing_detail", listing_id=listing.id)
+
+    return render(request, "rental_listing_form.html", {
+        "form": form,
+        "title": "Create Rental Listing",
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+def rental_listing_detail(request, listing_id):
+    listing = get_object_or_404(
+        RentalListing.objects.select_related("property", "created_by").prefetch_related("photos", "channels"),
+        id=listing_id,
+        property__in=staff_managed_properties(request.user),
+    )
+    ensure_listing_channels(listing)
+    channel_forms = [
+        (channel, RentalListingChannelForm(prefix=f"channel_{channel.id}", instance=channel))
+        for channel in listing.channels.all()
+    ]
+    return render(request, "rental_listing_detail.html", {
+        "listing": listing,
+        "channel_forms": channel_forms,
+        "posting_copy": build_listing_copy(request, listing),
+        "public_url": request.build_absolute_uri(reverse("public_rental_listing", args=[listing.id])),
+        "apply_url": request.build_absolute_uri(f"{reverse('apply')}?property={listing.property_id}"),
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+def rental_listing_edit(request, listing_id):
+    listing = get_object_or_404(
+        RentalListing.objects.select_related("property"),
+        id=listing_id,
+        property__in=staff_managed_properties(request.user),
+    )
+    old_status = listing.status
+    form = RentalListingForm(
+        request.POST or None,
+        request.FILES or None,
+        properties=staff_managed_properties(request.user).order_by("name"),
+        instance=listing,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        listing = form.save(commit=False)
+        if listing.status == "published" and old_status != "published":
+            listing.published_at = timezone.now()
+        if listing.status == "filled" and old_status != "filled":
+            listing.filled_at = timezone.now()
+        listing.save()
+        starting_order = listing.photos.count() + 1
+        for offset, image in enumerate(form.cleaned_data.get("photos", []), start=starting_order):
+            RentalListingPhoto.objects.create(listing=listing, image=image, sort_order=offset)
+        ensure_listing_channels(listing)
+        messages.success(request, "Rental listing updated.")
+        return redirect("rental_listing_detail", listing_id=listing.id)
+
+    return render(request, "rental_listing_form.html", {
+        "form": form,
+        "listing": listing,
+        "title": "Edit Rental Listing",
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+def rental_listing_update_channels(request, listing_id):
+    listing = get_object_or_404(
+        RentalListing,
+        id=listing_id,
+        property__in=staff_managed_properties(request.user),
+    )
+    ensure_listing_channels(listing)
+    all_valid = True
+    forms = []
+    for channel in listing.channels.all():
+        form = RentalListingChannelForm(request.POST, prefix=f"channel_{channel.id}", instance=channel)
+        forms.append(form)
+        all_valid = all_valid and form.is_valid()
+
+    if all_valid:
+        for form in forms:
+            channel = form.save(commit=False)
+            if channel.status == "posted" and not channel.posted_at:
+                channel.posted_at = timezone.now()
+            channel.save()
+        messages.success(request, "Listing channel status updated.")
+    else:
+        messages.error(request, "One or more channel updates could not be saved.")
+
+    return redirect("rental_listing_detail", listing_id=listing.id)
 
 
 @login_required
@@ -4993,11 +5202,13 @@ def property_financials(request, property_name):
 def property_detail(request, pk):
     property_obj = get_object_or_404(Property, pk=pk)
     gallery_images = property_obj.images.all()
+    active_listings = property_obj.rental_listings.filter(status="published").prefetch_related("photos")
     can_manage_property_blog = user_can_manage_property_blog(request.user, property_obj)
 
     return render(request, "property_detail.html", {
         "property": property_obj,
         "gallery_images": gallery_images,
+        "active_listings": active_listings,
         "can_view_property_blog": False,
         "can_manage_property_blog": can_manage_property_blog,
         "existing_resident_intake_open": property_existing_resident_intake_open(property_obj),

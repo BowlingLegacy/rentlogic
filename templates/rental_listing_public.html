@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.listing-hero {
+    background: #10151c;
+    color: #f7f1e7;
+    border-radius: 18px;
+    overflow: hidden;
+}
+.listing-hero img {
+    width: 100%;
+    height: min(52vh, 520px);
+    object-fit: cover;
+}
+.listing-stat {
+    background: #fff;
+    border: 1px solid rgba(20,30,42,.12);
+    border-radius: 12px;
+    padding: 1rem;
+}
+.listing-stat span {
+    display: block;
+    color: #667085;
+    font-size: .78rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+.listing-stat strong {
+    font-size: 1.2rem;
+}
+</style>
+
+<div class="container py-4">
+    <section class="listing-hero mb-4">
+        {% with first_photo=listing.photos.first %}
+            {% if first_photo %}
+                <img src="{{ first_photo.image.url }}" alt="{{ listing.headline }}">
+            {% elif listing.property.photo %}
+                <img src="{{ listing.property.photo.url }}" alt="{{ listing.property.name }}">
+            {% endif %}
+        {% endwith %}
+        <div class="p-4 p-lg-5">
+            <p class="text-uppercase fw-bold small mb-2" style="color:#f0c96a;">Now Leasing</p>
+            <h1 class="display-5 fw-bold mb-2">{{ listing.headline }}</h1>
+            <p class="mb-0">{{ listing.property.name }}{% if listing.unit_label %} | Unit {{ listing.unit_label }}{% endif %}</p>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-lg-3"><div class="listing-stat"><span>Rent</span><strong>${{ listing.rent_amount }}</strong></div></div>
+                <div class="col-sm-6 col-lg-3"><div class="listing-stat"><span>Deposit</span><strong>${{ listing.deposit_amount }}</strong></div></div>
+                <div class="col-sm-6 col-lg-3"><div class="listing-stat"><span>Available</span><strong>{% if listing.available_date %}{{ listing.available_date|date:"M j" }}{% else %}Ask{% endif %}</strong></div></div>
+                <div class="col-sm-6 col-lg-3"><div class="listing-stat"><span>Terms</span><strong>{{ listing.lease_terms|default:"Ask" }}</strong></div></div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 fw-bold">About This Listing</h2>
+                    <p style="white-space: pre-line;">{{ listing.listing_body|default:listing.property.description }}</p>
+                    {% if listing.unit_layout_description %}
+                        <h3 class="h5 fw-bold">Interior / Layout</h3>
+                        <p style="white-space: pre-line;">{{ listing.unit_layout_description }}</p>
+                    {% endif %}
+                    {% if listing.property_benefits %}
+                        <h3 class="h5 fw-bold">Property Benefits</h3>
+                        <p style="white-space: pre-line;">{{ listing.property_benefits }}</p>
+                    {% endif %}
+                    {% if listing.amenities %}
+                        <h3 class="h5 fw-bold">Amenities</h3>
+                        <p style="white-space: pre-line;">{{ listing.amenities }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if listing.photos.count > 1 %}
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 fw-bold">Photos</h2>
+                    <div class="row g-3">
+                        {% for photo in listing.photos.all %}
+                            <div class="col-md-6">
+                                <img src="{{ photo.image.url }}" class="img-fluid rounded" style="height:240px; width:100%; object-fit:cover;" alt="{{ photo.caption|default:listing.headline }}">
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 1rem;">
+                <div class="card-body">
+                    <h2 class="h4 fw-bold">Apply For This Unit</h2>
+                    <p class="text-muted">This application is connected directly to {{ listing.property.name }}.</p>
+                    {% if listing.screening_summary %}
+                        <div class="alert alert-warning small">{{ listing.screening_summary|linebreaksbr }}</div>
+                    {% endif %}
+                    <a href="{{ apply_url }}" class="btn btn-primary w-100 mb-2">Apply Now</a>
+                    <a href="{% url 'property_detail' listing.property.id %}" class="btn btn-outline-secondary w-100">View Property Page</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted fw-bold small mb-1">Listing Packet</p>
+            <h1 class="fw-bold mb-1">{{ listing.headline }}</h1>
+            <p class="text-muted mb-0">{{ listing.property.name }}{% if listing.unit_label %} | Unit {{ listing.unit_label }}{% endif %}</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'rental_listing_edit' listing.id %}" class="btn btn-outline-secondary">Edit Listing</a>
+            <a href="{% url 'listing_center' %}" class="btn btn-dark">Back To Listings</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex gap-3 flex-wrap mb-3">
+                        <span class="badge text-bg-{% if listing.status == 'published' %}success{% else %}secondary{% endif %}">{{ listing.get_status_display }}</span>
+                        <strong>${{ listing.rent_amount }}/mo</strong>
+                        <span>Deposit ${{ listing.deposit_amount }}</span>
+                        {% if listing.available_date %}<span>Available {{ listing.available_date|date:"M j, Y" }}</span>{% endif %}
+                    </div>
+                    <p style="white-space: pre-line;">{{ listing.listing_body|default:listing.property.description }}</p>
+                    {% if listing.unit_layout_description %}
+                        <h2 class="h5 fw-bold">Unit Layout</h2>
+                        <p style="white-space: pre-line;">{{ listing.unit_layout_description }}</p>
+                    {% endif %}
+                    {% if listing.property_benefits %}
+                        <h2 class="h5 fw-bold">Property Benefits</h2>
+                        <p style="white-space: pre-line;">{{ listing.property_benefits }}</p>
+                    {% endif %}
+                    {% if listing.amenities %}
+                        <h2 class="h5 fw-bold">Amenities</h2>
+                        <p style="white-space: pre-line;">{{ listing.amenities }}</p>
+                    {% endif %}
+                    {% if listing.screening_summary %}
+                        <h2 class="h5 fw-bold">Application / Screening</h2>
+                        <p style="white-space: pre-line;">{{ listing.screening_summary }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 fw-bold">Posting Copy</h2>
+                    <p class="text-muted">Use this for Facebook Marketplace, Craigslist, local groups, email, and manual listing sites.</p>
+                    <textarea class="form-control" rows="15" readonly>{{ posting_copy }}</textarea>
+                    <div class="row g-2 mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Public Listing URL</label>
+                            <input class="form-control" value="{{ public_url }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Application URL</label>
+                            <input class="form-control" value="{{ apply_url }}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 fw-bold">Photos</h2>
+                    <div class="row g-2">
+                        {% for photo in listing.photos.all %}
+                            <div class="col-6">
+                                <img src="{{ photo.image.url }}" class="img-fluid rounded" style="height:150px; width:100%; object-fit:cover;" alt="{{ photo.caption|default:listing.headline }}">
+                            </div>
+                        {% empty %}
+                            {% if listing.property.photo %}
+                                <div class="col-12">
+                                    <img src="{{ listing.property.photo.url }}" class="img-fluid rounded" alt="{{ listing.property.name }}">
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No listing photos uploaded yet.</p>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'rental_listing_update_channels' listing.id %}" class="card shadow-sm">
+                {% csrf_token %}
+                <div class="card-body">
+                    <h2 class="h4 fw-bold">Channel Tracker</h2>
+                    <p class="text-muted small">
+                        Rental Ledger publishes internally. Facebook Marketplace and Craigslist should be posted manually using the packet copy unless an approved integration is available.
+                    </p>
+                    {% for channel, form in channel_forms %}
+                        <div class="border rounded p-3 mb-3">
+                            <div class="fw-bold mb-2">{{ channel.get_channel_display }}</div>
+                            <div class="mb-2">
+                                <label class="form-label small">Status</label>
+                                {{ form.status }}
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">External URL</label>
+                                {{ form.external_url }}
+                            </div>
+                            <div>
+                                <label class="form-label small">Notes</label>
+                                {{ form.notes }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">Save Channel Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

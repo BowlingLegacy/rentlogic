@@ -150,6 +150,7 @@
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a href="{% url 'owner_property_create' %}" class="btn-owner">Add Property</a>
+                <a href="{% url 'listing_center' %}" class="btn-owner">Vacancy Listings</a>
                 <a href="{% url 'owner_landlord_invite' %}" class="btn-dark-soft">Invite Landlord</a>
                 <a href="{% url 'owner_financial_upload' %}" class="btn-dark-soft">Upload Financial Documents</a>
             </div>
@@ -220,6 +221,7 @@
                     <a href="{% url 'owner_property_onboarding_documents' card.property.id %}" class="btn-dark-soft">Onboarding Files</a>
                     <a href="{% url 'existing_resident_intake' card.property.id %}" class="btn-dark-soft">Current Resident Setup Link</a>
                     <a href="{% url 'property_detail' card.property.id %}" class="btn-dark-soft">Public Property Page</a>
+                    <a href="{% url 'rental_listing_create' %}?property={{ card.property.id }}" class="btn-owner">Create Vacancy Listing</a>
                     <a href="{% url 'landlord_dashboard' %}" class="btn-dark-soft">Open Landlord Operations</a>
                 </div>
             </div>

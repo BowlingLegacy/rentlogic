@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4" style="max-width: 1120px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted fw-bold small mb-1">Vacancy Listing</p>
+            <h1 class="fw-bold mb-1">{{ title }}</h1>
+            <p class="text-muted mb-0">Build the public listing and the copy used for outside channels.</p>
+        </div>
+        <a href="{% url 'listing_center' %}" class="btn btn-outline-secondary">Back To Listings</a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="card shadow-sm">
+        {% csrf_token %}
+        <div class="card-body">
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Property</label>
+                    {{ form.property }}
+                    {{ form.property.errors }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Unit / Room / Space</label>
+                    {{ form.unit_label }}
+                    {{ form.unit_label.errors }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    {{ form.status }}
+                    {{ form.status.errors }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Headline</label>
+                    {{ form.headline }}
+                    {{ form.headline.errors }}
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Monthly Rent</label>
+                    {{ form.rent_amount }}
+                    {{ form.rent_amount.errors }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Deposit</label>
+                    {{ form.deposit_amount }}
+                    {{ form.deposit_amount.errors }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Available Date</label>
+                    {{ form.available_date }}
+                    {{ form.available_date.errors }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Square Feet</label>
+                    {{ form.square_feet }}
+                    {{ form.square_feet.errors }}
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Bedrooms</label>
+                    {{ form.bedrooms }}
+                    {{ form.bedrooms.errors }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Bathrooms</label>
+                    {{ form.bathrooms }}
+                    {{ form.bathrooms.errors }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Lease Terms</label>
+                    {{ form.lease_terms }}
+                    {{ form.lease_terms.errors }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Utilities</label>
+                    {{ form.utilities_description }}
+                    {{ form.utilities_description.errors }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Unit Layout / Interior Description</label>
+                    {{ form.unit_layout_description }}
+                    {{ form.unit_layout_description.errors }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Property Benefits</label>
+                    {{ form.property_benefits }}
+                    {{ form.property_benefits.errors }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Amenities</label>
+                    {{ form.amenities }}
+                    {{ form.amenities.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Application / Screening Summary</label>
+                    {{ form.screening_summary }}
+                    {{ form.screening_summary.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Public Listing Description</label>
+                    {{ form.listing_body }}
+                    {{ form.listing_body.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Photos</label>
+                    {{ form.photos }}
+                    <div class="form-text">{{ form.photos.help_text }}</div>
+                    {{ form.photos.errors }}
+                </div>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Save Listing</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

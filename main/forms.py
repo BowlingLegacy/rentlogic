@@ -17,6 +17,8 @@ from .models import (
     ExistingResidentIntake,
     LandlordIntake,
     AdverseActionNotice,
+    RentalListing,
+    RentalListingChannel,
 )
 
 
@@ -208,6 +210,22 @@ class MultipleFileField(forms.FileField):
         return [single_file_clean(data, initial)] if data else []
 
 
+class RentalListingPhotoInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class RentalListingPhotoField(forms.FileField):
+    widget = RentalListingPhotoInput
+
+    def clean(self, data, initial=None):
+        single_file_clean = super().clean
+
+        if isinstance(data, (list, tuple)):
+            return [single_file_clean(file_obj, initial) for file_obj in data]
+
+        return [single_file_clean(data, initial)] if data else []
+
+
 class OwnerPropertyForm(forms.ModelForm):
     gallery_images = MultipleImageField(
         required=False,
@@ -350,6 +368,77 @@ class OwnerFinancialUploadForm(FinancialUploadForm):
     def __init__(self, *args, properties=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["property"].queryset = properties if properties is not None else Property.objects.none()
+
+
+class RentalListingForm(forms.ModelForm):
+    photos = RentalListingPhotoField(
+        required=False,
+        label="Unit and property photos",
+        help_text="Upload interior unit layout photos first, then exterior/community photos.",
+        widget=RentalListingPhotoInput(attrs={"class": "form-control", "accept": "image/*"}),
+    )
+
+    class Meta:
+        model = RentalListing
+        fields = [
+            "property",
+            "unit_label",
+            "headline",
+            "rent_amount",
+            "deposit_amount",
+            "utilities_description",
+            "lease_terms",
+            "available_date",
+            "bedrooms",
+            "bathrooms",
+            "square_feet",
+            "unit_layout_description",
+            "property_benefits",
+            "amenities",
+            "screening_summary",
+            "listing_body",
+            "status",
+        ]
+        widgets = {
+            "property": forms.Select(attrs={"class": "form-select"}),
+            "unit_label": forms.TextInput(attrs={"class": "form-control", "placeholder": "Example: H, 204, Studio B"}),
+            "headline": forms.TextInput(attrs={"class": "form-control", "maxlength": "180"}),
+            "rent_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "deposit_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "utilities_description": forms.TextInput(attrs={"class": "form-control"}),
+            "lease_terms": forms.TextInput(attrs={"class": "form-control"}),
+            "available_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "bedrooms": forms.TextInput(attrs={"class": "form-control"}),
+            "bathrooms": forms.TextInput(attrs={"class": "form-control"}),
+            "square_feet": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+            "unit_layout_description": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "property_benefits": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "amenities": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "screening_summary": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "listing_body": forms.Textarea(attrs={"class": "form-control", "rows": 7}),
+            "status": forms.Select(attrs={"class": "form-select"}),
+        }
+        labels = {
+            "unit_label": "Unit / Room / Space",
+            "rent_amount": "Monthly Rent",
+            "deposit_amount": "Deposit",
+            "listing_body": "Public Listing Description",
+        }
+
+    def __init__(self, *args, properties=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["property"].queryset = properties if properties is not None else Property.objects.none()
+
+
+class RentalListingChannelForm(forms.ModelForm):
+    class Meta:
+        model = RentalListingChannel
+        fields = ["status", "external_url", "notes"]
+        widgets = {
+            "status": forms.Select(attrs={"class": "form-select form-select-sm"}),
+            "external_url": forms.URLInput(attrs={"class": "form-control form-control-sm"}),
+            "notes": forms.Textarea(attrs={"class": "form-control form-control-sm", "rows": 2}),
+        }
 
 
 class OwnerPropertyOnboardingDocumentsForm(forms.Form):

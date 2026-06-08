@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted fw-bold small mb-1">Vacancy Marketing</p>
+            <h1 class="fw-bold mb-1">Listing Center</h1>
+            <p class="text-muted mb-0">Create one listing packet, publish it on Rental Ledger Pro, and track outside posting channels.</p>
+        </div>
+        <a href="{% url 'rental_listing_create' %}" class="btn btn-primary">Create Listing</a>
+    </div>
+
+    <div class="row g-3">
+        {% for listing in listings %}
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    {% with first_photo=listing.photos.first %}
+                        {% if first_photo %}
+                            <img src="{{ first_photo.image.url }}" class="card-img-top" style="height:220px; object-fit:cover;" alt="{{ listing.headline }}">
+                        {% elif listing.property.photo %}
+                            <img src="{{ listing.property.photo.url }}" class="card-img-top" style="height:220px; object-fit:cover;" alt="{{ listing.property.name }}">
+                        {% endif %}
+                    {% endwith %}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between gap-2">
+                            <h2 class="h4 fw-bold">{{ listing.headline }}</h2>
+                            <span class="badge text-bg-{% if listing.status == 'published' %}success{% elif listing.status == 'draft' %}secondary{% elif listing.status == 'filled' %}dark{% else %}warning{% endif %}">{{ listing.get_status_display }}</span>
+                        </div>
+                        <p class="text-muted mb-2">{{ listing.property.name }}{% if listing.unit_label %} | Unit {{ listing.unit_label }}{% endif %}</p>
+                        <div class="d-flex gap-3 flex-wrap mb-3">
+                            <strong>${{ listing.rent_amount }}/mo</strong>
+                            <span>Deposit ${{ listing.deposit_amount }}</span>
+                            {% if listing.available_date %}<span>Available {{ listing.available_date|date:"M j, Y" }}</span>{% endif %}
+                        </div>
+                        <p>{{ listing.listing_body|default:listing.property.description|truncatewords:32 }}</p>
+                    </div>
+                    <div class="card-footer d-flex gap-2 flex-wrap">
+                        <a href="{% url 'rental_listing_detail' listing.id %}" class="btn btn-dark btn-sm">Open Packet</a>
+                        <a href="{% url 'rental_listing_edit' listing.id %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+                        {% if listing.status == "published" %}
+                            <a href="{% url 'public_rental_listing' listing.id %}" class="btn btn-outline-primary btn-sm">Public Page</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h4 fw-bold">No vacancy listings yet.</h2>
+                        <p class="text-muted mb-0">Create a listing when a unit opens. The listing will generate a public page, application link, and channel posting packet.</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

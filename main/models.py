@@ -184,6 +184,95 @@ class PropertyImage(models.Model):
         return f"{self.property.name} Image"
 
 
+class RentalListing(models.Model):
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("published", "Published"),
+        ("paused", "Paused"),
+        ("filled", "Filled"),
+        ("archived", "Archived"),
+    ]
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="rental_listings")
+    unit_label = models.CharField(max_length=80, blank=True)
+    headline = models.CharField(max_length=180)
+    rent_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    utilities_description = models.CharField(max_length=255, blank=True)
+    lease_terms = models.CharField(max_length=255, blank=True)
+    available_date = models.DateField(blank=True, null=True)
+    bedrooms = models.CharField(max_length=50, blank=True)
+    bathrooms = models.CharField(max_length=50, blank=True)
+    square_feet = models.PositiveIntegerField(blank=True, null=True)
+    unit_layout_description = models.TextField(blank=True)
+    property_benefits = models.TextField(blank=True)
+    amenities = models.TextField(blank=True)
+    screening_summary = models.TextField(blank=True)
+    listing_body = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="created_rental_listings")
+    published_at = models.DateTimeField(blank=True, null=True)
+    filled_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.headline
+
+
+class RentalListingPhoto(models.Model):
+    listing = models.ForeignKey(RentalListing, on_delete=models.CASCADE, related_name="photos")
+    image = models.ImageField(upload_to="rental_listing_photos/")
+    caption = models.CharField(max_length=255, blank=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return self.caption or f"{self.listing.headline} photo"
+
+
+class RentalListingChannel(models.Model):
+    CHANNEL_CHOICES = [
+        ("rental_ledger", "Rental Ledger Pro Public Listing"),
+        ("facebook_marketplace", "Facebook Marketplace"),
+        ("craigslist", "Craigslist"),
+        ("zillow", "Zillow Rental Network"),
+        ("apartments_com", "Apartments.com"),
+        ("yard_sign", "Yard Sign / QR Code"),
+        ("other", "Other"),
+    ]
+
+    STATUS_CHOICES = [
+        ("not_started", "Not Started"),
+        ("ready", "Ready To Post"),
+        ("posted", "Posted"),
+        ("needs_update", "Needs Update"),
+        ("removed", "Removed"),
+        ("blocked", "Blocked / Not Available"),
+    ]
+
+    listing = models.ForeignKey(RentalListing, on_delete=models.CASCADE, related_name="channels")
+    channel = models.CharField(max_length=40, choices=CHANNEL_CHOICES)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="not_started")
+    external_url = models.URLField(blank=True)
+    notes = models.TextField(blank=True)
+    posted_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("listing", "channel")
+        ordering = ["channel"]
+
+    def __str__(self):
+        return f"{self.listing.headline} - {self.get_channel_display()}"
+
+
 class PropertyRoomRent(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="room_rents")
     room_unit_label = models.CharField(max_length=50)

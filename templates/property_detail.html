@@ -297,6 +297,29 @@
                 <p class="lead mb-0 text-muted">{{ property.description }}</p>
             </div>
 
+            {% if active_listings %}
+            <div class="soft-card p-4 mb-4">
+                <h3 class="section-title mb-3">Available Listings</h3>
+                <div class="row g-3">
+                    {% for listing in active_listings %}
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 h-100 bg-white">
+                            {% with first_photo=listing.photos.first %}
+                                {% if first_photo %}
+                                    <img src="{{ first_photo.image.url }}" class="img-fluid rounded mb-3" style="height:170px; width:100%; object-fit:cover;" alt="{{ listing.headline }}">
+                                {% endif %}
+                            {% endwith %}
+                            <h4 class="fw-bold">{{ listing.headline }}</h4>
+                            <p class="text-muted mb-2">{% if listing.unit_label %}Unit {{ listing.unit_label }} | {% endif %}${{ listing.rent_amount }}/month</p>
+                            <p>{{ listing.listing_body|default:listing.unit_layout_description|truncatewords:24 }}</p>
+                            <a href="{% url 'public_rental_listing' listing.id %}" class="gold-btn">View Listing</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <div class="gallery-frame">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                     <div>
