@@ -963,6 +963,15 @@ class PropertyOwnerIntake(models.Model):
         ("registered", "Registered"),
     ]
 
+    LEAD_STAGE_CHOICES = [
+        ("new", "New Lead"),
+        ("contacted", "Contacted"),
+        ("demo_scheduled", "Demo Scheduled"),
+        ("onboarding", "Onboarding"),
+        ("closed_won", "Closed Won"),
+        ("closed_lost", "Closed Lost"),
+    ]
+
     PROPERTY_TYPE_CHOICES = [
         ("multifamily", "Multifamily"),
         ("commercial", "Commercial"),
@@ -1008,6 +1017,9 @@ class PropertyOwnerIntake(models.Model):
     dashboard_goals = models.TextField(blank=True)
     additional_notes = models.TextField(blank=True)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="submitted")
+    lead_stage = models.CharField(max_length=30, choices=LEAD_STAGE_CHOICES, default="new")
+    follow_up_date = models.DateField(blank=True, null=True)
+    internal_notes = models.TextField(blank=True)
     user = models.ForeignKey(
         "User",
         on_delete=models.SET_NULL,

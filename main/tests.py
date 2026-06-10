@@ -2686,6 +2686,7 @@ class LiveFlowTests(TestCase):
         self.assertTrue(intake.needs_custom_reports)
         self.assertEqual(intake.desired_reports, "valuation_estimate, vendor_expense, utility_cost_trend")
         self.assertTrue(intake.offers_renters_insurance)
+        self.assertEqual(intake.lead_stage, "new")
 
     def test_existing_resident_intake_button_opens_for_new_property_and_saves_profile(self):
         property_obj = Property.objects.create(name="Painted Lady Inn")
@@ -5769,12 +5770,22 @@ class LiveFlowTests(TestCase):
 
         inbox_response = self.client.get(reverse("superadmin_owner_intakes"))
         detail_response = self.client.get(reverse("superadmin_owner_intake_detail", args=[intake.id]))
+        pipeline_response = self.client.post(reverse("superadmin_owner_intake_detail", args=[intake.id]), {
+            "action": "update_lead_pipeline",
+            "lead_stage": "demo_scheduled",
+            "follow_up_date": "2026-06-18",
+            "internal_notes": "Demo set for reporting workflow.",
+        })
         invite_response = self.client.post(reverse("superadmin_send_owner_invite", args=[intake.id]))
 
         self.assertContains(inbox_response, "Owner Inbox User")
         self.assertContains(detail_response, "Need reports by property.")
+        self.assertRedirects(pipeline_response, reverse("superadmin_owner_intake_detail", args=[intake.id]))
         self.assertRedirects(invite_response, reverse("superadmin_owner_intake_detail", args=[intake.id]))
         intake.refresh_from_db()
+        self.assertEqual(intake.lead_stage, "demo_scheduled")
+        self.assertEqual(str(intake.follow_up_date), "2026-06-18")
+        self.assertEqual(intake.internal_notes, "Demo set for reporting workflow.")
         self.assertEqual(intake.status, "invited")
         self.assertIsNotNone(intake.user)
         self.assertTrue(intake.user.invite_code)

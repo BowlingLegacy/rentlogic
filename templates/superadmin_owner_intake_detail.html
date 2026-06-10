@@ -8,6 +8,7 @@
 .file-panel { background: #fffaf0; border: 1px solid rgba(188,150,45,.24); border-radius: 14px; height: 100%; padding: 1rem; }
 .file-label { color: #7d5c0b; font-size: .78rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .file-value { color: #17130a; font-weight: 700; }
+.pipeline-panel { background: #f4fbf9; border: 1px solid #bedbd5; border-radius: 14px; padding: 1rem; }
 </style>
 
 <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -36,6 +37,32 @@
             <div class="col-md-4"><div class="file-panel"><div class="file-label">Properties</div><div class="file-value">{{ intake.property_count }}</div></div></div>
             <div class="col-md-4"><div class="file-panel"><div class="file-label">Units</div><div class="file-value">{{ intake.total_units }}</div></div></div>
         </div>
+
+        <section class="pipeline-panel mb-4">
+            <h2 class="h3 fw-bold">Lead Pipeline</h2>
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_lead_pipeline">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" for="{{ pipeline_form.lead_stage.id_for_label }}">{{ pipeline_form.lead_stage.label }}</label>
+                    {{ pipeline_form.lead_stage }}
+                    {{ pipeline_form.lead_stage.errors }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" for="{{ pipeline_form.follow_up_date.id_for_label }}">{{ pipeline_form.follow_up_date.label }}</label>
+                    {{ pipeline_form.follow_up_date }}
+                    {{ pipeline_form.follow_up_date.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold" for="{{ pipeline_form.internal_notes.id_for_label }}">{{ pipeline_form.internal_notes.label }}</label>
+                    {{ pipeline_form.internal_notes }}
+                    {{ pipeline_form.internal_notes.errors }}
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="gold-btn">Save Lead Status</button>
+                </div>
+            </form>
+        </section>
 
         <div class="d-flex gap-2 flex-wrap mb-4">
             <form method="post" action="{% url 'superadmin_send_owner_invite' intake.id %}">

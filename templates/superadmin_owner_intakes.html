@@ -7,6 +7,7 @@
 .intake-row { border: 1px solid rgba(188,150,45,.22); border-radius: 14px; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: .75rem; padding: 1rem; }
 .intake-row:last-child { margin-bottom: 0; }
 .status-pill { background: #111; border-radius: 999px; color: #f3d27a; display: inline-block; font-size: .78rem; font-weight: 900; padding: .35rem .65rem; text-transform: uppercase; }
+.lead-pill { background: #eaf4f2; border: 1px solid #b8d7d1; border-radius: 999px; color: #14534c; display: inline-block; font-size: .78rem; font-weight: 900; padding: .35rem .65rem; text-transform: uppercase; }
 @media (max-width: 768px) { .intake-row { flex-direction: column; } }
 </style>
 
@@ -28,8 +29,10 @@
                     <div>{{ intake.company_name|default:"No company entered" }}</div>
                     <div class="text-muted">{{ intake.email }} | {{ intake.phone }}</div>
                     <div class="small text-muted">{{ intake.created_at|date:"M j, Y g:i A" }}</div>
+                    {% if intake.follow_up_date %}<div class="small fw-bold">Follow up {{ intake.follow_up_date|date:"M j, Y" }}</div>{% endif %}
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="lead-pill">{{ intake.get_lead_stage_display }}</span>
                     <span class="status-pill">{{ intake.get_status_display }}</span>
                     <a href="{% url 'superadmin_owner_intake_detail' intake.id %}" class="gold-btn">Open Questionnaire</a>
                 </div>
@@ -40,9 +43,30 @@
     </section>
 
     <section class="intake-panel">
-        <h2 class="h3 fw-bold">Owner Files</h2>
-        <p class="text-muted">Questionnaires move here after an invite is issued or the owner account is registered.</p>
-        {% for intake in owner_files %}
+        <h2 class="h3 fw-bold">Active Lead Pipeline</h2>
+        <p class="text-muted">Questionnaires move here after contact, invite, demo scheduling, or onboarding.</p>
+        {% for intake in active_leads %}
+            <div class="intake-row">
+                <div>
+                    <div class="fw-bold">{{ intake.full_name }}</div>
+                    <div>{{ intake.company_name|default:"No company entered" }}</div>
+                    <div class="text-muted">{{ intake.email }}</div>
+                    {% if intake.follow_up_date %}<div class="small fw-bold">Follow up {{ intake.follow_up_date|date:"M j, Y" }}</div>{% endif %}
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="lead-pill">{{ intake.get_lead_stage_display }}</span>
+                    <span class="status-pill">{{ intake.get_status_display }}</span>
+                    <a href="{% url 'superadmin_owner_intake_detail' intake.id %}" class="message-btn">Open Owner File</a>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-muted mb-0">No active leads beyond new submissions yet.</p>
+        {% endfor %}
+    </section>
+
+    <section class="intake-panel">
+        <h2 class="h3 fw-bold">Closed Leads</h2>
+        {% for intake in closed_leads %}
             <div class="intake-row">
                 <div>
                     <div class="fw-bold">{{ intake.full_name }}</div>
@@ -50,12 +74,12 @@
                     <div class="text-muted">{{ intake.email }}</div>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="status-pill">{{ intake.get_status_display }}</span>
+                    <span class="lead-pill">{{ intake.get_lead_stage_display }}</span>
                     <a href="{% url 'superadmin_owner_intake_detail' intake.id %}" class="message-btn">Open Owner File</a>
                 </div>
             </div>
         {% empty %}
-            <p class="text-muted mb-0">No processed owner files yet.</p>
+            <p class="text-muted mb-0">No closed leads yet.</p>
         {% endfor %}
     </section>
 </div>

@@ -47,6 +47,7 @@ from .forms import (
     ResidentProfilePhotoForm,
     ReplacementInviteCodeForm,
     PropertyOwnerIntakeForm,
+    PropertyOwnerLeadPipelineForm,
     LandlordSignUpForm,
     ExistingResidentIntakeForm,
     CurrentResidentRosterUploadForm,
@@ -3314,8 +3315,9 @@ def superadmin_owner_intakes(request):
 
     owner_intakes = PropertyOwnerIntake.objects.select_related("user").all()
     return render(request, "superadmin_owner_intakes.html", {
-        "submitted_owner_intakes": owner_intakes.filter(status="submitted"),
-        "owner_files": owner_intakes.exclude(status="submitted"),
+        "submitted_owner_intakes": owner_intakes.filter(status="submitted").order_by("follow_up_date", "-created_at"),
+        "active_leads": owner_intakes.exclude(lead_stage__in=["closed_won", "closed_lost"]).exclude(status="submitted").order_by("follow_up_date", "-created_at"),
+        "closed_leads": owner_intakes.filter(lead_stage__in=["closed_won", "closed_lost"]).order_by("-created_at"),
     })
 
 
@@ -3326,9 +3328,20 @@ def superadmin_owner_intake_detail(request, intake_id):
         return redirect("tenant_dashboard")
 
     intake = get_object_or_404(PropertyOwnerIntake.objects.select_related("user"), id=intake_id)
+
+    if request.method == "POST" and request.POST.get("action") == "update_lead_pipeline":
+        pipeline_form = PropertyOwnerLeadPipelineForm(request.POST, instance=intake)
+        if pipeline_form.is_valid():
+            pipeline_form.save()
+            messages.success(request, "Owner lead pipeline updated.")
+            return redirect("superadmin_owner_intake_detail", intake_id=intake.id)
+    else:
+        pipeline_form = PropertyOwnerLeadPipelineForm(instance=intake)
+
     owner_properties = Property.objects.filter(owner_email__iexact=intake.email).order_by("name")
     return render(request, "superadmin_owner_intake_detail.html", {
         "intake": intake,
+        "pipeline_form": pipeline_form,
         "owner_properties": owner_properties,
     })
 

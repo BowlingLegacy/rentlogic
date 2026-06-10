@@ -670,6 +670,26 @@ class PropertyOwnerIntakeForm(forms.ModelForm):
         return intake
 
 
+class PropertyOwnerLeadPipelineForm(forms.ModelForm):
+    class Meta:
+        model = PropertyOwnerIntake
+        fields = ["lead_stage", "follow_up_date", "internal_notes"]
+        labels = {
+            "lead_stage": "Lead stage",
+            "follow_up_date": "Follow-up date",
+            "internal_notes": "Internal notes",
+        }
+        widgets = {
+            "lead_stage": forms.Select(attrs={"class": "form-select"}),
+            "follow_up_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "internal_notes": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 5,
+                "placeholder": "Call notes, demo needs, pricing questions, next step, objections, or onboarding plan.",
+            }),
+        }
+
+
 class ExistingResidentIntakeForm(forms.ModelForm):
     class Meta:
         model = ExistingResidentIntake

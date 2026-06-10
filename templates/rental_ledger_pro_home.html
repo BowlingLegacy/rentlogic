@@ -652,6 +652,7 @@
             <a href="{% url 'rental_ledger_product_page' 'property-app' %}">Property App</a>
             <a href="#records">Records</a>
             <a href="#workflow">Workflow</a>
+            <a href="{% url 'property_owner_intake' %}">Request Demo</a>
             <a class="demo" href="{% url 'rental_ledger_demo' %}">Launch Demo</a>
         </div>
     </nav>
@@ -664,7 +665,7 @@
                 <p class="hero-copy">Rental Ledger Pro brings rent collection, resident files, messages, documents, maintenance, accounting records, and owner-ready reports into one property-aware platform.</p>
                 <div class="actions">
                     <a class="button primary" href="#platform">See the System</a>
-                    <a class="button secondary" href="#proof">View Sample Reports</a>
+                    <a class="button secondary" href="{% url 'property_owner_intake' %}">Request Demo</a>
                 </div>
             </div>
 
@@ -869,6 +870,38 @@
                         </div>
                     </article>
                 {% endfor %}
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="layout-map">
+                <div class="map-copy">
+                    <div class="eyebrow">Start The Fit Check</div>
+                    <h2 style="font-size:clamp(2rem,3.8vw,3.5rem); margin-top:14px">Tell us what your portfolio needs before we build the setup.</h2>
+                    <p>The intake asks about property count, units, current software, reporting needs, application fees, background checks, utilities, renters insurance, listings, accounting, and dashboard goals.</p>
+                    <div class="actions">
+                        <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                        <a class="button secondary" href="{% url 'rental_ledger_demo' %}">Preview Demo First</a>
+                    </div>
+                </div>
+                <div class="map-stack">
+                    <div class="map-row">
+                        <div class="map-label">Profile</div>
+                        <div class="map-block">Owner contact, company, property count, unit count, property types, and current software.</div>
+                    </div>
+                    <div class="map-row">
+                        <div class="map-label">Needs</div>
+                        <div class="map-block">Payments, accounting, resident files, screening, listings, documents, messaging, maintenance, and custom reports.</div>
+                    </div>
+                    <div class="map-row">
+                        <div class="map-label">Reports</div>
+                        <div class="map-block">T-12, rent roll, NOI, valuation, vendor expense, utility trend, capital log, compliance, and portfolio summaries.</div>
+                    </div>
+                    <div class="map-row">
+                        <div class="map-label">Follow Up</div>
+                        <div class="map-block">Submissions land in the lead pipeline so the next call, demo, setup invite, or onboarding step is tracked.</div>
+                    </div>
+                </div>
             </div>
         </section>
 
