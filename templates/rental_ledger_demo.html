@@ -199,10 +199,96 @@
         .good { color: #317052; font-weight: 950; }
         .warn { color: #a2562b; font-weight: 950; }
 
+        .demo-dashboard-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .demo-dashboard {
+            display: grid;
+            grid-template-columns: .8fr 1.2fr;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .demo-dashboard:nth-child(even) {
+            grid-template-columns: 1.2fr .8fr;
+        }
+
+        .demo-dashboard:nth-child(even) .dashboard-copy {
+            order: 2;
+        }
+
+        .dashboard-copy,
+        .dashboard-panel {
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,.16);
+        }
+
+        .dashboard-copy {
+            background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+            padding: 22px;
+        }
+
+        .dashboard-copy h2 {
+            margin: 12px 0;
+            font-size: clamp(1.7rem, 3.1vw, 3rem);
+            line-height: 1;
+        }
+
+        .metric-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .metric-pill {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 72px;
+        }
+
+        .metric-pill span {
+            display: block;
+            color: #afbec8;
+            font-size: .72rem;
+            font-weight: 850;
+            margin-bottom: 7px;
+        }
+
+        .metric-pill strong {
+            display: block;
+            font-size: 1.15rem;
+        }
+
+        .dashboard-panel {
+            background: var(--panel);
+            color: var(--night);
+            overflow: hidden;
+        }
+
+        .dashboard-panel-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: center;
+            padding: 15px 16px;
+            border-bottom: 1px solid #dfe7e2;
+            font-weight: 950;
+        }
+
+        .dashboard-panel table {
+            min-width: 640px;
+        }
+
         @media (max-width: 860px) {
             .nav { padding: 16px; flex-direction: column; align-items: flex-start; }
             .hero { padding: 54px 18px 38px; }
-            .grid { grid-template-columns: 1fr; }
+            .grid, .demo-dashboard, .demo-dashboard:nth-child(even), .metric-strip { grid-template-columns: 1fr; }
+            .demo-dashboard:nth-child(even) .dashboard-copy { order: 0; }
             table { font-size: .78rem; }
             th, td { padding: 9px 7px; }
         }
@@ -272,6 +358,55 @@
                     </tbody>
                 </table>
             </div>
+        </section>
+
+        <section class="section demo-dashboard-grid">
+            {% for slug, page in product_pages.items %}
+                <article class="demo-dashboard">
+                    <div class="dashboard-copy">
+                        <span class="metric">{{ page.eyebrow }}</span>
+                        <h2>{{ page.dashboard_title }}</h2>
+                        <p>{{ page.dashboard_summary }}</p>
+                        <div class="metric-strip">
+                            {% for label, value in page.dashboard_metrics %}
+                                <div class="metric-pill">
+                                    <span>{{ label }}</span>
+                                    <strong>{{ value }}</strong>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="actions">
+                            <a class="button secondary" href="{% url 'rental_ledger_product_page' slug %}">Open {{ page.eyebrow }}</a>
+                        </div>
+                    </div>
+                    <div class="dashboard-panel">
+                        <div class="dashboard-panel-head">
+                            <span>{{ page.dashboard_title }}</span>
+                            <span>Sample Screen</span>
+                        </div>
+                        <div class="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        {% for column in page.dashboard_columns %}
+                                            <th>{{ column }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in page.dashboard_rows %}
+                                        <tr>
+                                            {% for cell in row %}
+                                                <td>{{ cell }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
         </section>
 
         <section class="section grid">

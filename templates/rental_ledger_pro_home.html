@@ -399,6 +399,97 @@
             gap: 16px;
         }
 
+        .dashboard-walkthrough {
+            display: grid;
+            gap: 18px;
+        }
+
+        .dashboard-stage {
+            display: grid;
+            grid-template-columns: .82fr 1.18fr;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .dashboard-stage:nth-child(even) {
+            grid-template-columns: 1.18fr .82fr;
+        }
+
+        .dashboard-stage:nth-child(even) .dashboard-copy {
+            order: 2;
+        }
+
+        .dashboard-copy,
+        .dashboard-panel {
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,.16);
+        }
+
+        .dashboard-copy {
+            background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.045));
+            padding: 22px;
+        }
+
+        .dashboard-copy h3 {
+            margin: 14px 0 12px;
+            font-size: clamp(1.7rem, 3vw, 2.8rem);
+            line-height: 1;
+        }
+
+        .dashboard-copy p {
+            color: #c4d1da;
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        .metric-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .metric-pill {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 74px;
+        }
+
+        .metric-pill span {
+            display: block;
+            color: #afbec8;
+            font-size: .72rem;
+            font-weight: 850;
+            margin-bottom: 7px;
+        }
+
+        .metric-pill strong {
+            display: block;
+            font-size: 1.18rem;
+        }
+
+        .dashboard-panel {
+            background: var(--panel);
+            color: var(--night);
+            overflow: hidden;
+        }
+
+        .dashboard-panel-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: center;
+            padding: 15px 16px;
+            border-bottom: 1px solid #dfe7e2;
+            font-weight: 950;
+        }
+
+        .dashboard-panel table {
+            min-width: 640px;
+        }
+
         .report-card {
             background: rgba(248,251,247,.96);
             color: var(--night);
@@ -543,7 +634,8 @@
             .signal-panel { left: 0; top: 0; width: 100%; }
             .phone-panel { right: auto; left: 50%; transform: translateX(-50%); bottom: 0; }
             .section-head { display: grid; align-items: start; }
-            .power-grid, .palette, .report-showcase { grid-template-columns: 1fr; }
+            .power-grid, .palette, .report-showcase, .dashboard-stage, .dashboard-stage:nth-child(even), .metric-strip { grid-template-columns: 1fr; }
+            .dashboard-stage:nth-child(even) .dashboard-copy { order: 0; }
             .dash-grid { grid-template-columns: 1fr; }
             .wide { grid-column: span 1; }
             .map-row { grid-template-columns: 1fr; }
@@ -671,6 +763,65 @@
                     </ul>
                     <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'property-app' %}">Open Tenant View</a></div>
                 </article>
+            </div>
+        </section>
+
+        <section class="section" id="dashboards">
+            <div class="section-head">
+                <div>
+                    <div class="eyebrow">Dashboard Showcase</div>
+                    <h2>Show owners, landlords, and residents the screen they actually need.</h2>
+                </div>
+                <p style="max-width:520px">Rental Ledger Pro should feel different by role: owners compare property performance, landlords work the daily queue, and residents see a clean property-branded dashboard.</p>
+            </div>
+
+            <div class="dashboard-walkthrough">
+                {% for slug, page in product_pages.items %}
+                    <article class="dashboard-stage">
+                        <div class="dashboard-copy">
+                            <div class="chip">{{ page.eyebrow }}</div>
+                            <h3>{{ page.dashboard_title }}</h3>
+                            <p>{{ page.dashboard_summary }}</p>
+                            <div class="metric-strip">
+                                {% for label, value in page.dashboard_metrics %}
+                                    <div class="metric-pill">
+                                        <span>{{ label }}</span>
+                                        <strong>{{ value }}</strong>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="actions">
+                                <a class="button secondary" href="{% url 'rental_ledger_product_page' slug %}">Open {{ page.eyebrow }}</a>
+                            </div>
+                        </div>
+                        <div class="dashboard-panel">
+                            <div class="dashboard-panel-head">
+                                <span>{{ page.dashboard_title }}</span>
+                                <span>Sample Screen</span>
+                            </div>
+                            <div class="table-scroll">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            {% for column in page.dashboard_columns %}
+                                                <th>{{ column }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in page.dashboard_rows %}
+                                            <tr>
+                                                {% for cell in row %}
+                                                    <td>{{ cell }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
             </div>
         </section>
 

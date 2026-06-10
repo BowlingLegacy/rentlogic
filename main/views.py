@@ -1383,6 +1383,7 @@ def rental_ledger_pro_home(request):
 def rental_ledger_demo(request):
     return render(request, "rental_ledger_demo.html", {
         "interactive_demo_enabled": getattr(settings, "DEMO_MODE", False),
+        "product_pages": RENTAL_LEDGER_PRODUCT_PAGES,
         "reports": RENTAL_LEDGER_DEMO_REPORTS,
     })
 
