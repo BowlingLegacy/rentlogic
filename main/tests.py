@@ -13,7 +13,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import AccountingReceipt, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, RentHistory, ResidentMessage, ResidentMessageReply, SignedDocument, SmsMessageLog, User
+from .models import AccountingReceipt, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, RentHistory, RentalListing, RentalListingChannel, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
 from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, payment_amount_for_month, prorated_monthly_charge, rent_roll_rows_for_properties, t12_report_rows
 
 
@@ -4028,12 +4028,19 @@ class LiveFlowTests(TestCase):
         self.assertTrue(Property.objects.filter(name="Pine Street Villas").exists())
         self.assertTrue(Property.objects.filter(name="Harbor View Senior Living").exists())
         self.assertEqual(Property.objects.count(), 4)
-        self.assertEqual(HousingApplication.objects.filter(property__name="Demo Ridge Apartments").count(), 4)
-        self.assertEqual(HousingApplication.objects.count(), 13)
+        self.assertEqual(HousingApplication.objects.filter(property__name="Demo Ridge Apartments").count(), 14)
+        self.assertEqual(HousingApplication.objects.count(), 44)
         self.assertTrue(Payment.objects.filter(application__property__name="Demo Ridge Apartments", status="completed").exists())
         self.assertTrue(Payment.objects.filter(application__property__name="Cedar Market Lofts", status="completed").exists())
         self.assertTrue(FinancialEntry.objects.filter(property_name="Demo Ridge Apartments").exists())
         self.assertTrue(FinancialEntry.objects.filter(property_name="Harbor View Senior Living").exists())
+        self.assertEqual(RentalListing.objects.count(), 4)
+        self.assertEqual(RentalListingChannel.objects.count(), 20)
+        self.assertEqual(AccountingReceipt.objects.filter(status="approved").count(), 16)
+        self.assertTrue(ResidentUtilitySetup.objects.exists())
+        self.assertTrue(HousingApplication.objects.filter(background_check_required=True, screening_score__isnull=False).exists())
+        self.assertTrue(PropertyOwnerIntake.objects.filter(lead_stage="demo_scheduled").exists())
+        self.assertTrue(ResidentMessageReply.objects.filter(body__icontains="vendor update").exists())
 
         response = self.client.get(reverse("demo_entry"))
 
