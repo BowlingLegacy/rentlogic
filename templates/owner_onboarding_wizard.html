@@ -3,8 +3,11 @@
 
 <style>
 .wizard-shell {
-    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
-    color: #15120b;
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        #10151f;
+    color: #f8fbf7;
     margin: -1rem;
     min-height: 100vh;
     padding: 1.25rem;
@@ -16,16 +19,17 @@
     box-shadow: 0 6px 16px rgba(65,45,10,.08);
 }
 .wizard-head {
-    background: #111;
-    border: 1px solid #9a792d;
-    color: #e0bd61;
+    background: linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94));
+    border: 1px solid rgba(16,199,194,.32);
+    color: #f8fbf7;
     margin-bottom: 1rem;
     padding: 1.2rem 1.4rem;
 }
-.wizard-head p { color: #d9d0bc; }
+.wizard-head p { color: #c6d4dc; }
 .wizard-panel {
-    background: rgba(255,255,255,.92);
-    border: 1px solid rgba(188,150,45,.16);
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(255,255,255,.16);
+    color: #10151f;
     margin-bottom: 1rem;
     padding: 1rem;
 }
@@ -36,13 +40,13 @@
     justify-content: space-between;
 }
 .progress-track {
-    background: #eadfca;
+    background: #dfe7e2;
     border-radius: 999px;
     height: 12px;
     overflow: hidden;
 }
 .progress-fill {
-    background: linear-gradient(90deg, #c2a04a, #62b69e);
+    background: linear-gradient(90deg, #10c7c2, #a9d95b, #ffb342);
     height: 100%;
 }
 .step-grid {
@@ -52,8 +56,8 @@
     margin-top: 1rem;
 }
 .step-card {
-    background: #fffaf0;
-    border: 1px solid rgba(184,146,56,.28);
+    background: #fff;
+    border: 1px solid #e1e9e3;
     padding: 1rem;
 }
 .step-top {
@@ -72,12 +76,12 @@
     width: 34px;
 }
 .step-icon.done {
-    background: #dff1e9;
-    color: #19684e;
+    background: rgba(16,199,194,.16);
+    color: #087a78;
 }
 .step-icon.open {
-    background: #fff0cc;
-    color: #7a5400;
+    background: rgba(255,179,66,.18);
+    color: #8a5600;
 }
 .step-card h3 {
     font-size: 1rem;
@@ -85,12 +89,12 @@
     margin: 0 0 .25rem;
 }
 .step-card p {
-    color: #5e533e;
+    color: #596772;
     margin: 0;
 }
 .btn-owner {
-    background: #c2a04a;
-    border: 1px solid #806116;
+    background: #ffb342;
+    border: 1px solid #ffb342;
     border-radius: 10px;
     color: #111;
     display: inline-flex;
@@ -99,21 +103,22 @@
     padding: .55rem .85rem;
     text-decoration: none;
 }
-.btn-owner:hover { background: #ae8d38; color: #111; }
+.btn-owner:hover { background: #f2a52c; color: #111; }
 .btn-dark-soft {
-    background: #111;
-    border: 1px solid #b89238;
+    background: #172233;
+    border: 1px solid rgba(16,199,194,.38);
     border-radius: 10px;
-    color: #f3d27a;
+    color: #eaf2f5;
     font-weight: 800;
     padding: .55rem .85rem;
     text-decoration: none;
 }
-.btn-dark-soft:hover { background: #2a2a2a; color: #e0bd61; }
+.btn-dark-soft:hover { background: #223149; color: #10c7c2; }
 .empty-state {
-    background: rgba(255,255,255,.92);
-    border: 1px dashed #b89238;
+    background: rgba(248,251,247,.96);
+    border: 1px dashed rgba(16,199,194,.45);
     border-radius: 16px;
+    color: #10151f;
     padding: 1.25rem;
 }
 </style>
