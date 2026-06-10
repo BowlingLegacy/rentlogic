@@ -3,8 +3,11 @@
 
 <style>
 body {
-    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
-    color: #1f1f1f;
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        #10151f;
+    color: #f8fbf7;
 }
 .page-shell {
     background: transparent !important;
@@ -19,35 +22,45 @@ body {
     gap: 1.5rem;
 }
 .ops-sidebar {
-    background: rgba(24,24,24,.96);
-    border: 1px solid rgba(197,154,50,.34);
-    border-radius: 20px;
+    background: rgba(23,34,51,.96);
+    border: 1px solid rgba(16,199,194,.32);
+    border-radius: 16px;
     padding: 1.2rem;
     min-height: calc(100vh - 160px);
     box-shadow: 0 8px 20px rgba(0,0,0,.08);
 }
 .ops-logo {
     text-align: center;
-    border-bottom: 1px solid rgba(197,154,50,.35);
+    border-bottom: 1px solid rgba(255,255,255,.14);
     padding-bottom: 1rem;
     margin-bottom: 1rem;
 }
-.ops-logo img { width: 118px; height: 118px; object-fit: contain; }
+.ops-brand-mark {
+    align-items: center;
+    background: linear-gradient(135deg, #10c7c2, #a9d95b 45%, #ffb342);
+    border-radius: 12px;
+    color: #10151f;
+    display: inline-flex;
+    font-size: 2rem;
+    font-weight: 950;
+    height: 86px;
+    justify-content: center;
+    width: 86px;
+}
 .ops-logo-title {
-    font-family: Georgia, serif;
-    color: #f6ead1;
-    font-weight: 700;
+    color: #f8fbf7;
+    font-weight: 950;
     font-size: 1.1rem;
     margin-top: .6rem;
 }
 .ops-logo-subtitle {
-    color: #c59a32;
+    color: #10c7c2;
     letter-spacing: 4px;
     text-transform: uppercase;
     font-size: .68rem;
 }
 .ops-nav-label {
-    color: #c59a32;
+    color: #a9d95b;
     letter-spacing: 3px;
     text-transform: uppercase;
     font-size: .68rem;
@@ -66,25 +79,31 @@ body {
 }
 .ops-nav a:hover,
 .ops-nav a.active {
-    border-color: rgba(197,154,50,.65);
-    background: rgba(197,154,50,.12);
+    border-color: rgba(16,199,194,.55);
+    background: rgba(16,199,194,.12);
     color: #fff;
 }
 .ops-main { min-width: 0; }
 .ops-hero,
 .soft-card,
 .workspace-card {
-    background: rgba(255,255,255,.9);
-    border: 1px solid rgba(188,150,45,.15);
-    border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 16px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.22);
+    color: #10151f;
 }
 .ops-hero {
-    padding: 1.5rem;
+    background:
+        linear-gradient(120deg, rgba(23,34,51,.96), rgba(16,21,31,.78)),
+        url("https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=1600&q=82") center/cover;
+    border-color: rgba(16,199,194,.34);
+    color: #f8fbf7;
+    padding: 1.65rem;
     margin-bottom: 1.5rem;
 }
 .ops-eyebrow {
-    color: #a57c18;
+    color: #a9d95b;
     letter-spacing: 5px;
     font-size: .72rem;
     text-transform: uppercase;
@@ -92,14 +111,13 @@ body {
     margin-bottom: .4rem;
 }
 .ops-title {
-    font-family: Georgia, serif;
-    color: #1c1c1c;
+    color: #f8fbf7;
     font-size: 2.7rem;
     font-weight: 700;
     line-height: 1;
     margin-bottom: .35rem;
 }
-.ops-text { color: #555; font-size: 1.05rem; }
+.ops-text { color: #d7e1e8; font-size: 1.05rem; }
 .metric-grid,
 .workspace-grid {
     display: grid;
@@ -108,21 +126,20 @@ body {
 }
 .metric-grid { grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); }
 .metric-card {
-    background: #fff;
-    border: 1px solid rgba(188,150,45,.18);
-    border-radius: 18px;
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 14px;
     padding: 1rem;
     box-shadow: 0 8px 20px rgba(0,0,0,.05);
 }
 .metric-label {
-    color: #a57c18;
+    color: #596772;
     font-size: .72rem;
     font-weight: 900;
     letter-spacing: 2px;
     text-transform: uppercase;
 }
 .metric-value {
-    font-family: Georgia, serif;
     font-size: 2rem;
     font-weight: 700;
     color: #111;
@@ -133,11 +150,10 @@ body {
     min-height: 165px;
     padding: 1.1rem;
     text-decoration: none;
-    color: #17130a;
+    color: #10151f;
 }
-.workspace-card:hover { background: #fff7e8; color: #17130a; }
+.workspace-card:hover { background: #eef8f6; color: #10151f; transform: translateY(-1px); }
 .workspace-card h2 {
-    font-family: Georgia, serif;
     font-size: 1.4rem;
     font-weight: 800;
     margin-bottom: .45rem;
@@ -149,8 +165,8 @@ body {
     min-width: 2.25rem;
     height: 2.25rem;
     border-radius: 999px;
-    background: #111;
-    color: #f3d27a;
+    background: #172233;
+    color: #10c7c2;
     font-weight: 900;
     margin-bottom: .65rem;
 }
@@ -162,8 +178,8 @@ body {
     margin-bottom: 0;
 }
 .collection-table th {
-    color: #6f5411;
-    background: #f3ead7;
+    color: #596772;
+    background: #eef5f1;
     border-bottom: none;
     font-size: .82rem;
 }
@@ -175,13 +191,13 @@ body {
     align-items: center;
     border-radius: 999px;
     padding: .28rem .65rem;
-    background: #fff0d6;
-    color: #8a5b00;
+    background: rgba(255,179,66,.18);
+    color: #8a5600;
     font-weight: 900;
     font-size: .78rem;
 }
 .small-action {
-    color: #a57c18;
+    color: #087a78;
     font-weight: 800;
     text-decoration: underline;
     text-underline-offset: 3px;
@@ -200,9 +216,9 @@ body {
     <div class="ops-shell">
         <aside class="ops-sidebar">
             <div class="ops-logo">
-                <img src="/static/images/bl-logo.png" alt="Bowling Legacy Logo">
-                <div class="ops-logo-title">Bowling Legacy</div>
-                <div class="ops-logo-subtitle">Rental Ledger Pro</div>
+                <div class="ops-brand-mark">RL</div>
+                <div class="ops-logo-title">Rental Ledger Pro</div>
+                <div class="ops-logo-subtitle">Operations</div>
             </div>
 
             <nav class="ops-nav">
