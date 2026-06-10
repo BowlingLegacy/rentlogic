@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.wizard-shell {
+    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
+    color: #15120b;
+    margin: -1rem;
+    min-height: 100vh;
+    padding: 1.25rem;
+}
+.wizard-head,
+.wizard-panel,
+.step-card {
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(65,45,10,.08);
+}
+.wizard-head {
+    background: #111;
+    border: 1px solid #9a792d;
+    color: #e0bd61;
+    margin-bottom: 1rem;
+    padding: 1.2rem 1.4rem;
+}
+.wizard-head p { color: #d9d0bc; }
+.wizard-panel {
+    background: rgba(255,255,255,.92);
+    border: 1px solid rgba(188,150,45,.16);
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+.property-title {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}
+.progress-track {
+    background: #eadfca;
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+}
+.progress-fill {
+    background: linear-gradient(90deg, #c2a04a, #62b69e);
+    height: 100%;
+}
+.step-grid {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin-top: 1rem;
+}
+.step-card {
+    background: #fffaf0;
+    border: 1px solid rgba(184,146,56,.28);
+    padding: 1rem;
+}
+.step-top {
+    align-items: start;
+    display: flex;
+    gap: .75rem;
+}
+.step-icon {
+    align-items: center;
+    border-radius: 999px;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-weight: 950;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+}
+.step-icon.done {
+    background: #dff1e9;
+    color: #19684e;
+}
+.step-icon.open {
+    background: #fff0cc;
+    color: #7a5400;
+}
+.step-card h3 {
+    font-size: 1rem;
+    font-weight: 950;
+    margin: 0 0 .25rem;
+}
+.step-card p {
+    color: #5e533e;
+    margin: 0;
+}
+.btn-owner {
+    background: #c2a04a;
+    border: 1px solid #806116;
+    border-radius: 10px;
+    color: #111;
+    display: inline-flex;
+    font-weight: 900;
+    margin-top: .85rem;
+    padding: .55rem .85rem;
+    text-decoration: none;
+}
+.btn-owner:hover { background: #ae8d38; color: #111; }
+.btn-dark-soft {
+    background: #111;
+    border: 1px solid #b89238;
+    border-radius: 10px;
+    color: #f3d27a;
+    font-weight: 800;
+    padding: .55rem .85rem;
+    text-decoration: none;
+}
+.btn-dark-soft:hover { background: #2a2a2a; color: #e0bd61; }
+.empty-state {
+    background: rgba(255,255,255,.92);
+    border: 1px dashed #b89238;
+    border-radius: 16px;
+    padding: 1.25rem;
+}
+</style>
+
+<div class="wizard-shell">
+    <div class="wizard-head d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="fw-bold mb-1">Owner Onboarding Wizard</h1>
+            <p class="mb-0">Use this checklist to turn a new owner account into a working property dashboard.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'property_owner_dashboard' %}" class="btn-dark-soft">Owner Dashboard</a>
+            <a href="{% url 'owner_property_create' %}" class="btn-owner">Add Property</a>
+        </div>
+    </div>
+
+    {% if property_steps %}
+        {% for item in property_steps %}
+            <section class="wizard-panel">
+                <div class="property-title flex-wrap">
+                    <div>
+                        <h2 class="h4 fw-bold mb-1">{{ item.property.name }}</h2>
+                        <p class="text-muted mb-0">{{ item.property.address|default:"No address entered" }}</p>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">{{ item.completed_count }} of {{ item.total_count }} complete</div>
+                        <small class="text-muted">{{ item.percent_complete }}% ready</small>
+                    </div>
+                </div>
+                <div class="progress-track mt-3">
+                    <div class="progress-fill" style="width:{{ item.percent_complete }}%"></div>
+                </div>
+
+                <div class="step-grid">
+                    {% for step in item.steps %}
+                        <article class="step-card">
+                            <div class="step-top">
+                                <span class="step-icon {% if step.complete %}done{% else %}open{% endif %}">
+                                    {% if step.complete %}OK{% else %}!{% endif %}
+                                </span>
+                                <div>
+                                    <h3>{{ step.label }}</h3>
+                                    <p>{{ step.detail }}</p>
+                                </div>
+                            </div>
+                            {% if step.url_args %}
+                                <a class="btn-owner" href="{% url step.url step.url_args.0 %}">{{ step.button }}</a>
+                            {% else %}
+                                <a class="btn-owner" href="{% url step.url %}">{{ step.button }}</a>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <h2 class="h4 fw-bold">Start with the first property.</h2>
+            <p class="text-muted">Once a property is added, this wizard will show documents, units, residents, listings, staff, and reporting setup.</p>
+            <a href="{% url 'owner_property_create' %}" class="btn-owner">Add First Property</a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

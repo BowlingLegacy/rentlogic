@@ -83,6 +83,95 @@ def property_owner_dashboard(request):
     })
 
 
+@login_required
+@user_passes_test(can_access_owner_dashboard)
+def owner_onboarding_wizard(request):
+    properties = owner_properties_for(request.user).prefetch_related(
+        "onboarding_documents",
+        "room_rents",
+        "financial_uploads",
+        "rental_listings",
+    )
+
+    property_steps = []
+    for property_obj in properties:
+        resident_count = HousingApplication.objects.filter(property=property_obj, user__isnull=False).count()
+        applicant_count = HousingApplication.objects.filter(property=property_obj, user__isnull=True).count()
+        onboarding_docs = property_obj.onboarding_documents.all()
+        room_count = property_obj.room_rents.filter(is_active=True).count()
+        financial_upload_count = property_obj.financial_uploads.count()
+        listing_count = property_obj.rental_listings.count()
+
+        steps = [
+            {
+                "label": "Property profile",
+                "complete": bool(property_obj.name and property_obj.address and property_obj.rent_amount),
+                "detail": "Name, address, rent, deposit, utilities, fees, screening, and insurance settings.",
+                "url": "owner_property_create",
+                "button": "Add Another Property",
+            },
+            {
+                "label": "Onboarding documents",
+                "complete": onboarding_docs.filter(document_type="application").exists() and onboarding_docs.filter(document_type="lease").exists(),
+                "detail": f"{onboarding_docs.count()} document(s) uploaded. Application and lease are the required starting point.",
+                "url": "owner_property_onboarding_documents",
+                "url_args": [property_obj.id],
+                "button": "Upload Documents",
+            },
+            {
+                "label": "Units and rent setup",
+                "complete": room_count > 0,
+                "detail": f"{room_count} unit/rent row(s) configured.",
+                "url": "landlord_rent_setup_property",
+                "url_args": [property_obj.id],
+                "button": "Set Up Units",
+            },
+            {
+                "label": "Landlord or manager",
+                "complete": bool(property_obj.landlord_email),
+                "detail": property_obj.landlord_email or "No landlord or property manager assigned yet.",
+                "url": "owner_landlord_invite",
+                "button": "Invite Landlord",
+            },
+            {
+                "label": "Residents and applicants",
+                "complete": resident_count > 0,
+                "detail": f"{resident_count} resident(s) and {applicant_count} applicant file(s) connected.",
+                "url": "property_detail",
+                "url_args": [property_obj.id],
+                "button": "Open Property Page",
+            },
+            {
+                "label": "Financial source files",
+                "complete": financial_upload_count > 0,
+                "detail": f"{financial_upload_count} financial upload(s) on file.",
+                "url": "owner_financial_upload",
+                "button": "Upload Financials",
+            },
+            {
+                "label": "Vacancy listing",
+                "complete": listing_count > 0,
+                "detail": f"{listing_count} listing record(s) created.",
+                "url": "rental_listing_create",
+                "button": "Create Listing",
+            },
+        ]
+
+        completed_count = sum(1 for step in steps if step["complete"])
+        property_steps.append({
+            "property": property_obj,
+            "steps": steps,
+            "completed_count": completed_count,
+            "total_count": len(steps),
+            "percent_complete": int(completed_count / len(steps) * 100),
+        })
+
+    return render(request, "owner_onboarding_wizard.html", {
+        "properties": properties,
+        "property_steps": property_steps,
+    })
+
+
 def owner_properties_for(user):
     if is_super_admin(user) or is_assistant_admin(user):
         return Property.objects.all().order_by("name")

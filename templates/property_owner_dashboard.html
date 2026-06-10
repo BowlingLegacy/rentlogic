@@ -149,6 +149,7 @@
                 <p class="text-muted mb-0">Add properties, assign a landlord, bring current residents into setup, and upload financial source files.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'owner_onboarding_wizard' %}" class="btn-owner">Onboarding Wizard</a>
                 <a href="{% url 'owner_property_create' %}" class="btn-owner">Add Property</a>
                 <a href="{% url 'listing_center' %}" class="btn-owner">Vacancy Listings</a>
                 <a href="{% url 'owner_landlord_invite' %}" class="btn-dark-soft">Invite Landlord</a>
@@ -219,6 +220,7 @@
                     <a href="{% url 'property_financials' card.property.name %}" class="btn-owner">Open {{ card.property.name }} Financials</a>
                     <a href="{% url 'custom_reports' %}?property_id={{ card.property.id }}" class="btn-dark-soft">Custom Reports</a>
                     <a href="{% url 'owner_property_onboarding_documents' card.property.id %}" class="btn-dark-soft">Onboarding Files</a>
+                    <a href="{% url 'owner_onboarding_wizard' %}" class="btn-dark-soft">Setup Checklist</a>
                     <a href="{% url 'existing_resident_intake' card.property.id %}" class="btn-dark-soft">Current Resident Setup Link</a>
                     <a href="{% url 'property_detail' card.property.id %}" class="btn-dark-soft">Public Property Page</a>
                     <a href="{% url 'rental_listing_create' %}?property={{ card.property.id }}" class="btn-owner">Create Vacancy Listing</a>

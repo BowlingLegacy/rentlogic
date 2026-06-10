@@ -74,6 +74,7 @@ urlpatterns = [
     path("landlord-dashboard/current-resident-intakes/<int:intake_id>/delete/", views.delete_existing_resident_intake, name="delete_existing_resident_intake"),
     path("resident-messages/group/", views.group_resident_message, name="group_resident_message"),
     path("owner-dashboard/", owner_views.property_owner_dashboard, name="property_owner_dashboard"),
+    path("owner-dashboard/onboarding/", owner_views.owner_onboarding_wizard, name="owner_onboarding_wizard"),
     path("owner-dashboard/properties/create/", owner_views.owner_property_create, name="owner_property_create"),
     path("owner-dashboard/properties/<int:property_id>/onboarding-documents/", owner_views.owner_property_onboarding_documents, name="owner_property_onboarding_documents"),
     path("owner-dashboard/landlords/invite/", owner_views.owner_landlord_invite, name="owner_landlord_invite"),

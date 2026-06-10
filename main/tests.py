@@ -2644,6 +2644,47 @@ class LiveFlowTests(TestCase):
         self.assertRedirects(upload_response, reverse("owner_financial_upload"))
         self.assertEqual(property_obj.financial_uploads.get(name="Owner Upload").notes, "QuickBooks export")
 
+    def test_property_owner_onboarding_wizard_tracks_setup_steps(self):
+        owner = User.objects.create_user(
+            username="wizard-owner",
+            email="wizard-owner@example.com",
+            password="StrongPass123!",
+            role="property_owner",
+        )
+        property_obj = Property.objects.create(
+            name="Wizard Property",
+            address="10 Wizard Way",
+            owner_email=owner.email,
+            landlord_email="manager@example.com",
+            rent_amount=Decimal("1200.00"),
+        )
+        PropertyRoomRent.objects.create(property=property_obj, room_unit_label="A", monthly_rent=Decimal("1200.00"))
+        PropertyOnboardingDocument.objects.create(
+            property=property_obj,
+            document_type="application",
+            title="Application",
+            file=SimpleUploadedFile("application.pdf", b"application", content_type="application/pdf"),
+        )
+        PropertyOnboardingDocument.objects.create(
+            property=property_obj,
+            document_type="lease",
+            title="Lease",
+            file=SimpleUploadedFile("lease.pdf", b"lease", content_type="application/pdf"),
+        )
+
+        self.client.login(username="wizard-owner", password="StrongPass123!")
+
+        response = self.client.get(reverse("owner_onboarding_wizard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Owner Onboarding Wizard")
+        self.assertContains(response, "Wizard Property")
+        self.assertContains(response, "Property profile")
+        self.assertContains(response, "Onboarding documents")
+        self.assertContains(response, "Units and rent setup")
+        self.assertContains(response, "Landlord or manager")
+        self.assertContains(response, "4 of 7 complete")
+
     def test_property_owner_intake_questionnaire_saves_system_needs(self):
         form_response = self.client.get(reverse("property_owner_intake"))
         self.assertEqual(form_response.status_code, 200)
