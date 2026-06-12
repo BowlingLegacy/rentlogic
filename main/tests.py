@@ -1566,6 +1566,72 @@ class LiveFlowTests(TestCase):
         resident_files = self.client.get(reverse("landlord_resident_files"))
         self.assertNotContains(resident_files, "Unit E File")
 
+    def test_landlord_can_reassign_unit_packet_to_resident_file(self):
+        landlord = User.objects.create_user(
+            username="packet-reassign-landlord",
+            email="packet-reassign-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Packet Reassign Property", landlord_email=landlord.email)
+        resident = HousingApplication.objects.create(
+            property=property_obj,
+            full_name="Assigned Packet Resident",
+            phone="555-0770",
+            email="assigned-packet@example.com",
+            age=50,
+            space_type="Room",
+            space_label="E",
+            monthly_rent=Decimal("500.00"),
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+        )
+        placeholder = HousingApplication.objects.create(
+            property=property_obj,
+            resident_file_status="unit_file",
+            full_name="Unit E File",
+            phone="",
+            email="",
+            age=0,
+            space_type="Unit",
+            space_label="E",
+            income_source="Tenant file packet placeholder",
+            monthly_income=Decimal("0.00"),
+            housing_need="Empty unit file packet placeholder.",
+        )
+        document = ApplicantDocument.objects.create(
+            application=placeholder,
+            document_type="other",
+            name="Old Unit Packet",
+            file=SimpleUploadedFile("old-packet.txt", b"Unit E old file", content_type="text/plain"),
+            packet_upload=True,
+            landlord_notified=True,
+        )
+
+        self.client.login(username="packet-reassign-landlord", password="StrongPass123!")
+        queue_response = self.client.get(reverse("landlord_resident_files"))
+        self.assertContains(queue_response, "Tenant File Packets Needing Review")
+        self.assertContains(queue_response, "Old Unit Packet")
+
+        response = self.client.post(reverse("tenant_file_packet_review", args=[document.id]), {
+            "action": "reassign",
+            "application": str(resident.id),
+        })
+
+        self.assertRedirects(response, reverse("tenant_file_packet_review", args=[document.id]))
+        document.refresh_from_db()
+        self.assertEqual(document.application, resident)
+
+        review_response = self.client.post(reverse("tenant_file_packet_review", args=[document.id]), {"action": "review"})
+        self.assertRedirects(review_response, reverse("application_detail", args=[resident.id]))
+        document.refresh_from_db()
+        self.assertTrue(document.locked)
+
+        queue_after_review = self.client.get(reverse("landlord_resident_files"))
+        self.assertNotContains(queue_after_review, "Old Unit Packet")
+
     def test_landlord_can_add_room_rent_without_roster_entry(self):
         landlord = User.objects.create_user(
             username="manual-room-rent-landlord",

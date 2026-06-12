@@ -1248,6 +1248,19 @@ class TenantFilePacketUploadForm(forms.Form):
         return cleaned_data
 
 
+class TenantFilePacketReassignForm(forms.Form):
+    application = forms.ModelChoiceField(
+        label="Move packet to resident file",
+        queryset=HousingApplication.objects.none(),
+        required=True,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    def __init__(self, *args, applications=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["application"].queryset = applications or HousingApplication.objects.none()
+
+
 class ResidentProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = HousingApplication

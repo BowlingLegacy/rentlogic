@@ -15,6 +15,44 @@
         </div>
     </div>
 
+    {% if tenant_file_packets %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <h2 class="h5 fw-bold mb-1">Tenant File Packets Needing Review</h2>
+                        <p class="text-muted mb-0">{{ tenant_file_packet_count }} uploaded packet{{ tenant_file_packet_count|pluralize }} waiting to be reviewed or locked.</p>
+                    </div>
+                    <a href="{% url 'tenant_file_packet_upload' %}" class="btn btn-outline-primary btn-sm">Upload Packet</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Packet</th>
+                                <th>Property</th>
+                                <th>Current File</th>
+                                <th>OCR</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for packet in tenant_file_packets %}
+                            <tr>
+                                <td><strong>{{ packet.name }}</strong><br><span class="text-muted small">{{ packet.get_document_type_display }}</span></td>
+                                <td>{{ packet.application.property.name|default:"No Property" }}</td>
+                                <td>{{ packet.application.full_name }}{% if packet.application.space_label %} | {{ packet.application.space_label }}{% endif %}</td>
+                                <td>{{ packet.get_ocr_status_display }}</td>
+                                <td><a href="{% url 'tenant_file_packet_review' packet.id %}" class="btn btn-outline-primary btn-sm">Review Packet</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="card shadow-sm">
         <div class="card-body">
             <div class="table-responsive">

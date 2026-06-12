@@ -53,6 +53,22 @@
                             </form>
                         {% endif %}
                     </div>
+
+                    {% if not document.locked %}
+                        <hr>
+                        <h3 class="h6 fw-bold">Move Packet To A Different File</h3>
+                        <form method="post" class="row g-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reassign">
+                            <div class="col-12">
+                                {{ reassign_form.application }}
+                                {{ reassign_form.application.errors }}
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-outline-primary">Move Packet</button>
+                            </div>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
         </div>

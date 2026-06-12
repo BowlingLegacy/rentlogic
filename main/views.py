@@ -54,6 +54,7 @@ from .forms import (
     ResidentRoomTransferForm,
     ResidentMoveOutForm,
     TenantFilePacketUploadForm,
+    TenantFilePacketReassignForm,
     GroupResidentMessageForm,
     CompanyEmailComposeForm,
     CompanyEmailReplyForm,
@@ -2145,6 +2146,16 @@ def get_landlord_workspace_context(user):
         .filter(property__in=properties, resident_file_status="archived")
         .order_by("-move_out_date", "property__name", "space_label", "full_name")
     )
+    tenant_file_packets = (
+        ApplicantDocument.objects
+        .select_related("application", "application__property")
+        .filter(
+            application__property__in=properties,
+            packet_upload=True,
+            locked=False,
+        )
+        .order_by("-created_at")
+    )
 
     payments = Payment.objects.filter(application__property__in=properties).order_by("-created_at")[:25]
 
@@ -2239,6 +2250,8 @@ def get_landlord_workspace_context(user):
     return {
         "applications": sorted_resident_list(resident_files),
         "archived_applications": archived_resident_files,
+        "tenant_file_packets": tenant_file_packets,
+        "tenant_file_packet_count": tenant_file_packets.count(),
         "properties": properties,
         "payments": payments,
         "landlord_inbox": landlord_inbox,
@@ -3852,12 +3865,32 @@ def tenant_file_packet_review(request, document_id):
         application__property__in=staff_managed_properties(request.user),
         packet_upload=True,
     )
+    reassign_applications = (
+        HousingApplication.objects
+        .select_related("property")
+        .filter(
+            property__in=staff_managed_properties(request.user),
+            resident_file_status__in=["active", "archived"],
+        )
+        .order_by("property__name", "space_label", "full_name")
+    )
+    reassign_form = TenantFilePacketReassignForm(
+        request.POST or None,
+        applications=reassign_applications,
+    )
 
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "ocr":
             process_applicant_document_ocr(document)
             messages.success(request, "OCR processing complete.")
+        elif action == "reassign":
+            if reassign_form.is_valid():
+                old_application = document.application
+                document.application = reassign_form.cleaned_data["application"]
+                document.landlord_notified = True
+                document.save(update_fields=["application", "landlord_notified"])
+                messages.success(request, f"Packet moved from {old_application.full_name} to {document.application.full_name}.")
         elif action == "review":
             document.status = "locked"
             document.locked = True
@@ -3877,6 +3910,7 @@ def tenant_file_packet_review(request, document_id):
 
     return render(request, "tenant_file_packet_review.html", {
         "document": document,
+        "reassign_form": reassign_form,
     })
 
 
