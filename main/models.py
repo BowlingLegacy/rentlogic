@@ -551,7 +551,12 @@ class ApplicantDocument(models.Model):
         ("locked", "Locked Final"),
         ("needs_correction", "Needs Correction"),
     ]
-    OCR_STATUS_CHOICES = AccountingReceipt.OCR_STATUS_CHOICES
+    OCR_STATUS_CHOICES = [
+        ("not_processed", "Not Processed"),
+        ("extracted", "Text Extracted"),
+        ("needs_ocr_provider", "Needs OCR Provider"),
+        ("failed", "OCR Failed"),
+    ]
 
     application = models.ForeignKey(HousingApplication, on_delete=models.CASCADE, related_name="documents")
     document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPE_CHOICES, default="other")
