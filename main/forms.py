@@ -748,7 +748,7 @@ class CurrentResidentRosterUploadForm(forms.Form):
     )
     file = forms.FileField(
         label="Current resident list",
-        help_text="CSV or Excel accepted. Columns can include first_name, last_name, email, phone, room_unit_label, name, resident, room, or unit.",
+        help_text="CSV or Excel accepted. Include tenant/name, unit, phone, rent, due day, utilities, deposit held, last month paid, and balances when available.",
         widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".csv,.xlsx,.xls"}),
     )
 

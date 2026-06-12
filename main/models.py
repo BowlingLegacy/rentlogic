@@ -1101,6 +1101,16 @@ class CurrentResidentRosterEntry(models.Model):
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=50, blank=True)
     room_unit_label = models.CharField(max_length=50, blank=True)
+    monthly_rent = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    rent_due_day = models.PositiveSmallIntegerField(default=1)
+    monthly_utilities = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    current_rent_balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    current_utility_balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    deposit_required = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    deposit_held = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    last_month_rent_paid = models.BooleanField(default=False)
+    last_month_rent_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    outstanding_balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     is_active = models.BooleanField(default=True)
     uploaded_by = models.ForeignKey(
         "User",

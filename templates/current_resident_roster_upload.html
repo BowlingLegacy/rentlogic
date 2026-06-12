@@ -7,7 +7,7 @@
         <div>
             <h1 class="section-title mb-1">Approved Current Resident List</h1>
             <p class="text-muted mb-0">
-                Upload this before residents use the setup form. Automatic setup codes are only sent when the submitted profile matches this list.
+                Upload this before residents use setup codes. The roster now creates or updates the resident file, unit rent setup, balances, and deposit record.
             </p>
         </div>
         <a href="{% url 'landlord_attention' %}" class="message-btn">Needs Attention</a>
@@ -20,8 +20,9 @@
     {% endif %}
 
     <div class="alert alert-info">
-        Accepted CSV headers include: <strong>first_name, last_name, email, phone, room_unit_label</strong>.
-        Common headers like Name, Resident, Room, Unit, and Phone Number are also accepted.
+        Accepted CSV/XLSX headers include:
+        <strong>name, first_name, last_name, phone, email, unit, monthly_rent, rent_due_day, monthly_utilities, rent_balance, utility_balance, deposit_required, deposit_held, last_month_rent_paid, last_month_rent, outstanding_balance</strong>.
+        Common headers like Tenant Name, Room, Unit Number, Rent, Balance, Deposit Paid, and Phone Number are also accepted.
         Uploading a corrected list replaces the active approved list for that property.
     </div>
 
@@ -53,8 +54,13 @@
                     <th>Property</th>
                     <th>Resident</th>
                     <th>Room / Unit</th>
-                    <th>Email</th>
                     <th>Phone</th>
+                    <th>Rent</th>
+                    <th>Due Day</th>
+                    <th>Utilities</th>
+                    <th>Rent Balance</th>
+                    <th>Deposit Held</th>
+                    <th>Setup Code</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,12 +69,27 @@
                         <td>{{ entry.property.name }}</td>
                         <td>{{ entry.full_name }}</td>
                         <td>{{ entry.room_unit_label|default:"-" }}</td>
-                        <td>{{ entry.email|default:"-" }}</td>
                         <td>{{ entry.phone|phone_format|default:"-" }}</td>
+                        <td>${{ entry.monthly_rent }}</td>
+                        <td>{{ entry.rent_due_day }}</td>
+                        <td>${{ entry.monthly_utilities }}</td>
+                        <td>${{ entry.current_rent_balance }}</td>
+                        <td>${{ entry.deposit_held }}</td>
+                        <td>
+                            {% with app=entry.synced_application %}
+                                {% if app and app.user and app.user.invite_code %}
+                                    {{ app.user.invite_code }}
+                                {% elif app and app.user and app.user.has_usable_password %}
+                                    Completed
+                                {% else %}
+                                    Ready
+                                {% endif %}
+                            {% endwith %}
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5" class="text-muted">No approved current resident list has been uploaded yet.</td>
+                        <td colspan="10" class="text-muted">No approved current resident list has been uploaded yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>

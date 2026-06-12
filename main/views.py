@@ -5501,6 +5501,26 @@ def roster_value(row, *keys):
     return ""
 
 
+def roster_money_value(row, *keys):
+    raw_value = roster_value(row, *keys)
+    return money(raw_value) if raw_value else Decimal("0.00")
+
+
+def roster_int_value(row, *keys, default=0):
+    raw_value = roster_value(row, *keys)
+    if not raw_value:
+        return default
+    try:
+        return int(float(str(raw_value).strip()))
+    except (TypeError, ValueError):
+        return default
+
+
+def roster_bool_value(row, *keys):
+    raw_value = roster_value(row, *keys).strip().lower()
+    return raw_value in {"1", "true", "yes", "y", "paid", "x", "checked"}
+
+
 ROSTER_HEADER_ALIASES = {
     "first name",
     "firstname",
@@ -5524,6 +5544,34 @@ ROSTER_HEADER_ALIASES = {
     "room/unit",
     "room number",
     "unit number",
+    "rent",
+    "monthly rent",
+    "scheduled rent",
+    "rent amount",
+    "rent due day",
+    "due day",
+    "utilities",
+    "monthly utilities",
+    "utility fee",
+    "shared utilities",
+    "rent balance",
+    "current rent balance",
+    "rent due",
+    "utility balance",
+    "current utility balance",
+    "utilities due",
+    "deposit",
+    "deposit required",
+    "security deposit",
+    "deposit held",
+    "deposit paid",
+    "last month paid",
+    "last month rent paid",
+    "last month rent",
+    "last month amount",
+    "outstanding balance",
+    "balance",
+    "amount owed",
 }
 
 
@@ -5599,6 +5647,7 @@ def import_current_resident_roster(property_obj, file_obj, user):
 def import_current_resident_roster_rows(property_obj, row_iterable, user):
     created = 0
     skipped = 0
+    synced = 0
     active_entry_ids = []
 
     for normalized_row in row_iterable:
@@ -5614,6 +5663,16 @@ def import_current_resident_roster_rows(property_obj, row_iterable, user):
         email = roster_value(normalized_row, "email", "email address")
         phone = roster_value(normalized_row, "phone", "phone number", "mobile", "cell")
         room_unit_label = roster_value(normalized_row, "room unit label", "room", "unit", "room/unit", "room number", "unit number")
+        monthly_rent = roster_money_value(normalized_row, "monthly rent", "rent", "scheduled rent", "rent amount")
+        rent_due_day = roster_int_value(normalized_row, "rent due day", "due day", default=1)
+        monthly_utilities = roster_money_value(normalized_row, "monthly utilities", "utilities", "utility fee", "shared utilities")
+        current_rent_balance = roster_money_value(normalized_row, "current rent balance", "rent balance", "rent due")
+        current_utility_balance = roster_money_value(normalized_row, "current utility balance", "utility balance", "utilities due")
+        deposit_required = roster_money_value(normalized_row, "deposit required", "deposit", "security deposit")
+        deposit_held = roster_money_value(normalized_row, "deposit held", "deposit paid")
+        last_month_rent_paid = roster_bool_value(normalized_row, "last month paid", "last month rent paid")
+        last_month_rent_amount = roster_money_value(normalized_row, "last month rent", "last month amount")
+        outstanding_balance = roster_money_value(normalized_row, "outstanding balance", "balance", "amount owed")
 
         if not first_name or not last_name:
             skipped += 1
@@ -5627,17 +5686,122 @@ def import_current_resident_roster_rows(property_obj, row_iterable, user):
             room_unit_label=room_unit_label,
             defaults={
                 "phone": phone,
+                "monthly_rent": monthly_rent,
+                "rent_due_day": rent_due_day,
+                "monthly_utilities": monthly_utilities,
+                "current_rent_balance": current_rent_balance,
+                "current_utility_balance": current_utility_balance,
+                "deposit_required": deposit_required,
+                "deposit_held": deposit_held,
+                "last_month_rent_paid": last_month_rent_paid,
+                "last_month_rent_amount": last_month_rent_amount,
+                "outstanding_balance": outstanding_balance,
                 "is_active": True,
                 "uploaded_by": user,
             },
         )
         active_entry_ids.append(roster_entry.id)
         created += 1
+        sync_current_resident_roster_entry(roster_entry, user)
+        synced += 1
 
     if active_entry_ids:
         CurrentResidentRosterEntry.objects.filter(property=property_obj).exclude(id__in=active_entry_ids).update(is_active=False)
 
-    return created, skipped
+    return created, skipped, synced
+
+
+def find_resident_file_for_roster_entry(roster_entry):
+    target_unit = normalized_room_label(roster_entry.room_unit_label)
+    applications = HousingApplication.objects.filter(property=roster_entry.property).select_related("user")
+
+    if target_unit:
+        for application in applications:
+            if normalized_room_label(application.space_label) == target_unit:
+                return application
+
+    if roster_entry.email:
+        match = applications.filter(email__iexact=roster_entry.email).first()
+        if match:
+            return match
+
+    phone_digits = normalize_phone_digits(roster_entry.phone)
+    if phone_digits:
+        for application in applications:
+            if normalize_phone_digits(application.phone) == phone_digits:
+                return application
+
+    return None
+
+
+def sync_current_resident_roster_entry(roster_entry, user):
+    clean_room_label = canonical_room_label(roster_entry.room_unit_label)
+    if clean_room_label:
+        save_room_rent_setting(
+            roster_entry.property_id,
+            clean_room_label,
+            {
+                "monthly_rent": roster_entry.monthly_rent,
+                "rent_due_day": roster_entry.rent_due_day or 1,
+                "utility_monthly": roster_entry.monthly_utilities,
+                "deposit_required": roster_entry.deposit_required,
+                "deposit_paid": roster_entry.deposit_held,
+                "is_active": True,
+            },
+        )
+
+    application = find_resident_file_for_roster_entry(roster_entry)
+    full_name = roster_entry.full_name()
+    additional_notes = "Current resident imported from approved resident roster."
+    if roster_entry.last_month_rent_paid:
+        additional_notes += f" Last month rent paid/held: ${roster_entry.last_month_rent_amount}."
+
+    rent_balance = roster_entry.current_rent_balance
+    if rent_balance == Decimal("0.00") and roster_entry.outstanding_balance > Decimal("0.00"):
+        rent_balance = roster_entry.outstanding_balance
+
+    defaults = {
+        "property": roster_entry.property,
+        "full_name": full_name,
+        "phone": roster_entry.phone,
+        "email": roster_entry.email,
+        "age": 0,
+        "space_type": "Unit",
+        "space_label": clean_room_label,
+        "monthly_rent": roster_entry.monthly_rent,
+        "balance": rent_balance,
+        "rent_due_day": roster_entry.rent_due_day or 1,
+        "deposit_required": roster_entry.deposit_required,
+        "deposit_paid": min(roster_entry.deposit_held, roster_entry.deposit_required),
+        "utility_monthly": roster_entry.monthly_utilities,
+        "utility_balance": roster_entry.current_utility_balance,
+        "communication_preference": "sms" if roster_entry.phone else "portal",
+        "income_source": "Current resident roster import",
+        "monthly_income": Decimal("0.00"),
+        "housing_need": "Existing resident imported from approved roster.",
+        "additional_notes": additional_notes,
+    }
+
+    if application:
+        for field_name, value in defaults.items():
+            setattr(application, field_name, value)
+        application.save()
+    else:
+        application = HousingApplication.objects.create(**defaults)
+
+    if not application.user:
+        application.user = create_pending_portal_user(
+            full_name,
+            roster_entry.email,
+            "tenant",
+            application.id,
+        )
+        application.save(update_fields=["user"])
+
+    if application.user and not application.user.has_usable_password() and not application.user.invite_code:
+        application.user.refresh_invite_code()
+
+    return application
 
 
 def existing_resident_intake(request, pk):
@@ -5723,8 +5887,11 @@ def current_resident_roster_upload(request):
     if request.method == "POST" and form.is_valid():
         property_obj = form.cleaned_data["property"]
         file_obj = form.cleaned_data["file"]
-        created, skipped = import_current_resident_roster(property_obj, file_obj, request.user)
-        messages.success(request, f"Current resident list imported for {property_obj.name}. {created} rows saved, {skipped} rows skipped.")
+        created, skipped, synced = import_current_resident_roster(property_obj, file_obj, request.user)
+        messages.success(
+            request,
+            f"Current resident list imported for {property_obj.name}. {created} rows saved, {synced} resident file(s) synced, {skipped} rows skipped.",
+        )
         return redirect("current_resident_roster_upload")
 
     roster_entries = (
@@ -5733,6 +5900,8 @@ def current_resident_roster_upload(request):
         .select_related("property")
         .order_by("property__name", "room_unit_label", "last_name")
     )
+    for entry in roster_entries:
+        entry.synced_application = find_resident_file_for_roster_entry(entry)
 
     return render(request, "current_resident_roster_upload.html", {
         "form": form,

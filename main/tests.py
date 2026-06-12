@@ -5765,6 +5765,9 @@ class LiveFlowTests(TestCase):
         roster_entry = CurrentResidentRosterEntry.objects.get(email="roster@example.com")
         self.assertEqual(roster_entry.property, property_obj)
         self.assertEqual(roster_entry.room_unit_label, "Unit 12")
+        application = HousingApplication.objects.get(property=property_obj, space_label="Unit 12")
+        self.assertEqual(application.full_name, "Roster Resident")
+        self.assertIsNotNone(application.user)
 
     def test_landlord_can_upload_current_resident_roster_excel(self):
         landlord = User.objects.create_user(
@@ -5802,6 +5805,52 @@ class LiveFlowTests(TestCase):
         self.assertEqual(roster_entry.last_name, "Malone")
         self.assertEqual(roster_entry.room_unit_label, "L")
 
+    def test_current_resident_roster_upload_syncs_financial_terms_to_resident_file(self):
+        landlord = User.objects.create_user(
+            username="roster-financial-landlord",
+            email="roster-financial-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Roster Financial Property", landlord_email=landlord.email)
+        roster_file = SimpleUploadedFile(
+            "financial-roster.csv",
+            (
+                b"name,phone,unit,monthly_rent,rent_due_day,monthly_utilities,rent_balance,utility_balance,"
+                b"deposit_required,deposit_held,last_month_rent_paid,last_month_rent,outstanding_balance\n"
+                b"Current Resident,555-111-2222,B,650.00,1,55.00,25.00,0.00,450.00,450.00,yes,650.00,25.00\n"
+            ),
+            content_type="text/csv",
+        )
+
+        self.client.login(username="roster-financial-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("current_resident_roster_upload"), {
+            "property": property_obj.id,
+            "file": roster_file,
+        })
+
+        self.assertRedirects(response, reverse("current_resident_roster_upload"))
+        roster_entry = CurrentResidentRosterEntry.objects.get(property=property_obj, room_unit_label="B")
+        self.assertEqual(roster_entry.monthly_rent, Decimal("650.00"))
+        self.assertEqual(roster_entry.deposit_held, Decimal("450.00"))
+        self.assertTrue(roster_entry.last_month_rent_paid)
+
+        room_setting = PropertyRoomRent.objects.get(property=property_obj, room_unit_label="B")
+        self.assertEqual(room_setting.monthly_rent, Decimal("650.00"))
+        self.assertEqual(room_setting.utility_monthly, Decimal("55.00"))
+        self.assertEqual(room_setting.deposit_paid, Decimal("450.00"))
+
+        application = HousingApplication.objects.get(property=property_obj, space_label="B")
+        self.assertEqual(application.full_name, "Current Resident")
+        self.assertEqual(application.monthly_rent, Decimal("650.00"))
+        self.assertEqual(application.balance, Decimal("25.00"))
+        self.assertEqual(application.utility_monthly, Decimal("55.00"))
+        self.assertEqual(application.deposit_paid, Decimal("450.00"))
+        self.assertIn("Last month rent paid/held", application.additional_notes)
+        self.assertIsNotNone(application.user)
+        self.assertTrue(application.user.invite_code)
+
     def test_current_resident_roster_upload_replaces_active_property_list(self):
         landlord = User.objects.create_user(
             username="replace-roster-landlord",
@@ -5834,6 +5883,48 @@ class LiveFlowTests(TestCase):
         self.assertRedirects(response, reverse("current_resident_roster_upload"))
         self.assertFalse(CurrentResidentRosterEntry.objects.get(email="old@example.com").is_active)
         self.assertTrue(CurrentResidentRosterEntry.objects.get(email="new@example.com").is_active)
+
+    def test_current_resident_roster_update_same_unit_does_not_duplicate_resident_file(self):
+        landlord = User.objects.create_user(
+            username="roster-dedupe-landlord",
+            email="roster-dedupe-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Roster Dedupe Property", landlord_email=landlord.email)
+        HousingApplication.objects.create(
+            property=property_obj,
+            full_name="Old Name",
+            phone="555-1000",
+            email="old@example.com",
+            age=0,
+            space_type="Room",
+            space_label="Room C",
+            monthly_rent=Decimal("500.00"),
+            balance=Decimal("0.00"),
+            income_source="Existing",
+            monthly_income=Decimal("0.00"),
+            housing_need="Existing file",
+        )
+        roster_file = SimpleUploadedFile(
+            "corrected.csv",
+            b"name,phone,unit,monthly_rent\nCorrect Name,555-2000,C,610.00\n",
+            content_type="text/csv",
+        )
+
+        self.client.login(username="roster-dedupe-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("current_resident_roster_upload"), {
+            "property": property_obj.id,
+            "file": roster_file,
+        })
+
+        self.assertRedirects(response, reverse("current_resident_roster_upload"))
+        self.assertEqual(HousingApplication.objects.filter(property=property_obj).count(), 1)
+        application = HousingApplication.objects.get(property=property_obj)
+        self.assertEqual(application.full_name, "Correct Name")
+        self.assertEqual(application.space_label, "C")
+        self.assertEqual(application.monthly_rent, Decimal("610.00"))
 
     def test_landlord_can_view_current_resident_intake_detail_and_backup_code(self):
         landlord = User.objects.create_user(
