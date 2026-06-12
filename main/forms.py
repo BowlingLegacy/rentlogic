@@ -129,7 +129,7 @@ class AccountingReceiptForm(forms.ModelForm):
         }
         help_texts = {
             "receipt_file": "Upload the original receipt, invoice, or PDF. Rental Ledger Pro stores it as proof.",
-            "amount": "Enter the amount from the receipt. Automatic reading can be added later, but this keeps the books reliable now.",
+            "amount": "Enter the amount if you know it. OCR may prefill this after upload when the file contains readable text.",
         }
         widgets = {
             "property": forms.Select(attrs={"class": "form-select"}),
@@ -153,6 +153,7 @@ class AccountingReceiptForm(forms.ModelForm):
 
         self.fields["category"].queryset = ExpenseCategory.objects.filter(is_active=True).order_by("entry_type", "name")
         self.fields["category"].required = False
+        self.fields["amount"].required = False
 
     def save(self, commit=True):
         receipt = super().save(commit=False)

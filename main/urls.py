@@ -111,6 +111,7 @@ urlpatterns = [
     path("financial-upload/<int:upload_id>/parse/", views.parse_financial_upload, name="parse_financial_upload"),
     path("accounting/receipts/", views.accounting_receipts, name="accounting_receipts"),
     path("accounting/receipts/<int:receipt_id>/approve/", views.approve_accounting_receipt, name="approve_accounting_receipt"),
+    path("accounting/receipts/<int:receipt_id>/ocr/", views.process_accounting_receipt_ocr, name="process_accounting_receipt_ocr"),
     path("documents/<int:document_id>/open/", views.open_applicant_document, name="open_applicant_document"),
 
     path("property-financials/<str:property_name>/", views.property_financials, name="property_financials"),

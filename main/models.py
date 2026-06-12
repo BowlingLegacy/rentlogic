@@ -895,6 +895,13 @@ class AccountingReceipt(models.Model):
         ("ignored", "Ignored / Duplicate"),
     ]
 
+    OCR_STATUS_CHOICES = [
+        ("not_processed", "Not Processed"),
+        ("extracted", "Text Extracted"),
+        ("needs_ocr_provider", "Needs OCR Provider"),
+        ("failed", "OCR Failed"),
+    ]
+
     PAYMENT_METHOD_CHOICES = Payment.PAYMENT_METHOD_CHOICES
 
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="accounting_receipts")
@@ -948,6 +955,13 @@ class AccountingReceipt(models.Model):
     )
     uploaded_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(blank=True, null=True)
+    ocr_status = models.CharField(max_length=30, choices=OCR_STATUS_CHOICES, default="not_processed")
+    ocr_text = models.TextField(blank=True)
+    ocr_error = models.TextField(blank=True)
+    ocr_processed_at = models.DateTimeField(blank=True, null=True)
+    ocr_suggested_vendor = models.CharField(max_length=255, blank=True)
+    ocr_suggested_date = models.DateField(blank=True, null=True)
+    ocr_suggested_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
 
     class Meta:
         ordering = ["-uploaded_at"]

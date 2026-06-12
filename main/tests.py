@@ -4596,6 +4596,80 @@ class LiveFlowTests(TestCase):
         self.assertEqual(receipt.category.name, "Plumbing Repairs")
         self.assertTrue(receipt.receipt_file.name)
 
+    def test_accounting_receipt_upload_extracts_text_suggestions(self):
+        landlord = User.objects.create_user(
+            username="ocr-receipt-landlord",
+            email="ocr-receipt-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="OCR Receipt Property", landlord_email=landlord.email)
+        receipt_file = SimpleUploadedFile(
+            "lowes-receipt.txt",
+            b"LOWES HOME IMPROVEMENT\nDate: 05/25/2026\nPaint and supplies\nTotal: $151.13\n",
+            content_type="text/plain",
+        )
+
+        self.client.login(username="ocr-receipt-landlord", password="StrongPass123!")
+
+        response = self.client.post(reverse("accounting_receipts"), {
+            "property": property_obj.id,
+            "receipt_file": receipt_file,
+            "vendor": "",
+            "receipt_date": "",
+            "entry_type": "operating_expense",
+            "new_category": "Maintenance Supplies",
+            "description": "Room reset supplies",
+            "amount": "",
+            "payment_method": "other",
+            "notes": "",
+        })
+
+        self.assertRedirects(response, reverse("accounting_receipts"))
+        receipt = AccountingReceipt.objects.get(property=property_obj)
+        self.assertEqual(receipt.ocr_status, "extracted")
+        self.assertIn("LOWES HOME IMPROVEMENT", receipt.ocr_text)
+        self.assertEqual(receipt.vendor, "LOWES HOME IMPROVEMENT")
+        self.assertEqual(receipt.receipt_date, date(2026, 5, 25))
+        self.assertEqual(receipt.amount, Decimal("151.13"))
+        self.assertEqual(receipt.ocr_suggested_amount, Decimal("151.13"))
+
+    def test_accounting_receipt_upload_flags_scanned_image_for_ocr_provider(self):
+        landlord = User.objects.create_user(
+            username="scan-receipt-landlord",
+            email="scan-receipt-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Scanned Receipt Property", landlord_email=landlord.email)
+        receipt_file = SimpleUploadedFile(
+            "scanned-receipt.jpg",
+            b"\xff\xd8\xff\xe0fake-image-bytes",
+            content_type="image/jpeg",
+        )
+
+        self.client.login(username="scan-receipt-landlord", password="StrongPass123!")
+
+        response = self.client.post(reverse("accounting_receipts"), {
+            "property": property_obj.id,
+            "receipt_file": receipt_file,
+            "vendor": "Image Vendor",
+            "receipt_date": "",
+            "entry_type": "operating_expense",
+            "new_category": "Image Category",
+            "description": "Scanned receipt",
+            "amount": "0.00",
+            "payment_method": "other",
+            "notes": "",
+        })
+
+        self.assertRedirects(response, reverse("accounting_receipts"))
+        receipt = AccountingReceipt.objects.get(property=property_obj)
+        self.assertEqual(receipt.ocr_status, "needs_ocr_provider")
+        self.assertIn("OCR provider", receipt.ocr_error)
+
     def test_accounting_receipt_approval_creates_financial_entry_and_scopes_property(self):
         landlord = User.objects.create_user(
             username="approve-receipt-landlord",

@@ -91,6 +91,7 @@ from .models import (
     RentalListingChannel,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
+from .receipt_ocr import process_receipt_ocr
 from .templatetags.formatting import phone_format
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -4924,8 +4925,14 @@ def accounting_receipts(request):
         )
 
         if form.is_valid():
-            form.save()
-            messages.success(request, "Receipt uploaded and saved for accounting review.")
+            receipt = form.save()
+            process_receipt_ocr(receipt)
+            if receipt.ocr_status == "extracted":
+                messages.success(request, "Receipt uploaded, text was extracted, and available fields were prefilled for review.")
+            elif receipt.ocr_status == "needs_ocr_provider":
+                messages.warning(request, "Receipt uploaded. This looks like a scanned image or image-only PDF, so it is stored for review until OCR is connected.")
+            else:
+                messages.success(request, "Receipt uploaded and saved for accounting review.")
             return redirect("accounting_receipts")
     else:
         form = AccountingReceiptForm(properties=properties, user=request.user)
@@ -5002,6 +5009,29 @@ def approve_accounting_receipt(request, receipt_id):
     receipt.save()
 
     messages.success(request, "Receipt approved and added to the financial ledger.")
+    return redirect("accounting_receipts")
+
+
+@login_required
+@user_passes_test(reporting_required)
+def process_accounting_receipt_ocr(request, receipt_id):
+    if request.method != "POST":
+        return redirect("accounting_receipts")
+
+    receipt = get_object_or_404(
+        AccountingReceipt.objects.select_related("property"),
+        id=receipt_id,
+        property__in=staff_managed_properties(request.user),
+    )
+    process_receipt_ocr(receipt)
+
+    if receipt.ocr_status == "extracted":
+        messages.success(request, "OCR text was extracted and receipt suggestions were updated.")
+    elif receipt.ocr_status == "needs_ocr_provider":
+        messages.warning(request, "This file is stored, but scanned images and image-only PDFs need an OCR provider before text can be read automatically.")
+    else:
+        messages.error(request, "OCR could not process this receipt.")
+
     return redirect("accounting_receipts")
 
 

@@ -109,6 +109,21 @@ body {
     font-size: .78rem;
     font-weight: 900;
 }
+.ocr-box {
+    background: #f3faf7;
+    border: 1px solid rgba(16,199,194,.18);
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: .82rem;
+    padding: .65rem;
+}
+.ocr-box strong {
+    color: var(--midnight);
+}
+.ocr-warning {
+    background: #fff7e8;
+    border-color: rgba(255,179,66,.32);
+}
 .form-control,
 .form-select,
 .soft-card input,
@@ -135,7 +150,7 @@ body {
     <div class="receipt-eyebrow">Accounting</div>
     <h1 class="acct-title mb-1">Receipt Upload & Review</h1>
     <p class="mb-0" style="color:#d3dee6;">
-        Store original receipts, add simple accounting details, and approve clean entries into the financial ledger.
+        Store original receipts, read text from supported files, add simple accounting details, and approve clean entries into the financial ledger.
     </p>
 </div>
 
@@ -183,6 +198,7 @@ body {
                             <th>Category</th>
                             <th>Amount</th>
                             <th>Status</th>
+                            <th>OCR</th>
                             <th>Receipt</th>
                             <th>Action</th>
                         </tr>
@@ -203,15 +219,33 @@ body {
                                 <td>${{ receipt.amount }}</td>
                                 <td><span class="status-pill">{{ receipt.get_status_display }}</span></td>
                                 <td>
+                                    <div class="ocr-box {% if receipt.ocr_status == 'needs_ocr_provider' or receipt.ocr_status == 'failed' %}ocr-warning{% endif %}">
+                                        <strong>{{ receipt.get_ocr_status_display }}</strong>
+                                        {% if receipt.ocr_suggested_vendor or receipt.ocr_suggested_date or receipt.ocr_suggested_amount %}
+                                            <div>
+                                                {% if receipt.ocr_suggested_vendor %}Vendor: {{ receipt.ocr_suggested_vendor }}<br>{% endif %}
+                                                {% if receipt.ocr_suggested_date %}Date: {{ receipt.ocr_suggested_date|date:"M j, Y" }}<br>{% endif %}
+                                                {% if receipt.ocr_suggested_amount %}Amount: ${{ receipt.ocr_suggested_amount }}{% endif %}
+                                            </div>
+                                        {% elif receipt.ocr_error %}
+                                            <div>{{ receipt.ocr_error }}</div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
                                     {% if receipt.receipt_file %}
                                         <a href="{{ receipt.receipt_file.url }}" target="_blank">View</a>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if receipt.status == "needs_review" %}
-                                        <form method="post" action="{% url 'approve_accounting_receipt' receipt.id %}">
+                                        <form method="post" action="{% url 'approve_accounting_receipt' receipt.id %}" class="mb-2">
                                             {% csrf_token %}
                                             <button type="submit" class="message-btn">Approve</button>
+                                        </form>
+                                        <form method="post" action="{% url 'process_accounting_receipt_ocr' receipt.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="message-btn">Read Text</button>
                                         </form>
                                     {% elif receipt.financial_entry %}
                                         Ledgered
@@ -222,7 +256,7 @@ body {
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="8" class="text-muted p-4">No receipts uploaded yet.</td>
+                                <td colspan="9" class="text-muted p-4">No receipts uploaded yet.</td>
                             </tr>
                         {% endfor %}
                     </tbody>
