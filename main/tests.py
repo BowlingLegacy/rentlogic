@@ -1484,6 +1484,88 @@ class LiveFlowTests(TestCase):
         self.assertContains(resident_files, "Archived Resident Files")
         self.assertContains(resident_files, "Open Archive")
 
+    def test_landlord_can_upload_and_review_tenant_file_packet(self):
+        landlord = User.objects.create_user(
+            username="packet-landlord",
+            email="packet-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Packet Property", landlord_email=landlord.email)
+        resident = HousingApplication.objects.create(
+            property=property_obj,
+            full_name="Packet Resident",
+            phone="555-0660",
+            email="packet@example.com",
+            age=50,
+            space_type="Room",
+            space_label="D",
+            monthly_rent=Decimal("500.00"),
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+        )
+
+        self.client.login(username="packet-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("tenant_file_packet_upload"), {
+            "target_type": "resident",
+            "property": str(property_obj.id),
+            "application": str(resident.id),
+            "unit_label": "",
+            "document_type": "lease",
+            "name": "Scanned Lease Packet",
+            "packet_notes": "Original paper file.",
+            "run_ocr": "on",
+            "file": SimpleUploadedFile(
+                "lease.txt",
+                b"Resident: Packet Resident\nUnit: D\nLease date 06/12/2026\n",
+                content_type="text/plain",
+            ),
+        })
+
+        document = ApplicantDocument.objects.get(application=resident, name="Scanned Lease Packet")
+        self.assertRedirects(response, reverse("tenant_file_packet_review", args=[document.id]))
+        self.assertTrue(document.packet_upload)
+        self.assertEqual(document.ocr_status, "extracted")
+        self.assertEqual(document.ocr_suggested_unit, "D")
+
+        review_response = self.client.post(reverse("tenant_file_packet_review", args=[document.id]), {"action": "review"})
+        self.assertRedirects(review_response, reverse("application_detail", args=[resident.id]))
+        document.refresh_from_db()
+        self.assertTrue(document.locked)
+        self.assertEqual(document.status, "locked")
+        self.assertEqual(document.packet_reviewed_by, landlord)
+
+    def test_landlord_can_upload_packet_to_empty_unit_placeholder(self):
+        landlord = User.objects.create_user(
+            username="unit-packet-landlord",
+            email="unit-packet-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Unit Packet Property", landlord_email=landlord.email)
+
+        self.client.login(username="unit-packet-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("tenant_file_packet_upload"), {
+            "target_type": "unit",
+            "property": str(property_obj.id),
+            "unit_label": "E",
+            "document_type": "other",
+            "name": "Empty Unit Old File",
+            "run_ocr": "",
+            "file": SimpleUploadedFile("packet.txt", b"Unit E old paper file", content_type="text/plain"),
+        })
+
+        placeholder = HousingApplication.objects.get(property=property_obj, resident_file_status="unit_file", space_label="E")
+        document = ApplicantDocument.objects.get(application=placeholder, name="Empty Unit Old File")
+        self.assertRedirects(response, reverse("tenant_file_packet_review", args=[document.id]))
+        self.assertEqual(placeholder.full_name, "Unit E File")
+
+        resident_files = self.client.get(reverse("landlord_resident_files"))
+        self.assertNotContains(resident_files, "Unit E File")
+
     def test_landlord_can_add_room_rent_without_roster_entry(self):
         landlord = User.objects.create_user(
             username="manual-room-rent-landlord",

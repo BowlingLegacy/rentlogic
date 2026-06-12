@@ -53,6 +53,7 @@ from .forms import (
     CurrentResidentRosterUploadForm,
     ResidentRoomTransferForm,
     ResidentMoveOutForm,
+    TenantFilePacketUploadForm,
     GroupResidentMessageForm,
     CompanyEmailComposeForm,
     CompanyEmailReplyForm,
@@ -93,7 +94,7 @@ from .models import (
     ReportTemplate,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
-from .receipt_ocr import process_receipt_ocr
+from .receipt_ocr import extract_embedded_text, extract_provider_text, guess_receipt_date, normalize_ocr_text, process_receipt_ocr
 from .templatetags.formatting import phone_format
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -1095,6 +1096,89 @@ def report_template_query_params(template):
     if template.math_column:
         params["math_column"] = template.math_column
     return params
+
+
+def guess_tenant_file_name(text):
+    clean_text = normalize_ocr_text(text)
+    patterns = [
+        re.compile(r"(?:tenant|resident|applicant|name)\s*[:#]\s*(?P<name>[A-Z][A-Za-z.' -]+(?:\s+[A-Z][A-Za-z.' -]+)+)", re.I),
+        re.compile(r"\b(?P<name>[A-Z][a-z]+(?:\s+[A-Z]\.)?\s+[A-Z][a-z]+)\b"),
+    ]
+    for pattern in patterns:
+        match = pattern.search(clean_text)
+        if match:
+            return match.group("name").strip()[:255]
+    return ""
+
+
+def guess_tenant_file_unit(text):
+    clean_text = normalize_ocr_text(text)
+    match = re.search(r"\b(?:unit|room|apt|apartment|suite|space)\s*[:#-]?\s*(?P<unit>[A-Za-z0-9-]{1,12})\b", clean_text, re.I)
+    return match.group("unit").strip()[:50] if match else ""
+
+
+def process_applicant_document_ocr(document):
+    extracted_text = extract_embedded_text(document.file)
+    provider_error = ""
+    if not extracted_text:
+        extracted_text, provider_error = extract_provider_text(document.file)
+
+    document.ocr_processed_at = timezone.now()
+    update_fields = [
+        "ocr_status",
+        "ocr_text",
+        "ocr_error",
+        "ocr_processed_at",
+        "ocr_suggested_name",
+        "ocr_suggested_unit",
+        "ocr_suggested_date",
+    ]
+
+    if not extracted_text:
+        document.ocr_status = "needs_ocr_provider" if "not configured" in provider_error.lower() else "failed"
+        document.ocr_text = ""
+        document.ocr_error = (
+            provider_error
+            or "This file appears to be a scanned image or image-only PDF. Connect an OCR provider to extract text automatically."
+        )
+        document.save(update_fields=update_fields)
+        return document
+
+    document.ocr_status = "extracted"
+    document.ocr_text = extracted_text
+    document.ocr_error = ""
+    document.ocr_suggested_name = guess_tenant_file_name(extracted_text)
+    document.ocr_suggested_unit = guess_tenant_file_unit(extracted_text)
+    document.ocr_suggested_date = guess_receipt_date(extracted_text)
+    document.save(update_fields=update_fields)
+    return document
+
+
+def get_or_create_unit_packet_placeholder(property_obj, unit_label):
+    clean_unit = canonical_room_label(unit_label)
+    placeholder_name = f"Unit {clean_unit} File"
+    application, _created = HousingApplication.objects.get_or_create(
+        property=property_obj,
+        resident_file_status="unit_file",
+        space_label=clean_unit,
+        defaults={
+            "full_name": placeholder_name,
+            "phone": "",
+            "email": "",
+            "age": 0,
+            "space_type": "Unit",
+            "monthly_rent": Decimal("0.00"),
+            "balance": Decimal("0.00"),
+            "deposit_required": Decimal("0.00"),
+            "deposit_paid": Decimal("0.00"),
+            "utility_monthly": Decimal("0.00"),
+            "utility_balance": Decimal("0.00"),
+            "income_source": "Tenant file packet placeholder",
+            "monthly_income": Decimal("0.00"),
+            "housing_need": "Empty unit file packet placeholder.",
+        },
+    )
+    return application
 
 
 def decimal_percent(numerator, denominator):
@@ -3711,6 +3795,89 @@ def open_applicant_document(request, document_id):
 
     messages.warning(request, "This document file is not available.")
     return redirect("landlord_attention")
+
+
+@login_required
+@user_passes_test(staff_required)
+def tenant_file_packet_upload(request):
+    properties = staff_managed_properties(request.user).order_by("name")
+    applications = (
+        HousingApplication.objects
+        .select_related("property")
+        .filter(property__in=properties, resident_file_status__in=["active", "archived"])
+        .order_by("property__name", "space_label", "full_name")
+    )
+    form = TenantFilePacketUploadForm(
+        request.POST or None,
+        request.FILES or None,
+        properties=properties,
+        applications=applications,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        target_type = form.cleaned_data["target_type"]
+        if target_type == "unit":
+            application = get_or_create_unit_packet_placeholder(
+                form.cleaned_data["property"],
+                form.cleaned_data["unit_label"],
+            )
+        else:
+            application = form.cleaned_data["application"]
+
+        document = ApplicantDocument.objects.create(
+            application=application,
+            document_type=form.cleaned_data["document_type"],
+            name=form.cleaned_data["name"],
+            file=form.cleaned_data["file"],
+            packet_upload=True,
+            packet_notes=form.cleaned_data.get("packet_notes", ""),
+            landlord_notified=True,
+        )
+        if form.cleaned_data.get("run_ocr"):
+            process_applicant_document_ocr(document)
+        messages.success(request, "Tenant file packet uploaded. Review and lock it into the file when ready.")
+        return redirect("tenant_file_packet_review", document_id=document.id)
+
+    return render(request, "tenant_file_packet_upload.html", {
+        "form": form,
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+def tenant_file_packet_review(request, document_id):
+    document = get_object_or_404(
+        ApplicantDocument.objects.select_related("application", "application__property"),
+        id=document_id,
+        application__property__in=staff_managed_properties(request.user),
+        packet_upload=True,
+    )
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "ocr":
+            process_applicant_document_ocr(document)
+            messages.success(request, "OCR processing complete.")
+        elif action == "review":
+            document.status = "locked"
+            document.locked = True
+            document.packet_reviewed_at = timezone.now()
+            document.packet_reviewed_by = request.user
+            document.landlord_notified = True
+            document.save(update_fields=[
+                "status",
+                "locked",
+                "packet_reviewed_at",
+                "packet_reviewed_by",
+                "landlord_notified",
+            ])
+            messages.success(request, "Tenant file packet reviewed and locked into the file.")
+            return redirect("application_detail", pk=document.application.id)
+        return redirect("tenant_file_packet_review", document_id=document.id)
+
+    return render(request, "tenant_file_packet_review.html", {
+        "document": document,
+    })
 
 
 @login_required

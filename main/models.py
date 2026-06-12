@@ -353,6 +353,7 @@ class HousingApplication(models.Model):
     RESIDENT_FILE_STATUS_CHOICES = [
         ("active", "Active / Current"),
         ("archived", "Archived / Moved Out"),
+        ("unit_file", "Empty Unit File"),
     ]
 
     property = models.ForeignKey(Property, on_delete=models.SET_NULL, null=True, blank=True, related_name="applications")
@@ -550,6 +551,7 @@ class ApplicantDocument(models.Model):
         ("locked", "Locked Final"),
         ("needs_correction", "Needs Correction"),
     ]
+    OCR_STATUS_CHOICES = AccountingReceipt.OCR_STATUS_CHOICES
 
     application = models.ForeignKey(HousingApplication, on_delete=models.CASCADE, related_name="documents")
     document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPE_CHOICES, default="other")
@@ -563,6 +565,23 @@ class ApplicantDocument(models.Model):
     submitted_at = models.DateTimeField(blank=True, null=True)
     locked = models.BooleanField(default=False)
     landlord_notified = models.BooleanField(default=False)
+    packet_upload = models.BooleanField(default=False)
+    packet_reviewed_at = models.DateTimeField(blank=True, null=True)
+    packet_reviewed_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="reviewed_tenant_file_packets",
+        blank=True,
+        null=True,
+    )
+    packet_notes = models.TextField(blank=True)
+    ocr_status = models.CharField(max_length=30, choices=OCR_STATUS_CHOICES, default="not_processed")
+    ocr_text = models.TextField(blank=True)
+    ocr_error = models.TextField(blank=True)
+    ocr_processed_at = models.DateTimeField(blank=True, null=True)
+    ocr_suggested_name = models.CharField(max_length=255, blank=True)
+    ocr_suggested_unit = models.CharField(max_length=50, blank=True)
+    ocr_suggested_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):

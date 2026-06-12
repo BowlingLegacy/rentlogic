@@ -414,12 +414,16 @@ class ApplicantDocumentInline(admin.TabularInline):
         "needs_signature",
         "signed_at",
         "locked",
+        "packet_upload",
+        "ocr_status",
     )
 
     readonly_fields = (
         "signed_at",
         "submitted_at",
         "locked",
+        "packet_reviewed_at",
+        "ocr_processed_at",
         "created_at",
     )
 

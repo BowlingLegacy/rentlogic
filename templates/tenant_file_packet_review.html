@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Review Tenant File Packet</h1>
+            <p class="text-muted mb-0">Confirm the packet belongs in this file, then lock it as read/print only.</p>
+        </div>
+        <a href="{% url 'landlord_resident_files' %}" class="btn btn-outline-dark">Resident Files</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5 fw-bold">Packet Details</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">File</dt>
+                        <dd class="col-sm-8">{{ document.name }}</dd>
+                        <dt class="col-sm-4">Type</dt>
+                        <dd class="col-sm-8">{{ document.get_document_type_display }}</dd>
+                        <dt class="col-sm-4">Property</dt>
+                        <dd class="col-sm-8">{{ document.application.property.name|default:"No Property" }}</dd>
+                        <dt class="col-sm-4">Resident / Unit</dt>
+                        <dd class="col-sm-8">{{ document.application.full_name }}{% if document.application.space_label %} | {{ document.application.space_label }}{% endif %}</dd>
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">{{ document.get_status_display }}</dd>
+                        <dt class="col-sm-4">OCR</dt>
+                        <dd class="col-sm-8">{{ document.get_ocr_status_display }}</dd>
+                    </dl>
+
+                    {% if document.packet_notes %}
+                        <hr>
+                        <div class="fw-bold">Notes</div>
+                        <p class="text-muted mb-0">{{ document.packet_notes }}</p>
+                    {% endif %}
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        {% if document.file %}
+                            <a href="{% url 'open_applicant_document' document.id %}" target="_blank" class="btn btn-outline-secondary">Open File</a>
+                        {% endif %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="ocr">
+                            <button type="submit" class="btn btn-outline-primary">Run OCR Again</button>
+                        </form>
+                        {% if not document.locked %}
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="review">
+                                <button type="submit" class="btn btn-primary">Mark Reviewed & Lock</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 fw-bold">Suggested Data</h2>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="small text-muted">Name</div>
+                            <div class="fw-bold">{{ document.ocr_suggested_name|default:"-" }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Unit</div>
+                            <div class="fw-bold">{{ document.ocr_suggested_unit|default:"-" }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small text-muted">Date</div>
+                            <div class="fw-bold">{{ document.ocr_suggested_date|default:"-" }}</div>
+                        </div>
+                    </div>
+                    {% if document.ocr_error %}
+                        <div class="alert alert-warning mt-3 mb-0">{{ document.ocr_error }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 fw-bold">Extracted Text</h2>
+                    {% if document.ocr_text %}
+                        <pre class="bg-light border rounded p-3 small" style="white-space: pre-wrap; max-height: 440px; overflow:auto;">{{ document.ocr_text }}</pre>
+                    {% else %}
+                        <p class="text-muted mb-0">No text has been extracted yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

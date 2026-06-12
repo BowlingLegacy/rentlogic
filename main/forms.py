@@ -1179,6 +1179,75 @@ class ResidentDocumentUploadForm(forms.ModelForm):
         }
 
 
+class TenantFilePacketUploadForm(forms.Form):
+    TARGET_CHOICES = [
+        ("resident", "Existing resident file"),
+        ("archived", "Archived resident file"),
+        ("unit", "Empty unit / no tenant yet"),
+    ]
+
+    target_type = forms.ChoiceField(
+        choices=TARGET_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    property = forms.ModelChoiceField(
+        queryset=Property.objects.none(),
+        required=True,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    application = forms.ModelChoiceField(
+        label="Resident file",
+        queryset=HousingApplication.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    unit_label = forms.CharField(
+        label="Unit / room",
+        required=False,
+        max_length=50,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Example: B, 204, Suite 3"}),
+    )
+    document_type = forms.ChoiceField(
+        choices=ApplicantDocument.DOCUMENT_TYPE_CHOICES,
+        initial="other",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    name = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Example: Signed lease packet, scanned tenant file"}),
+    )
+    file = forms.FileField(widget=forms.ClearableFileInput(attrs={"class": "form-control"}))
+    packet_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Optional notes about what this packet contains."}),
+    )
+    run_ocr = forms.BooleanField(
+        label="Try to read scanned text now",
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+
+    def __init__(self, *args, properties=None, applications=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["property"].queryset = properties or Property.objects.none()
+        self.fields["application"].queryset = applications or HousingApplication.objects.none()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        target_type = cleaned_data.get("target_type")
+        application = cleaned_data.get("application")
+        unit_label = (cleaned_data.get("unit_label") or "").strip()
+
+        if target_type in ["resident", "archived"] and not application:
+            self.add_error("application", "Choose the resident file this packet belongs to.")
+
+        if target_type == "unit" and not unit_label:
+            self.add_error("unit_label", "Enter the unit or room label for this packet.")
+
+        return cleaned_data
+
+
 class ResidentProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = HousingApplication

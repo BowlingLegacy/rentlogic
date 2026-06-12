@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Upload Tenant File Packet</h1>
+            <p class="text-muted mb-0">Attach scanned leases, IDs, old applications, deposit records, notices, or full tenant packets to a file.</p>
+        </div>
+        <a href="{% url 'landlord_resident_files' %}" class="btn btn-outline-dark">Back to Resident Files</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="row g-3">
+                {% csrf_token %}
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">{{ form.target_type.label }}</label>
+                    {{ form.target_type }}
+                    {{ form.target_type.errors }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">{{ form.property.label }}</label>
+                    {{ form.property }}
+                    {{ form.property.errors }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">{{ form.application.label }}</label>
+                    {{ form.application }}
+                    {{ form.application.errors }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">{{ form.unit_label.label }}</label>
+                    {{ form.unit_label }}
+                    {{ form.unit_label.errors }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">{{ form.document_type.label }}</label>
+                    {{ form.document_type }}
+                    {{ form.document_type.errors }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">{{ form.file.label }}</label>
+                    {{ form.file }}
+                    {{ form.file.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">{{ form.packet_notes.label }}</label>
+                    {{ form.packet_notes }}
+                    {{ form.packet_notes.errors }}
+                </div>
+                <div class="col-12">
+                    <label class="form-check-label d-flex align-items-center gap-2">
+                        {{ form.run_ocr }} {{ form.run_ocr.label }}
+                    </label>
+                    {{ form.run_ocr.errors }}
+                    <div class="small text-muted mt-1">Text-based PDFs and text files can be read immediately. Scanned images require the configured OCR provider.</div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Upload Packet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
