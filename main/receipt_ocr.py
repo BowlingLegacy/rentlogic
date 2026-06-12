@@ -2,6 +2,8 @@ import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
+import requests
+from django.conf import settings
 from django.utils import timezone
 
 
@@ -102,8 +104,65 @@ def extract_embedded_text(receipt_file):
     return normalize_ocr_text(text)
 
 
+def extract_provider_text(receipt_file):
+    provider = getattr(settings, "RECEIPT_OCR_PROVIDER", "").strip().lower()
+    if provider == "ocr_space":
+        return extract_ocr_space_text(receipt_file)
+
+    return "", "No receipt OCR provider is configured."
+
+
+def extract_ocr_space_text(receipt_file):
+    api_key = getattr(settings, "OCR_SPACE_API_KEY", "")
+    if not api_key:
+        return "", "OCR_SPACE_API_KEY is not configured."
+
+    endpoint = getattr(settings, "OCR_SPACE_ENDPOINT", "https://api.ocr.space/parse/image")
+    language = getattr(settings, "OCR_SPACE_LANGUAGE", "eng")
+    file_name = receipt_file.name.rsplit("/", 1)[-1] or "receipt"
+
+    receipt_file.open("rb")
+    try:
+        response = requests.post(
+            endpoint,
+            data={
+                "apikey": api_key,
+                "language": language,
+                "isOverlayRequired": "false",
+                "scale": "true",
+                "OCREngine": "2",
+            },
+            files={"file": (file_name, receipt_file)},
+            timeout=60,
+        )
+    finally:
+        receipt_file.close()
+
+    if response.status_code >= 400:
+        return "", f"OCR provider returned HTTP {response.status_code}."
+
+    try:
+        payload = response.json()
+    except ValueError:
+        return "", "OCR provider returned an unreadable response."
+
+    if payload.get("IsErroredOnProcessing"):
+        error_message = payload.get("ErrorMessage") or payload.get("ErrorDetails") or "OCR provider could not process the file."
+        if isinstance(error_message, list):
+            error_message = " ".join(str(item) for item in error_message)
+        return "", str(error_message)
+
+    parsed_results = payload.get("ParsedResults") or []
+    text = "\n".join(result.get("ParsedText", "") for result in parsed_results if result.get("ParsedText"))
+    return normalize_ocr_text(text), ""
+
+
 def process_receipt_ocr(receipt):
     extracted_text = extract_embedded_text(receipt.receipt_file)
+    provider_error = ""
+    if not extracted_text:
+        extracted_text, provider_error = extract_provider_text(receipt.receipt_file)
+
     update_fields = [
         "ocr_status",
         "ocr_text",
@@ -117,11 +176,11 @@ def process_receipt_ocr(receipt):
     receipt.ocr_processed_at = timezone.now()
 
     if not extracted_text:
-        receipt.ocr_status = "needs_ocr_provider"
+        receipt.ocr_status = "needs_ocr_provider" if "not configured" in provider_error.lower() else "failed"
         receipt.ocr_text = ""
         receipt.ocr_error = (
-            "This file appears to be a scanned image or image-only PDF. "
-            "Connect an OCR provider to extract text automatically."
+            provider_error
+            or "This file appears to be a scanned image or image-only PDF. Connect an OCR provider to extract text automatically."
         )
         receipt.save(update_fields=update_fields)
         return receipt

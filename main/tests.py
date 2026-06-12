@@ -4670,6 +4670,60 @@ class LiveFlowTests(TestCase):
         self.assertEqual(receipt.ocr_status, "needs_ocr_provider")
         self.assertIn("OCR provider", receipt.ocr_error)
 
+    @override_settings(RECEIPT_OCR_PROVIDER="ocr_space", OCR_SPACE_API_KEY="test-key")
+    @patch("main.receipt_ocr.requests.post")
+    def test_accounting_receipt_upload_uses_configured_ocr_provider(self, mock_post):
+        class FakeOcrResponse:
+            status_code = 200
+
+            def json(self):
+                return {
+                    "IsErroredOnProcessing": False,
+                    "ParsedResults": [
+                        {
+                            "ParsedText": "AVISTA UTILITIES\n06/01/2026\nPower service\nTotal: $736.40"
+                        }
+                    ],
+                }
+
+        mock_post.return_value = FakeOcrResponse()
+        landlord = User.objects.create_user(
+            username="provider-ocr-landlord",
+            email="provider-ocr-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Provider OCR Property", landlord_email=landlord.email)
+        receipt_file = SimpleUploadedFile(
+            "avista-scan.jpg",
+            b"\xff\xd8\xff\xe0fake-image-bytes",
+            content_type="image/jpeg",
+        )
+
+        self.client.login(username="provider-ocr-landlord", password="StrongPass123!")
+
+        response = self.client.post(reverse("accounting_receipts"), {
+            "property": property_obj.id,
+            "receipt_file": receipt_file,
+            "vendor": "",
+            "receipt_date": "",
+            "entry_type": "operating_expense",
+            "new_category": "Power",
+            "description": "Power bill",
+            "amount": "",
+            "payment_method": "other",
+            "notes": "",
+        })
+
+        self.assertRedirects(response, reverse("accounting_receipts"))
+        receipt = AccountingReceipt.objects.get(property=property_obj)
+        self.assertEqual(receipt.ocr_status, "extracted")
+        self.assertEqual(receipt.vendor, "AVISTA UTILITIES")
+        self.assertEqual(receipt.receipt_date, date(2026, 6, 1))
+        self.assertEqual(receipt.amount, Decimal("736.40"))
+        mock_post.assert_called_once()
+
     def test_accounting_receipt_approval_creates_financial_entry_and_scopes_property(self):
         landlord = User.objects.create_user(
             username="approve-receipt-landlord",

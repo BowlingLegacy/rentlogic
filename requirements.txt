@@ -6,3 +6,4 @@ psycopg2==2.9.9
 reportlab
 stripe
 openpyxl==3.1.5
+requests

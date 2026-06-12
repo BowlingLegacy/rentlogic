@@ -191,6 +191,14 @@ TELNYX_API_KEY = os.environ.get("TELNYX_API_KEY", "")
 TELNYX_FROM_NUMBER = os.environ.get("TELNYX_FROM_NUMBER", "")
 
 # ---------------------------------------------------------
+# RECEIPT OCR SETTINGS
+# ---------------------------------------------------------
+RECEIPT_OCR_PROVIDER = os.environ.get("RECEIPT_OCR_PROVIDER", "").strip().lower()
+OCR_SPACE_API_KEY = os.environ.get("OCR_SPACE_API_KEY", "")
+OCR_SPACE_ENDPOINT = os.environ.get("OCR_SPACE_ENDPOINT", "https://api.ocr.space/parse/image")
+OCR_SPACE_LANGUAGE = os.environ.get("OCR_SPACE_LANGUAGE", "eng")
+
+# ---------------------------------------------------------
 # MICROSOFT GRAPH MAILBOX SETTINGS
 # ---------------------------------------------------------
 MICROSOFT_GRAPH_CLIENT_ID = os.environ.get("MICROSOFT_GRAPH_CLIENT_ID", "")
