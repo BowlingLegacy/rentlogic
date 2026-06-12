@@ -1009,6 +1009,29 @@ def custom_report_period_year(start_date):
     return start_date.year if start_date else timezone.localdate().year
 
 
+def custom_report_csv_response(report_title, report_columns, report_rows, totals):
+    safe_title = re.sub(r"[^a-zA-Z0-9]+", "-", report_title or "custom-report").strip("-").lower()
+    filename = f"{safe_title or 'custom-report'}-{timezone.localdate().isoformat()}.csv"
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow([report_title or "Custom Report"])
+    writer.writerow(["Generated", timezone.localtime().strftime("%Y-%m-%d %H:%M")])
+    writer.writerow([])
+    writer.writerow(report_columns)
+    for row in report_rows:
+        writer.writerow(row)
+
+    if totals:
+        writer.writerow([])
+        writer.writerow(["Totals"])
+        for label, value in totals.items():
+            writer.writerow([label, value])
+
+    return response
+
+
 def decimal_percent(numerator, denominator):
     denominator = Decimal(denominator or "0.00")
     if denominator <= 0:
@@ -4853,6 +4876,9 @@ def custom_reports(request):
                     ResidentMessage.objects.filter(application__property=property_obj).count(),
                     SignedDocument.objects.filter(application__property=property_obj).count(),
                 ])
+
+        if request.GET.get("export") == "csv":
+            return custom_report_csv_response(report_title, report_columns, report_rows, totals)
 
     return render(request, "custom_reports.html", {
         "form": form,

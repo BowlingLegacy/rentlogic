@@ -4114,7 +4114,22 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "roster-only@example.com")
         self.assertContains(response, "Uploaded Roster")
         self.assertContains(response, "$2400.00")
+        self.assertContains(response, "Download CSV")
         self.assertNotContains(response, "Hidden Roster")
+
+        csv_response = self.client.get(reverse("custom_reports"), {
+            "report_type": "resident_directory",
+            "property_id": property_obj.id,
+            "export": "csv",
+        })
+
+        self.assertEqual(csv_response.status_code, 200)
+        self.assertEqual(csv_response["Content-Type"], "text/csv")
+        csv_content = csv_response.content.decode()
+        self.assertIn("Resident Directory / Roster Export", csv_content)
+        self.assertIn("Directory Resident", csv_content)
+        self.assertIn("Roster Only", csv_content)
+        self.assertNotIn("Hidden Roster", csv_content)
 
     def test_custom_vendor_reports_cross_reference_receipts_and_contacts(self):
         owner = User.objects.create_user(

@@ -232,7 +232,12 @@ body {
                 <h1 class="report-title mb-1">Report Builder</h1>
                 <p class="text-muted mb-0">Create focused resident, payment, vendor, receipt, unit, and financial reports from the records already in the system.</p>
             </div>
-            <button type="button" class="message-btn" onclick="window.print()">Print Report</button>
+            <div class="d-flex flex-wrap gap-2">
+                {% if generated %}
+                    <a class="message-btn text-decoration-none" href="?{{ request.GET.urlencode }}{% if request.GET.urlencode %}&{% endif %}export=csv">Download CSV</a>
+                {% endif %}
+                <button type="button" class="message-btn" onclick="window.print()">Print Report</button>
+            </div>
         </div>
 
         <form method="get" class="row g-3 align-items-end">
