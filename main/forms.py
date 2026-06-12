@@ -19,6 +19,7 @@ from .models import (
     AdverseActionNotice,
     RentalListing,
     RentalListingChannel,
+    ReportTemplate,
 )
 
 
@@ -951,6 +952,7 @@ class CustomReportForm(forms.Form):
         ("capital_expense", "Capital Expenses"),
         ("other", "Other"),
     ]
+    MATH_MODE_CHOICES = ReportTemplate.MATH_MODE_CHOICES
 
     report_type = forms.ChoiceField(
         choices=REPORT_TYPE_CHOICES,
@@ -974,6 +976,29 @@ class CustomReportForm(forms.Form):
         required=False,
         widget=forms.CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
     )
+    save_template = forms.BooleanField(
+        label="Save this report setup",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+    template_name = forms.CharField(
+        label="Template name",
+        required=False,
+        max_length=120,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Monthly utility cost report"}),
+    )
+    math_mode = forms.ChoiceField(
+        label="Extra math",
+        choices=MATH_MODE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    math_column = forms.CharField(
+        label="Column to calculate",
+        required=False,
+        max_length=120,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Amount, Rent, Utilities, Total"}),
+    )
 
     def __init__(self, *args, properties=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -983,6 +1008,38 @@ class CustomReportForm(forms.Form):
             property_choices.extend((str(property_obj.id), property_obj.name) for property_obj in properties)
 
         self.fields["property_id"].choices = property_choices
+
+    def clean(self):
+        cleaned_data = super().clean()
+        save_template = cleaned_data.get("save_template")
+        template_name = (cleaned_data.get("template_name") or "").strip()
+        math_mode = cleaned_data.get("math_mode")
+        math_column = (cleaned_data.get("math_column") or "").strip()
+
+        if save_template and not template_name:
+            self.add_error("template_name", "Enter a name before saving this report template.")
+
+        if math_mode in ["sum", "average"] and not math_column:
+            self.add_error("math_column", "Enter the column name to calculate.")
+
+        return cleaned_data
+
+
+class ResidentMoveOutForm(forms.Form):
+    move_out_date = forms.DateField(
+        label="Move-out date",
+        required=True,
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+    )
+    archive_notes = forms.CharField(
+        label="Archive notes",
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-control",
+            "rows": 3,
+            "placeholder": "Optional notes about keys, deposit, cleaning, forwarding address, or final balance.",
+        }),
+    )
 
 
 class LandlordCreateTenantForm(forms.Form):

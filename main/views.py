@@ -52,6 +52,7 @@ from .forms import (
     ExistingResidentIntakeForm,
     CurrentResidentRosterUploadForm,
     ResidentRoomTransferForm,
+    ResidentMoveOutForm,
     GroupResidentMessageForm,
     CompanyEmailComposeForm,
     CompanyEmailReplyForm,
@@ -89,6 +90,7 @@ from .models import (
     RentalListing,
     RentalListingPhoto,
     RentalListingChannel,
+    ReportTemplate,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
 from .receipt_ocr import process_receipt_ocr
@@ -911,6 +913,7 @@ def rent_roll_rows_for_properties(user, selected_month, properties):
             Q(user__isnull=False)
             | Q(payments__status="completed", payments__service_month=selected_month),
             property__in=properties,
+            resident_file_status="active",
         )
         .distinct()
         .order_by("property__name", "space_label", "full_name")
@@ -1030,6 +1033,68 @@ def custom_report_csv_response(report_title, report_columns, report_rows, totals
             writer.writerow([label, value])
 
     return response
+
+
+def decimal_from_report_value(value):
+    if value in [None, ""]:
+        return None
+    if isinstance(value, Decimal):
+        return value
+    try:
+        clean_value = str(value).replace("$", "").replace(",", "").strip()
+        if clean_value.endswith("%"):
+            clean_value = clean_value[:-1]
+        return Decimal(clean_value)
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def apply_custom_report_math(report_columns, report_rows, totals, math_mode, math_column):
+    if math_mode not in ["sum", "average"] or not math_column:
+        return totals
+
+    column_map = {str(column).strip().lower(): index for index, column in enumerate(report_columns)}
+    column_index = column_map.get(str(math_column).strip().lower())
+    if column_index is None:
+        return totals
+
+    values = []
+    for row in report_rows:
+        if column_index >= len(row):
+            continue
+        value = decimal_from_report_value(row[column_index])
+        if value is not None:
+            values.append(value)
+
+    if not values:
+        return totals
+
+    label_prefix = "Sum" if math_mode == "sum" else "Average"
+    if math_mode == "sum":
+        calculated = sum(values, Decimal("0.00"))
+    else:
+        calculated = (sum(values, Decimal("0.00")) / Decimal(len(values))).quantize(Decimal("0.01"))
+
+    updated_totals = dict(totals)
+    updated_totals[f"{label_prefix} of {report_columns[column_index]}"] = calculated
+    return updated_totals
+
+
+def report_template_query_params(template):
+    params = {
+        "report_type": template.report_type,
+        "financial_entry_types": template.financial_entry_types or [],
+        "math_mode": template.math_mode,
+    }
+    if template.property_id:
+        params["property_id"] = str(template.property_id)
+    if template.start_date:
+        params["start_date"] = template.start_date.isoformat()
+    if template.end_date:
+        params["end_date"] = template.end_date.isoformat()
+    if template.math_column:
+        params["math_column"] = template.math_column
+    return params
 
 
 def decimal_percent(numerator, denominator):
@@ -1987,8 +2052,14 @@ def get_landlord_workspace_context(user):
     resident_files = (
         HousingApplication.objects
         .select_related("property", "user")
-        .filter(property__in=properties, user__isnull=False)
+        .filter(property__in=properties, user__isnull=False, resident_file_status="active")
         .order_by("property__name", "space_label", "full_name")
+    )
+    archived_resident_files = (
+        HousingApplication.objects
+        .select_related("property", "user")
+        .filter(property__in=properties, resident_file_status="archived")
+        .order_by("-move_out_date", "property__name", "space_label", "full_name")
     )
 
     payments = Payment.objects.filter(application__property__in=properties).order_by("-created_at")[:25]
@@ -2083,6 +2154,7 @@ def get_landlord_workspace_context(user):
 
     return {
         "applications": sorted_resident_list(resident_files),
+        "archived_applications": archived_resident_files,
         "properties": properties,
         "payments": payments,
         "landlord_inbox": landlord_inbox,
@@ -2122,6 +2194,50 @@ def landlord_attention(request):
 @user_passes_test(staff_required)
 def landlord_resident_files(request):
     return render(request, "landlord_resident_files.html", get_landlord_workspace_context(request.user))
+
+
+@login_required
+@user_passes_test(staff_required)
+def archive_resident_move_out(request, application_id):
+    application = get_object_or_404(
+        HousingApplication.objects.select_related("property", "user"),
+        id=application_id,
+        property__in=staff_managed_properties(request.user),
+        resident_file_status="active",
+    )
+    initial = {"move_out_date": timezone.localdate()}
+    form = ResidentMoveOutForm(request.POST or None, initial=initial)
+
+    if request.method == "POST" and form.is_valid():
+        application.resident_file_status = "archived"
+        application.move_out_date = form.cleaned_data["move_out_date"]
+        application.archived_at = timezone.now()
+        application.archive_notes = form.cleaned_data.get("archive_notes", "")
+        application.save(update_fields=[
+            "resident_file_status",
+            "move_out_date",
+            "archived_at",
+            "archive_notes",
+        ])
+
+        if application.user:
+            application.user.is_active = False
+            application.user.save(update_fields=["is_active"])
+
+        if application.property and application.space_label:
+            target_room = normalized_room_label(application.space_label)
+            for roster_entry in CurrentResidentRosterEntry.objects.filter(property=application.property, is_active=True):
+                if normalized_room_label(roster_entry.room_unit_label) == target_room and clean_match_value(roster_entry.full_name()) == clean_match_value(application.full_name):
+                    roster_entry.is_active = False
+                    roster_entry.save(update_fields=["is_active"])
+
+        messages.success(request, f"{application.full_name}'s file was archived. Unit {canonical_room_label(application.space_label)} is ready for the next tenant.")
+        return redirect("landlord_resident_files")
+
+    return render(request, "archive_resident_move_out.html", {
+        "application": application,
+        "form": form,
+    })
 
 
 @login_required
@@ -4243,6 +4359,12 @@ def rent_roll(request):
 @user_passes_test(reporting_required)
 def custom_reports(request):
     properties = custom_report_accessible_properties(request.user)
+    saved_templates = (
+        ReportTemplate.objects
+        .select_related("property")
+        .filter(created_by=request.user)
+        .order_by("name")
+    )
     form = CustomReportForm(
         request.GET or None,
         properties=properties,
@@ -4258,12 +4380,15 @@ def custom_reports(request):
     report_rows = []
     totals = {}
     generated = bool(request.GET)
+    active_template = None
 
     if form.is_valid() and generated:
         report_type = form.cleaned_data["report_type"]
         selected_property_id = form.cleaned_data.get("property_id")
         start_date = form.cleaned_data.get("start_date")
         end_date = form.cleaned_data.get("end_date")
+        math_mode = form.cleaned_data.get("math_mode") or "none"
+        math_column = form.cleaned_data.get("math_column") or ""
 
         filtered_properties = properties
         if selected_property_id:
@@ -4273,7 +4398,7 @@ def custom_reports(request):
         residents = (
             HousingApplication.objects
             .select_related("property")
-            .filter(property__in=filtered_properties)
+            .filter(property__in=filtered_properties, resident_file_status="active")
             .order_by("property__name", "space_label", "full_name")
         )
         sorted_residents = sorted_resident_list(residents)
@@ -4877,11 +5002,39 @@ def custom_reports(request):
                     SignedDocument.objects.filter(application__property=property_obj).count(),
                 ])
 
+        if form.cleaned_data.get("save_template") and not request.GET.get("export"):
+            template_name = form.cleaned_data["template_name"].strip()
+            template_property = selected_property if selected_property else None
+            active_template, _created = ReportTemplate.objects.update_or_create(
+                created_by=request.user,
+                name=template_name,
+                defaults={
+                    "property": template_property,
+                    "report_type": report_type,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "financial_entry_types": form.cleaned_data.get("financial_entry_types") or [],
+                    "math_mode": math_mode,
+                    "math_column": math_column.strip(),
+                },
+            )
+            messages.success(request, f"Saved report template: {active_template.name}")
+            saved_templates = (
+                ReportTemplate.objects
+                .select_related("property")
+                .filter(created_by=request.user)
+                .order_by("name")
+            )
+
+        totals = apply_custom_report_math(report_columns, report_rows, totals, math_mode, math_column)
+
         if request.GET.get("export") == "csv":
             return custom_report_csv_response(report_title, report_columns, report_rows, totals)
 
     return render(request, "custom_reports.html", {
         "form": form,
+        "saved_templates": saved_templates,
+        "active_template": active_template,
         "generated": generated,
         "selected_property": selected_property,
         "report_title": report_title,
@@ -4891,6 +5044,22 @@ def custom_reports(request):
         "row_count": len(report_rows),
         "generated_at": timezone.localtime(),
     })
+
+
+@login_required
+@user_passes_test(reporting_required)
+def run_custom_report_template(request, template_id):
+    template = get_object_or_404(
+        ReportTemplate.objects.select_related("property"),
+        id=template_id,
+        created_by=request.user,
+    )
+    if template.property and not custom_report_accessible_properties(request.user).filter(id=template.property_id).exists():
+        raise Http404
+
+    params = report_template_query_params(template)
+    query_string = urlencode(params, doseq=True)
+    return redirect(f"{reverse('custom_reports')}?{query_string}")
 
 
 @login_required

@@ -350,9 +350,21 @@ class HousingApplication(models.Model):
         ("sms", "SMS Text"),
         ("email", "Email"),
     ]
+    RESIDENT_FILE_STATUS_CHOICES = [
+        ("active", "Active / Current"),
+        ("archived", "Archived / Moved Out"),
+    ]
 
     property = models.ForeignKey(Property, on_delete=models.SET_NULL, null=True, blank=True, related_name="applications")
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="resident_profile")
+    resident_file_status = models.CharField(
+        max_length=30,
+        choices=RESIDENT_FILE_STATUS_CHOICES,
+        default="active",
+    )
+    move_out_date = models.DateField(blank=True, null=True)
+    archived_at = models.DateTimeField(blank=True, null=True)
+    archive_notes = models.TextField(blank=True)
 
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20)
@@ -1130,6 +1142,70 @@ class CurrentResidentRosterEntry(models.Model):
 
     def __str__(self):
         return f"{self.property.name} - {self.full_name()}"
+
+
+class ReportTemplate(models.Model):
+    MATH_MODE_CHOICES = [
+        ("none", "No extra math"),
+        ("sum", "Sum selected column"),
+        ("average", "Average selected column"),
+    ]
+
+    name = models.CharField(max_length=120)
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="custom_report_templates",
+    )
+    property = models.ForeignKey(
+        "Property",
+        on_delete=models.SET_NULL,
+        related_name="custom_report_templates",
+        blank=True,
+        null=True,
+    )
+    report_type = models.CharField(max_length=80)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+    financial_entry_types = models.JSONField(default=list, blank=True)
+    math_mode = models.CharField(max_length=20, choices=MATH_MODE_CHOICES, default="none")
+    math_column = models.CharField(max_length=120, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ("created_by", "name")
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def report_type_label(self):
+        labels = {
+            "resident_phone_list": "Resident Phone List",
+            "resident_roster": "Resident Roster",
+            "resident_directory": "Resident Directory / Roster Export",
+            "unit_rent_setup": "Unit Rent Setup",
+            "delinquency_report": "Delinquency Report",
+            "deposit_liability": "Deposit Liability Report",
+            "payment_summary": "Payment Summary",
+            "property_performance_summary": "Property Performance Summary",
+            "valuation_estimate": "Valuation Estimate",
+            "income_statement": "Income Statement / P&L",
+            "expense_by_category": "Expense Detail by Category",
+            "vendor_expense": "Vendor Expense Report",
+            "occupancy_vacancy": "Occupancy / Vacancy Report",
+            "capital_improvement_log": "Capital Improvement Log",
+            "utility_cost_trend": "Utility Usage / Cost Trend",
+            "insurance_compliance": "Insurance / Compliance Report",
+            "financial_entries": "Financial Entries / Expenses",
+            "receipt_expense_detail": "Receipt Expense Detail",
+            "vendor_directory": "Vendor Directory",
+            "vendor_category_summary": "Vendor / Category Summary",
+            "data_inventory": "Property Data Inventory",
+        }
+        return labels.get(self.report_type, self.report_type)
 
 
 class LandlordIntake(models.Model):

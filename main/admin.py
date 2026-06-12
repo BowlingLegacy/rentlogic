@@ -32,6 +32,7 @@ from .models import (
     RentalListing,
     RentalListingPhoto,
     RentalListingChannel,
+    ReportTemplate,
 )
 from django.utils import timezone
 
@@ -393,6 +394,13 @@ class CurrentResidentRosterEntryAdmin(admin.ModelAdmin):
     search_fields = ("first_name", "last_name", "email", "phone", "room_unit_label", "property__name")
 
 
+@admin.register(ReportTemplate)
+class ReportTemplateAdmin(admin.ModelAdmin):
+    list_display = ("name", "created_by", "property", "report_type", "math_mode", "math_column", "updated_at")
+    list_filter = ("report_type", "math_mode", "property")
+    search_fields = ("name", "created_by__username", "created_by__email", "property__name", "math_column")
+
+
 class ApplicantDocumentInline(admin.TabularInline):
     model = ApplicantDocument
     extra = 0
@@ -538,6 +546,7 @@ class HousingApplicationAdmin(admin.ModelAdmin):
         "full_name",
         "user",
         "property",
+        "resident_file_status",
         "space_label",
         "monthly_rent",
         "balance",
@@ -551,6 +560,7 @@ class HousingApplicationAdmin(admin.ModelAdmin):
 
     list_filter = (
         "property",
+        "resident_file_status",
         "space_type",
         "background_check_status",
         "screening_rating",
@@ -571,6 +581,10 @@ class HousingApplicationAdmin(admin.ModelAdmin):
             "fields": (
                 "user",
                 "property",
+                "resident_file_status",
+                "move_out_date",
+                "archived_at",
+                "archive_notes",
                 "space_type",
                 "space_label",
             )

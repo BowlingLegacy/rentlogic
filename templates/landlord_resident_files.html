@@ -41,6 +41,7 @@
                             <td class="d-flex gap-2 flex-wrap">
                                 <a href="{% url 'application_detail' resident.id %}" class="btn btn-outline-secondary btn-sm">Open</a>
                                 <a href="{% url 'transfer_resident_room' resident.id %}" class="btn btn-outline-primary btn-sm">Move Room</a>
+                                <a href="{% url 'archive_resident_move_out' resident.id %}" class="btn btn-outline-danger btn-sm">Move Out / Archive</a>
                                 <a href="{% url 'edit_resident_balances' resident.id %}" class="btn btn-outline-primary btn-sm">Edit Balances</a>
                                 <a href="{% url 'printable_application' resident.id %}" class="btn btn-outline-secondary btn-sm">Print</a>
                                 <a href="{% url 'record_manual_payment' %}?application={{ resident.id }}" class="btn btn-outline-primary btn-sm">Record Payment</a>
@@ -60,6 +61,41 @@
             </div>
         </div>
     </div>
+
+    {% if archived_applications %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3">Archived Resident Files</h2>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Resident</th>
+                                <th>Property</th>
+                                <th>Unit</th>
+                                <th>Move-Out</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for resident in archived_applications %}
+                            <tr>
+                                <td><strong>{{ resident.full_name }}</strong><br><span class="text-muted small">{{ resident.email }}</span></td>
+                                <td>{{ resident.property.name|default:"No Property" }}</td>
+                                <td>{{ resident.space_type }} {{ resident.space_label }}</td>
+                                <td>{{ resident.move_out_date|default:"Archived" }}</td>
+                                <td class="d-flex gap-2 flex-wrap">
+                                    <a href="{% url 'application_detail' resident.id %}" class="btn btn-outline-secondary btn-sm">Open Archive</a>
+                                    <a href="{% url 'printable_application' resident.id %}" class="btn btn-outline-secondary btn-sm">Print</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 
 {% endblock %}

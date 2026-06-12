@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Move Out / Archive Resident</h1>
+            <p class="text-muted mb-0">Archive the resident file while preserving documents, payments, messages, and history.</p>
+        </div>
+        <a href="{% url 'landlord_resident_files' %}" class="btn btn-outline-dark">Back to Resident Files</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="alert alert-warning">
+                This will remove <strong>{{ application.full_name }}</strong> from current resident lists and deactivate their portal login.
+                Their file remains available as an archived record.
+            </div>
+
+            <dl class="row">
+                <dt class="col-sm-3">Property</dt>
+                <dd class="col-sm-9">{{ application.property.name|default:"No Property" }}</dd>
+                <dt class="col-sm-3">Unit</dt>
+                <dd class="col-sm-9">{{ application.space_type }} {{ application.space_label }}</dd>
+                <dt class="col-sm-3">Current Balance</dt>
+                <dd class="col-sm-9">${{ application.balance }} rent / ${{ application.utility_balance }} utilities</dd>
+            </dl>
+
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">{{ form.move_out_date.label }}</label>
+                    {{ form.move_out_date }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">{{ form.archive_notes.label }}</label>
+                    {{ form.archive_notes }}
+                </div>
+                <div class="col-12 d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-danger">Archive File</button>
+                    <a href="{% url 'landlord_resident_files' %}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

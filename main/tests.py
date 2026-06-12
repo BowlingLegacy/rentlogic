@@ -13,7 +13,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import AccountingReceipt, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
+from .models import AccountingReceipt, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
 from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, payment_amount_for_month, prorated_monthly_charge, rent_roll_rows_for_properties, t12_report_rows
 
 
@@ -1419,6 +1419,70 @@ class LiveFlowTests(TestCase):
         self.assertEqual(resident.utility_monthly, Decimal("75.00"))
         self.assertIn("larger room", resident.additional_notes)
         self.assertTrue(RentHistory.objects.filter(application=resident, rent_amount=Decimal("650.00")).exists())
+
+    def test_landlord_can_archive_moved_out_resident_file(self):
+        landlord = User.objects.create_user(
+            username="move-out-landlord",
+            email="move-out-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        tenant_user = User.objects.create_user(
+            username="move-out-tenant",
+            email="move-out-tenant@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        property_obj = Property.objects.create(name="Move Out Property", landlord_email=landlord.email)
+        resident = HousingApplication.objects.create(
+            property=property_obj,
+            user=tenant_user,
+            full_name="Move Out Resident",
+            phone="555-0550",
+            email="move-out@example.com",
+            age=50,
+            space_type="Room",
+            space_label="C",
+            monthly_rent=Decimal("500.00"),
+            balance=Decimal("0.00"),
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+        )
+        Payment.objects.create(application=resident, payment_type="rent", amount=Decimal("500.00"), status="completed")
+        ResidentMessage.objects.create(application=resident, subject="Move out note", message="History remains.")
+        CurrentResidentRosterEntry.objects.create(
+            property=property_obj,
+            first_name="Move Out",
+            last_name="Resident",
+            room_unit_label="C",
+            is_active=True,
+        )
+        PropertyRoomRent.objects.create(property=property_obj, room_unit_label="C", monthly_rent=Decimal("500.00"))
+
+        self.client.login(username="move-out-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("archive_resident_move_out", args=[resident.id]), {
+            "move_out_date": "2026-06-12",
+            "archive_notes": "Keys returned.",
+        })
+
+        self.assertRedirects(response, reverse("landlord_resident_files"))
+        resident.refresh_from_db()
+        tenant_user.refresh_from_db()
+        self.assertEqual(resident.resident_file_status, "archived")
+        self.assertEqual(resident.move_out_date, date(2026, 6, 12))
+        self.assertIn("Keys returned", resident.archive_notes)
+        self.assertFalse(tenant_user.is_active)
+        self.assertTrue(Payment.objects.filter(application=resident).exists())
+        self.assertTrue(ResidentMessage.objects.filter(application=resident).exists())
+        self.assertTrue(PropertyRoomRent.objects.filter(property=property_obj, room_unit_label="C").exists())
+        self.assertFalse(CurrentResidentRosterEntry.objects.get(property=property_obj, room_unit_label="C").is_active)
+
+        resident_files = self.client.get(reverse("landlord_resident_files"))
+        self.assertNotContains(resident_files, "Move Out / Archive")
+        self.assertContains(resident_files, "Archived Resident Files")
+        self.assertContains(resident_files, "Open Archive")
 
     def test_landlord_can_add_room_rent_without_roster_entry(self):
         landlord = User.objects.create_user(
@@ -4130,6 +4194,55 @@ class LiveFlowTests(TestCase):
         self.assertIn("Directory Resident", csv_content)
         self.assertIn("Roster Only", csv_content)
         self.assertNotIn("Hidden Roster", csv_content)
+
+    def test_custom_report_template_saves_and_runs_with_math(self):
+        owner = User.objects.create_user(
+            username="template-owner",
+            email="template-owner@example.com",
+            password="StrongPass123!",
+            role="property_owner",
+        )
+        property_obj = Property.objects.create(name="Template Property", owner_email=owner.email)
+        category = ExpenseCategory.objects.create(name="Power")
+        AccountingReceipt.objects.create(
+            property=property_obj,
+            vendor="Utility One",
+            receipt_file=SimpleUploadedFile("one.txt", b"receipt", content_type="text/plain"),
+            receipt_date=date(2026, 5, 1),
+            category=category,
+            amount=Decimal("100.00"),
+            status="approved",
+        )
+        AccountingReceipt.objects.create(
+            property=property_obj,
+            vendor="Utility Two",
+            receipt_file=SimpleUploadedFile("two.txt", b"receipt", content_type="text/plain"),
+            receipt_date=date(2026, 5, 2),
+            category=category,
+            amount=Decimal("200.00"),
+            status="approved",
+        )
+
+        self.client.login(username="template-owner", password="StrongPass123!")
+        response = self.client.get(reverse("custom_reports"), {
+            "report_type": "receipt_expense_detail",
+            "property_id": property_obj.id,
+            "save_template": "on",
+            "template_name": "May Utility Receipts",
+            "math_mode": "sum",
+            "math_column": "Amount",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(ReportTemplate.objects.filter(created_by=owner, name="May Utility Receipts").exists())
+        self.assertContains(response, "Saved Report Templates")
+        self.assertContains(response, "Sum of Amount")
+        self.assertContains(response, "$300.00")
+
+        template = ReportTemplate.objects.get(created_by=owner, name="May Utility Receipts")
+        run_response = self.client.get(reverse("run_custom_report_template", args=[template.id]))
+        self.assertEqual(run_response.status_code, 302)
+        self.assertIn("receipt_expense_detail", run_response.url)
 
     def test_custom_vendor_reports_cross_reference_receipts_and_contacts(self):
         owner = User.objects.create_user(

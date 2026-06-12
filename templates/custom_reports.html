@@ -274,8 +274,54 @@ body {
                     These choices apply to Financial Entries / Expenses reports.
                 </div>
             </div>
+
+            <div class="col-lg-3">
+                <label class="form-label fw-bold">Extra Math</label>
+                {{ form.math_mode }}
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label fw-bold">Column To Calculate</label>
+                {{ form.math_column }}
+            </div>
+            <div class="col-lg-4">
+                <label class="form-label fw-bold">Save As Template</label>
+                {{ form.template_name }}
+            </div>
+            <div class="col-lg-2">
+                <label class="form-check-label fw-bold d-flex gap-2 align-items-center">
+                    {{ form.save_template }} Save
+                </label>
+            </div>
         </form>
     </section>
+
+    {% if saved_templates %}
+        <section class="soft-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div>
+                    <h2 class="section-title mb-1">Saved Report Templates</h2>
+                    <p class="text-muted mb-0">Run a saved report setup without rebuilding the filters.</p>
+                </div>
+            </div>
+            <div class="row g-3">
+                {% for template in saved_templates %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="border rounded p-3 bg-white h-100">
+                            <div class="fw-bold">{{ template.name }}</div>
+                            <div class="small text-muted mb-2">
+                                {{ template.report_type_label }}
+                                {% if template.property %} | {{ template.property.name }}{% endif %}
+                            </div>
+                            {% if template.math_mode != "none" and template.math_column %}
+                                <div class="small text-muted mb-2">{{ template.get_math_mode_display }}: {{ template.math_column }}</div>
+                            {% endif %}
+                            <a href="{% url 'run_custom_report_template' template.id %}" class="message-btn text-decoration-none">Run Report</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
 
     {% if generated %}
         <section class="soft-card p-4">
