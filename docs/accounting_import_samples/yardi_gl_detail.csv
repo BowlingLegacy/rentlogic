@@ -1,0 +1,7 @@
+Property Code,Property Name,Book,Period,Account,Account Name,Batch,Control,Date,Description,Debit,Credit
+PLI,The Painted Lady Inn,Accrual,2026-05,4100,Rental Income,RNT0526,INV1001,2026-05-01,May rent charges,,9250.00
+PLI,The Painted Lady Inn,Accrual,2026-05,4150,Utility Reimbursements,UTL0526,INV1002,2026-05-01,May utility charges,,780.00
+PLI,The Painted Lady Inn,Accrual,2026-05,6100,Repairs and Maintenance,EXP0526,LOWES1182,2026-05-02,Lowes supplies,199.99,
+PLI,The Painted Lady Inn,Accrual,2026-05,6400,Utilities - Power,EXP0526,AVISTA552,2026-05-07,Power bill,736.40,
+PLI,The Painted Lady Inn,Accrual,2026-05,6500,Insurance,EXP0526,INS0526,2026-05-05,Property insurance,880.47,
+PLI,The Painted Lady Inn,Accrual,2026-05,7100,Debt Service,DEBT0526,LOAN515,2026-05-15,Loan payment,4000.00,

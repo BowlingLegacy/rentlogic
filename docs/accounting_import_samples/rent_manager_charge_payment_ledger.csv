@@ -1,0 +1,10 @@
+Property,Unit,Resident,Date,Ledger Type,Charge Code,Description,Charge,Payment,Balance
+The Painted Lady Inn,B,Grady Bradley,2026-06-01,Charge,RENT,June rent,506.00,,506.00
+The Painted Lady Inn,B,Grady Bradley,2026-06-01,Charge,UTIL,June utilities,55.00,,561.00
+The Painted Lady Inn,B,Grady Bradley,2026-05-27,Payment,CASH,June rent paid early,,506.00,55.00
+The Painted Lady Inn,C,Steven Bruno,2026-06-01,Charge,RENT,June rent,610.00,,610.00
+The Painted Lady Inn,C,Steven Bruno,2026-06-01,Charge,UTIL,June utilities,55.00,,665.00
+The Painted Lady Inn,C,Steven Bruno,2026-06-03,Payment,CHECK,June rent payment,,610.00,55.00
+The Painted Lady Inn,H,Felicia Valdez,2026-06-01,Charge,RENT,June rent,650.00,,650.00
+The Painted Lady Inn,H,Felicia Valdez,2026-06-01,Charge,UTIL,June utilities,55.00,,705.00
+The Painted Lady Inn,H,Felicia Valdez,2026-06-01,Payment,STRIPE,June rent and utilities,,705.00,0.00

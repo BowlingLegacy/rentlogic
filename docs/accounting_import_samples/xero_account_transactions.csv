@@ -1,0 +1,9 @@
+Date,Source,Contact,Reference,Description,Account,Tax Rate,Debit,Credit,Gross
+2026-05-01,Receive Money,Residents,DEP-MAY-01,May rent collection,Rental Income,No Tax,,4225.00,4225.00
+2026-05-02,Spend Money,Lowes,LOWES-1182,Maintenance supplies,Repairs and Maintenance,No Tax,199.99,,199.99
+2026-05-03,Spend Money,Walmart,WM-5521,Room furnishings,Room Furnishings,No Tax,66.26,,66.26
+2026-05-05,Spend Money,Insurance Carrier,POL-2026-05,Property insurance,Insurance,No Tax,880.47,,880.47
+2026-05-07,Spend Money,Avista,AV-552,Power bill,Utilities - Power,No Tax,736.40,,736.40
+2026-05-15,Spend Money,Regional Bank,LOAN-515,Loan payment,Debt Service,No Tax,4000.00,,4000.00
+2026-05-25,Receive Money,Felicia Valdez,MOVEIN-H,Prorated rent,Rental Income,No Tax,,105.00,105.00
+2026-05-25,Receive Money,Felicia Valdez,MOVEIN-H,Prorated utilities,Utility Reimbursements,No Tax,,9.00,9.00

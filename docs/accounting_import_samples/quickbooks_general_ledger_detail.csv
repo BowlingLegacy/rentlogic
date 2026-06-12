@@ -1,0 +1,11 @@
+Date,Transaction Type,Num,Name,Memo/Description,Account,Split,Debit,Credit,Balance
+2026-05-01,Invoice,INV-1001,Room B Grady Bradley,May rent,Rental Income,Accounts Receivable,,506.00,506.00
+2026-05-01,Invoice,INV-1002,Room C Steven Bruno,May rent,Rental Income,Accounts Receivable,,610.00,1116.00
+2026-05-02,Expense,LOWES-1182,Lowes,Paint and room reset supplies,Maintenance Supplies,Checking,199.99,,916.01
+2026-05-03,Expense,WM-5521,Walmart,Bedding and room furnishings,Room Furnishings,Checking,66.26,,849.75
+2026-05-05,Check,CHK-884,Insurance Carrier,Monthly property insurance,Insurance,Checking,880.47,,-30.72
+2026-05-07,Expense,AVISTA-552,Avista,Electric service,Power,Checking,736.40,,-767.12
+2026-05-10,Deposit,DEP-0510,Residents,Collected rent and utilities,Undeposited Funds,Rental Income,,4225.00,3457.88
+2026-05-15,Check,LOAN-515,Regional Bank,Debt service payment,Debt Service,Checking,4000.00,,-542.12
+2026-05-25,Sales Receipt,SR-526,Felicia Valdez,Prorated May rent,Rental Income,Undeposited Funds,,105.00,-437.12
+2026-05-25,Sales Receipt,SR-527,Felicia Valdez,Prorated May utilities,Utility Reimbursements,Undeposited Funds,,9.00,-428.12

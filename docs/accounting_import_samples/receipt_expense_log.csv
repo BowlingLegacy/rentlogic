@@ -1,0 +1,6 @@
+Receipt Date,Property,Vendor,Category,Description,Amount,Payment Method,Receipt File,Approval Status
+2026-05-02,The Painted Lady Inn,Lowes,Maintenance Supplies,Paint and room reset supplies,199.99,Debit Card,lowes_2026_05_02.jpg,Needs Review
+2026-05-03,The Painted Lady Inn,Walmart,Room Furnishings,Bedding and room supplies,66.26,Cash,walmart_2026_05_03.jpg,Needs Review
+2026-05-07,The Painted Lady Inn,Avista,Power,Monthly power bill,736.40,ACH,avisa_2026_05.pdf,Approved
+2026-05-10,The Painted Lady Inn,City of Medford,Water and Sewer,Water and sewer service,504.20,ACH,city_medford_2026_05.pdf,Approved
+2026-05-18,Bowling Legacy LLC,Phone Carrier,Company Overhead,Company cell phone service,88.00,Debit Card,phone_2026_05.pdf,Company Expense

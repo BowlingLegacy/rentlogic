@@ -1,0 +1,10 @@
+Property,Unit,Tenant,Transaction Date,Transaction Type,GL Account,Description,Income,Expense,Owner Distribution
+The Painted Lady Inn,B,Grady Bradley,2026-05-01,Charge,Rent,May rent,506.00,,
+The Painted Lady Inn,C,Steven Bruno,2026-05-01,Charge,Rent,May rent,610.00,,
+The Painted Lady Inn,G,David Kellum,2026-05-01,Charge,Rent,May rent,560.00,,
+The Painted Lady Inn,H,Felicia Valdez,2026-05-25,Charge,Rent,Prorated May rent,105.00,,
+The Painted Lady Inn,H,Felicia Valdez,2026-05-25,Charge,Utilities,Prorated utilities,9.00,,
+The Painted Lady Inn,Property,,2026-05-02,Bill,Repairs and Maintenance,Lowes room reset,,199.99,
+The Painted Lady Inn,Property,,2026-05-07,Bill,Utilities,Avista power,,736.40,
+The Painted Lady Inn,Property,,2026-05-15,Bill,Mortgage Interest,Debt service,,4000.00,
+The Painted Lady Inn,Property,,2026-05-31,Owner Draw,Owner Distribution,Owner distribution,,,1500.00
