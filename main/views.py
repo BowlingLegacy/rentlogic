@@ -26,7 +26,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.management import call_command
 from django.core.mail import EmailMessage, send_mail
-from django.db.models import Count, Max, Q, Sum
+from django.db.models import Count, Max, Min, Q, Sum
 from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -4288,6 +4288,126 @@ def custom_reports(request):
                 "Open Balances": sum((resident.balance for resident in residents), Decimal("0.00")),
             }
 
+        elif report_type == "resident_directory":
+            report_title = "Resident Directory / Roster Export"
+            report_columns = [
+                "Property",
+                "Unit",
+                "Resident",
+                "Phone",
+                "Email",
+                "Move-In / Lease Start",
+                "Rent",
+                "Due Day",
+                "Utilities",
+                "Rent Balance",
+                "Utility Balance",
+                "Deposit Held",
+                "Last Month Paid",
+                "Source",
+            ]
+            seen_keys = set()
+            rent_total = Decimal("0.00")
+            balance_total = Decimal("0.00")
+
+            for resident in sorted_residents:
+                unit_label = canonical_room_label(resident.space_label or resident.space_type or "")
+                seen_keys.add((resident.property_id, normalized_room_label(unit_label), clean_match_value(resident.full_name)))
+                rent_total += resident.monthly_rent
+                balance_total += resident.balance + resident.utility_balance
+                report_rows.append([
+                    resident.property.name if resident.property else "No Property",
+                    unit_label,
+                    resident.full_name,
+                    phone_format(resident.phone),
+                    resident.email,
+                    resident.lease_start_date or "",
+                    resident.monthly_rent,
+                    resident.rent_due_day,
+                    resident.utility_monthly,
+                    resident.balance,
+                    resident.utility_balance,
+                    resident.deposit_paid,
+                    "Yes" if resident.deposit_payment_plan == "paid_in_full" and resident.deposit_paid > 0 else "",
+                    "Resident File",
+                ])
+
+            roster_entries = (
+                CurrentResidentRosterEntry.objects
+                .select_related("property")
+                .filter(property__in=filtered_properties, is_active=True)
+                .order_by("property__name", "room_unit_label", "last_name", "first_name")
+            )
+            for entry in sorted(
+                roster_entries,
+                key=lambda item: (
+                    item.property.name.lower(),
+                    rent_roll_room_sort_key(item.room_unit_label),
+                    item.full_name().lower(),
+                ),
+            ):
+                unit_label = canonical_room_label(entry.room_unit_label)
+                entry_key = (entry.property_id, normalized_room_label(unit_label), clean_match_value(entry.full_name()))
+                if entry_key in seen_keys:
+                    continue
+                rent_total += entry.monthly_rent
+                balance_total += entry.current_rent_balance + entry.current_utility_balance + entry.outstanding_balance
+                report_rows.append([
+                    entry.property.name,
+                    unit_label,
+                    entry.full_name(),
+                    phone_format(entry.phone),
+                    entry.email,
+                    "",
+                    entry.monthly_rent,
+                    entry.rent_due_day,
+                    entry.monthly_utilities,
+                    entry.current_rent_balance,
+                    entry.current_utility_balance + entry.outstanding_balance,
+                    entry.deposit_held,
+                    "Yes" if entry.last_month_rent_paid else "",
+                    "Uploaded Roster",
+                ])
+
+            totals = {
+                "Scheduled Rent": rent_total,
+                "Open Balances": balance_total,
+            }
+
+        elif report_type == "unit_rent_setup":
+            report_title = "Unit Rent Setup"
+            report_columns = ["Property", "Unit", "Rent", "Due Day", "Utilities", "Deposit", "Deposit Held", "Active Resident"]
+            active_resident_names = {}
+            for resident in sorted_residents:
+                if resident.space_label:
+                    active_resident_names[(resident.property_id, normalized_room_label(resident.space_label))] = resident.full_name
+            for entry in CurrentResidentRosterEntry.objects.filter(property__in=filtered_properties, is_active=True):
+                if entry.room_unit_label:
+                    active_resident_names.setdefault((entry.property_id, normalized_room_label(entry.room_unit_label)), entry.full_name())
+
+            room_settings = (
+                PropertyRoomRent.objects
+                .select_related("property")
+                .filter(property__in=filtered_properties)
+                .order_by("property__name", "room_unit_label")
+            )
+            rent_total = Decimal("0.00")
+            for setting in sorted(room_settings, key=lambda item: (item.property.name.lower(), rent_roll_room_sort_key(item.room_unit_label))):
+                rent_total += setting.monthly_rent
+                report_rows.append([
+                    setting.property.name,
+                    canonical_room_label(setting.room_unit_label),
+                    setting.monthly_rent,
+                    setting.rent_due_day,
+                    setting.utility_monthly,
+                    setting.deposit_required,
+                    setting.deposit_paid,
+                    active_resident_names.get((setting.property_id, normalized_room_label(setting.room_unit_label)), ""),
+                ])
+            totals = {
+                "Scheduled Rent": rent_total,
+            }
+
         elif report_type == "payment_summary":
             report_title = "Payment Summary"
             report_columns = ["Date Received", "Applies To", "Months Covered", "Property", "Resident", "Type", "Method", "Amount", "Status"]
@@ -4474,6 +4594,129 @@ def custom_reports(request):
                 ])
             totals = {"Vendor Expense Total": receipts.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")}
 
+        elif report_type == "receipt_expense_detail":
+            report_title = "Receipt Expense Detail"
+            report_columns = ["Date", "Property", "Vendor", "Category", "Type", "Description", "Amount", "Method", "Status", "OCR"]
+            receipts = (
+                AccountingReceipt.objects
+                .select_related("property", "category")
+                .filter(property__in=filtered_properties)
+                .order_by("property__name", "-receipt_date", "vendor", "-uploaded_at")
+            )
+            if start_date:
+                receipts = receipts.filter(receipt_date__gte=start_date)
+            if end_date:
+                receipts = receipts.filter(receipt_date__lte=end_date)
+            for receipt in receipts:
+                report_rows.append([
+                    receipt.receipt_date or timezone.localtime(receipt.uploaded_at).date(),
+                    receipt.property.name,
+                    receipt.vendor or "Unassigned Vendor",
+                    receipt.category.name if receipt.category else "Unassigned Category",
+                    receipt.get_entry_type_display(),
+                    receipt.description,
+                    receipt.amount,
+                    receipt.get_payment_method_display(),
+                    receipt.get_status_display(),
+                    receipt.get_ocr_status_display(),
+                ])
+            totals = {"Receipt Total": receipts.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")}
+
+        elif report_type == "vendor_directory":
+            report_title = "Vendor Directory"
+            report_columns = ["Property", "Vendor", "Service / Category", "Phone", "Link", "Receipt Count", "Spend", "Last Receipt", "Notes"]
+            receipts = AccountingReceipt.objects.select_related("property", "category").filter(property__in=filtered_properties)
+            if start_date:
+                receipts = receipts.filter(receipt_date__gte=start_date)
+            if end_date:
+                receipts = receipts.filter(receipt_date__lte=end_date)
+            receipt_summary = {}
+            for receipt in receipts:
+                vendor_key = clean_match_value(receipt.vendor or "Unassigned Vendor")
+                key = (receipt.property_id, vendor_key)
+                summary = receipt_summary.setdefault(key, {
+                    "property": receipt.property.name,
+                    "vendor": receipt.vendor or "Unassigned Vendor",
+                    "categories": set(),
+                    "count": 0,
+                    "total": Decimal("0.00"),
+                    "last_receipt": None,
+                })
+                if receipt.category:
+                    summary["categories"].add(receipt.category.name)
+                summary["count"] += 1
+                summary["total"] += receipt.amount
+                if receipt.receipt_date and (summary["last_receipt"] is None or receipt.receipt_date > summary["last_receipt"]):
+                    summary["last_receipt"] = receipt.receipt_date
+
+            service_vendor_keys = set()
+            utility_vendors = (
+                PropertyUtilityVendor.objects
+                .select_related("property")
+                .filter(property__in=filtered_properties, is_active=True)
+                .order_by("property__name", "sort_order", "service_type", "provider_name")
+            )
+            for vendor in utility_vendors:
+                key = (vendor.property_id, clean_match_value(vendor.provider_name))
+                service_vendor_keys.add(key)
+                summary = receipt_summary.get(key)
+                report_rows.append([
+                    vendor.property.name,
+                    vendor.provider_name,
+                    vendor.service_type,
+                    phone_format(vendor.phone),
+                    vendor.setup_url,
+                    summary["count"] if summary else 0,
+                    summary["total"] if summary else Decimal("0.00"),
+                    summary["last_receipt"] if summary else "",
+                    vendor.notes,
+                ])
+
+            for key, summary in sorted(receipt_summary.items(), key=lambda item: (item[1]["property"].lower(), item[1]["vendor"].lower())):
+                if key in service_vendor_keys:
+                    continue
+                report_rows.append([
+                    summary["property"],
+                    summary["vendor"],
+                    ", ".join(sorted(summary["categories"])) or "Receipt Vendor",
+                    "",
+                    "",
+                    summary["count"],
+                    summary["total"],
+                    summary["last_receipt"] or "",
+                    "Seen in receipt uploads",
+                ])
+            totals = {"Vendor Spend": receipts.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")}
+
+        elif report_type == "vendor_category_summary":
+            report_title = "Vendor / Category Summary"
+            report_columns = ["Property", "Vendor", "Category", "Type", "Status", "Items", "First Receipt", "Last Receipt", "Total"]
+            receipts = AccountingReceipt.objects.filter(property__in=filtered_properties)
+            if start_date:
+                receipts = receipts.filter(receipt_date__gte=start_date)
+            if end_date:
+                receipts = receipts.filter(receipt_date__lte=end_date)
+            grouped_receipts = (
+                receipts.values("property__name", "vendor", "category__name", "entry_type", "status")
+                .annotate(item_count=Count("id"), first_receipt=Min("receipt_date"), last_receipt=Max("receipt_date"), total=Sum("amount"))
+                .order_by("property__name", "vendor", "category__name", "entry_type")
+            )
+            entry_type_labels = dict(FinancialEntry.ENTRY_TYPE_CHOICES)
+            status_labels = dict(AccountingReceipt.STATUS_CHOICES)
+            for receipt in grouped_receipts:
+                report_rows.append([
+                    receipt["property__name"],
+                    receipt["vendor"] or "Unassigned Vendor",
+                    receipt["category__name"] or "Unassigned Category",
+                    entry_type_labels.get(receipt["entry_type"], receipt["entry_type"]),
+                    status_labels.get(receipt["status"], receipt["status"]),
+                    receipt["item_count"],
+                    receipt["first_receipt"] or "",
+                    receipt["last_receipt"] or "",
+                    receipt["total"],
+                ])
+            totals = {"Vendor / Category Total": receipts.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")}
+
         elif report_type == "occupancy_vacancy":
             report_title = "Occupancy / Vacancy Report"
             report_columns = ["Property", "Units", "Occupied", "Vacant", "Occupancy %", "Vacant Units"]
@@ -4579,6 +4822,37 @@ def custom_reports(request):
             totals = {
                 "Report Total": entries.aggregate(total=Sum("amount"))["total"] or Decimal("0.00"),
             }
+
+        elif report_type == "data_inventory":
+            report_title = "Property Data Inventory"
+            report_columns = [
+                "Property",
+                "Resident Files",
+                "Uploaded Roster Rows",
+                "Unit Rent Rows",
+                "Payments",
+                "Receipts",
+                "Financial Entries",
+                "Utility Vendors",
+                "Listings",
+                "Resident Messages",
+                "Signed Documents",
+            ]
+            for property_obj in filtered_properties:
+                property_residents = HousingApplication.objects.filter(property=property_obj)
+                report_rows.append([
+                    property_obj.name,
+                    property_residents.count(),
+                    CurrentResidentRosterEntry.objects.filter(property=property_obj).count(),
+                    PropertyRoomRent.objects.filter(property=property_obj).count(),
+                    Payment.objects.filter(application__property=property_obj).count(),
+                    AccountingReceipt.objects.filter(property=property_obj).count(),
+                    FinancialEntry.objects.filter(property_name=property_obj.name).count(),
+                    PropertyUtilityVendor.objects.filter(property=property_obj).count(),
+                    RentalListing.objects.filter(property=property_obj).count(),
+                    ResidentMessage.objects.filter(application__property=property_obj).count(),
+                    SignedDocument.objects.filter(application__property=property_obj).count(),
+                ])
 
     return render(request, "custom_reports.html", {
         "form": form,

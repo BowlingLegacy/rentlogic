@@ -923,6 +923,8 @@ class CustomReportForm(forms.Form):
     REPORT_TYPE_CHOICES = [
         ("resident_phone_list", "Resident Phone List"),
         ("resident_roster", "Resident Roster"),
+        ("resident_directory", "Resident Directory / Roster Export"),
+        ("unit_rent_setup", "Unit Rent Setup"),
         ("delinquency_report", "Delinquency Report"),
         ("deposit_liability", "Deposit Liability Report"),
         ("payment_summary", "Payment Summary"),
@@ -936,6 +938,10 @@ class CustomReportForm(forms.Form):
         ("utility_cost_trend", "Utility Usage / Cost Trend"),
         ("insurance_compliance", "Insurance / Compliance Report"),
         ("financial_entries", "Financial Entries / Expenses"),
+        ("receipt_expense_detail", "Receipt Expense Detail"),
+        ("vendor_directory", "Vendor Directory"),
+        ("vendor_category_summary", "Vendor / Category Summary"),
+        ("data_inventory", "Property Data Inventory"),
     ]
 
     FINANCIAL_ENTRY_CHOICES = [

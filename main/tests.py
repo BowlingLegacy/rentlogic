@@ -13,7 +13,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import AccountingReceipt, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, RentHistory, RentalListing, RentalListingChannel, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
+from .models import AccountingReceipt, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
 from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, payment_amount_for_month, prorated_monthly_charge, rent_roll_rows_for_properties, t12_report_rows
 
 
@@ -4054,6 +4054,185 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "size: landscape")
         self.assertContains(response, "table-layout: fixed")
         self.assertNotContains(response, "May rent")
+
+    def test_custom_resident_directory_cross_references_files_and_roster(self):
+        owner = User.objects.create_user(
+            username="directory-owner",
+            email="directory-owner@example.com",
+            password="StrongPass123!",
+            role="property_owner",
+        )
+        property_obj = Property.objects.create(name="Directory Property", owner_email=owner.email)
+        hidden_property = Property.objects.create(name="Hidden Directory Property", owner_email="hidden@example.com")
+        HousingApplication.objects.create(
+            property=property_obj,
+            full_name="Directory Resident",
+            phone="5550117788",
+            email="directory-resident@example.com",
+            age=38,
+            space_label="7",
+            lease_start_date=date(2026, 1, 15),
+            monthly_rent=Decimal("1250.00"),
+            utility_monthly=Decimal("75.00"),
+            balance=Decimal("100.00"),
+            utility_balance=Decimal("25.00"),
+            deposit_paid=Decimal("600.00"),
+            income_source="Employment",
+            monthly_income=Decimal("4000.00"),
+            housing_need="Current resident.",
+        )
+        CurrentResidentRosterEntry.objects.create(
+            property=property_obj,
+            first_name="Roster",
+            last_name="Only",
+            phone="5550117799",
+            email="roster-only@example.com",
+            room_unit_label="8",
+            monthly_rent=Decimal("1150.00"),
+            monthly_utilities=Decimal("65.00"),
+            deposit_held=Decimal("500.00"),
+            last_month_rent_paid=True,
+        )
+        CurrentResidentRosterEntry.objects.create(
+            property=hidden_property,
+            first_name="Hidden",
+            last_name="Roster",
+            room_unit_label="9",
+            monthly_rent=Decimal("9999.00"),
+        )
+
+        self.client.login(username="directory-owner", password="StrongPass123!")
+        response = self.client.get(reverse("custom_reports"), {
+            "report_type": "resident_directory",
+            "property_id": property_obj.id,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Resident Directory / Roster Export")
+        self.assertContains(response, "Directory Resident")
+        self.assertContains(response, "(555) 011-7788")
+        self.assertContains(response, "roster-only@example.com")
+        self.assertContains(response, "Uploaded Roster")
+        self.assertContains(response, "$2400.00")
+        self.assertNotContains(response, "Hidden Roster")
+
+    def test_custom_vendor_reports_cross_reference_receipts_and_contacts(self):
+        owner = User.objects.create_user(
+            username="vendor-owner",
+            email="vendor-owner@example.com",
+            password="StrongPass123!",
+            role="property_owner",
+        )
+        property_obj = Property.objects.create(name="Vendor Property", owner_email=owner.email)
+        hidden_property = Property.objects.create(name="Hidden Vendor Property", owner_email="hidden@example.com")
+        category = ExpenseCategory.objects.create(name="Maintenance Supplies")
+        PropertyUtilityVendor.objects.create(
+            property=property_obj,
+            service_type="Power",
+            provider_name="Pacific Power",
+            phone="5550116600",
+            setup_url="https://example.com/power",
+            notes="Tenant setup link",
+        )
+        AccountingReceipt.objects.create(
+            property=property_obj,
+            vendor="Pacific Power",
+            receipt_file=SimpleUploadedFile("power.txt", b"receipt", content_type="text/plain"),
+            receipt_date=date(2026, 5, 2),
+            category=category,
+            amount=Decimal("210.00"),
+            status="approved",
+            description="May power",
+        )
+        AccountingReceipt.objects.create(
+            property=property_obj,
+            vendor="Ace Hardware",
+            receipt_file=SimpleUploadedFile("ace.txt", b"receipt", content_type="text/plain"),
+            receipt_date=date(2026, 5, 4),
+            category=category,
+            amount=Decimal("45.50"),
+            status="needs_review",
+            description="Door parts",
+        )
+        AccountingReceipt.objects.create(
+            property=hidden_property,
+            vendor="Hidden Vendor",
+            receipt_file=SimpleUploadedFile("hidden.txt", b"receipt", content_type="text/plain"),
+            receipt_date=date(2026, 5, 4),
+            category=category,
+            amount=Decimal("999.00"),
+        )
+
+        self.client.login(username="vendor-owner", password="StrongPass123!")
+
+        detail = self.client.get(reverse("custom_reports"), {
+            "report_type": "receipt_expense_detail",
+            "property_id": property_obj.id,
+        })
+        directory = self.client.get(reverse("custom_reports"), {
+            "report_type": "vendor_directory",
+            "property_id": property_obj.id,
+        })
+        summary = self.client.get(reverse("custom_reports"), {
+            "report_type": "vendor_category_summary",
+            "property_id": property_obj.id,
+        })
+
+        self.assertContains(detail, "Receipt Expense Detail")
+        self.assertContains(detail, "Door parts")
+        self.assertContains(directory, "Vendor Directory")
+        self.assertContains(directory, "Pacific Power")
+        self.assertContains(directory, "(555) 011-6600")
+        self.assertContains(directory, "Ace Hardware")
+        self.assertContains(summary, "Vendor / Category Summary")
+        self.assertContains(summary, "Maintenance Supplies")
+        self.assertContains(summary, "$255.50")
+        self.assertNotContains(detail, "Hidden Vendor")
+        self.assertNotContains(directory, "Hidden Vendor")
+        self.assertNotContains(summary, "Hidden Vendor")
+
+    def test_custom_data_inventory_counts_scoped_property_records(self):
+        owner = User.objects.create_user(
+            username="inventory-owner",
+            email="inventory-owner@example.com",
+            password="StrongPass123!",
+            role="property_owner",
+        )
+        property_obj = Property.objects.create(name="Inventory Property", owner_email=owner.email)
+        hidden_property = Property.objects.create(name="Hidden Inventory Property", owner_email="hidden@example.com")
+        resident = HousingApplication.objects.create(
+            property=property_obj,
+            full_name="Inventory Resident",
+            phone="5550119911",
+            email="inventory@example.com",
+            age=44,
+            income_source="Employment",
+            monthly_income=Decimal("3500.00"),
+            housing_need="Current resident.",
+        )
+        HousingApplication.objects.create(
+            property=hidden_property,
+            full_name="Hidden Inventory Resident",
+            phone="5550119922",
+            age=44,
+            income_source="Employment",
+            monthly_income=Decimal("3500.00"),
+            housing_need="Current resident.",
+        )
+        Payment.objects.create(application=resident, payment_type="rent", amount=Decimal("700.00"), status="completed")
+        ResidentMessage.objects.create(application=resident, subject="Inventory", message="Inventory message")
+        SignedDocument.objects.create(application=resident, document_type="lease", title="Lease")
+
+        self.client.login(username="inventory-owner", password="StrongPass123!")
+        response = self.client.get(reverse("custom_reports"), {
+            "report_type": "data_inventory",
+            "property_id": property_obj.id,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Property Data Inventory")
+        self.assertContains(response, "Inventory Property")
+        self.assertNotContains(response, "Hidden Inventory Property")
 
     def test_demo_reset_refuses_live_mode(self):
         with self.assertRaises(CommandError):
