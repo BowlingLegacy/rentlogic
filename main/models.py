@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from decimal import Decimal
+import builtins
 import random
 import string
 
@@ -1204,7 +1205,7 @@ class ReportTemplate(models.Model):
     def __str__(self):
         return self.name
 
-    @property
+    @builtins.property
     def report_type_label(self):
         labels = {
             "resident_phone_list": "Resident Phone List",
