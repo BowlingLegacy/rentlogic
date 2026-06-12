@@ -3,9 +3,23 @@
 {% block content %}
 
 <style>
+:root {
+    --night: #10151f;
+    --midnight: #172233;
+    --panel: #f8fbf7;
+    --cyan: #10c7c2;
+    --lime: #a9d95b;
+    --amber: #ffb342;
+    --ink: #18202b;
+    --muted: #596772;
+}
+
 body {
-    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
-    color: #1f1f1f;
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        var(--night);
+    color: var(--panel);
 }
 
 .page-shell {
@@ -20,48 +34,113 @@ body {
 }
 
 .soft-card {
-    background: rgba(255,255,255,0.9);
-    border: 1px solid rgba(188,150,45,0.12);
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(16,199,194,.18);
     border-radius: 18px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    box-shadow: 0 18px 48px rgba(0,0,0,.24);
+    color: var(--ink);
+}
+
+.report-controls {
+    background:
+        linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94)),
+        radial-gradient(circle at 92% 15%, rgba(16,199,194,.34), transparent 25%);
+    border-color: rgba(16,199,194,.36);
+    color: #fff;
+    overflow: hidden;
+}
+
+.report-controls .text-muted {
+    color: #d3dee6 !important;
+}
+
+.report-eyebrow {
+    color: var(--lime);
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.report-controls form {
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(16,199,194,.16);
+    border-radius: 16px;
+    color: var(--ink);
+    margin-top: 1rem;
+    padding: 1rem;
+}
+
+.report-controls form .text-muted {
+    color: var(--muted) !important;
+}
+
+.form-control,
+.form-select {
+    border: 1px solid rgba(23,34,51,.18);
+    border-radius: 10px;
+    padding: .65rem .75rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 .2rem rgba(16,199,194,.18);
 }
 
 .report-title {
-    font-family: Georgia, serif;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #1c1c1c;
+    font-size: clamp(2.1rem, 5vw, 4.1rem);
+    font-weight: 900;
+    letter-spacing: 0;
+    color: #fff;
 }
 
 .section-title {
-    font-family: Georgia, serif;
     font-size: 1.55rem;
-    color: #1c1c1c;
+    font-weight: 900;
+    color: var(--ink);
 }
 
 .gold-btn {
-    background: linear-gradient(135deg, #c48f22, #d8ab3b);
-    color: white;
+    background: var(--amber);
+    color: var(--night);
     border: none;
     border-radius: 10px;
     padding: .75rem 1rem;
-    font-weight: 700;
+    font-weight: 900;
     text-decoration: none;
 }
 
 .message-btn {
-    background: transparent;
-    border: 1px solid #c59a32;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(16,199,194,.55);
     border-radius: 12px;
     padding: .75rem 1rem;
-    color: #a57c18;
-    font-weight: 700;
+    color: #dff8f7;
+    font-weight: 900;
     text-decoration: none;
 }
 
+.message-btn:hover {
+    background: rgba(16,199,194,.16);
+    color: #fff;
+}
+
+.report-table {
+    border-color: rgba(23,34,51,.12);
+}
+
 .report-table th {
-    color: #6f5411;
-    background: #f3ead7;
+    color: var(--muted);
+    background: #eef5f1;
+    border-bottom: 1px solid rgba(23,34,51,.12);
+    font-size: .78rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.report-table td {
+    color: var(--ink);
 }
 
 .totals-grid {
@@ -71,24 +150,24 @@ body {
 }
 
 .total-box {
-    background: #f7f1e2;
-    border: 1px solid rgba(197,154,50,0.28);
+    background: #eff8f1;
+    border: 1px solid rgba(16,199,194,.2);
     border-radius: 12px;
     padding: .85rem 1rem;
 }
 
 .total-label {
-    color: #7d5c0b;
+    color: var(--muted);
     font-size: .75rem;
     text-transform: uppercase;
     font-weight: 800;
-    letter-spacing: 2px;
+    letter-spacing: .12em;
 }
 
 .total-value {
-    font-family: Georgia, serif;
     font-size: 1.35rem;
-    font-weight: 700;
+    font-weight: 900;
+    color: var(--midnight);
 }
 
 @media print {
@@ -107,6 +186,7 @@ body {
 
     body {
         background: white !important;
+        color: #111 !important;
         font-size: 9px !important;
     }
 
@@ -148,7 +228,7 @@ body {
     <section class="soft-card p-4 mb-4 report-controls">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
             <div>
-                <div class="text-uppercase fw-bold text-muted small">Custom Reports</div>
+                <div class="report-eyebrow">Custom Reports</div>
                 <h1 class="report-title mb-1">Report Builder</h1>
                 <p class="text-muted mb-0">Create focused resident, payment, and expense reports from the records already in the system.</p>
             </div>

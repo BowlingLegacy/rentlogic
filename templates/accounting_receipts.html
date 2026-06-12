@@ -2,9 +2,23 @@
 {% block content %}
 
 <style>
+:root {
+    --night: #10151f;
+    --midnight: #172233;
+    --panel: #f8fbf7;
+    --cyan: #10c7c2;
+    --lime: #a9d95b;
+    --amber: #ffb342;
+    --ink: #18202b;
+    --muted: #596772;
+}
+
 body {
-    background: linear-gradient(180deg, #faf6ee 0%, #f2ead9 100%);
-    color: #1f1f1f;
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        var(--night);
+    color: var(--panel);
 }
 .page-shell {
     background: transparent !important;
@@ -13,58 +27,114 @@ body {
     padding: 0 !important;
 }
 .soft-card {
-    background: rgba(255,255,255,.92);
-    border: 1px solid rgba(188,150,45,.14);
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(16,199,194,.18);
     border-radius: 18px;
-    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+    box-shadow: 0 18px 48px rgba(0,0,0,.24);
+    color: var(--ink);
+}
+.receipt-hero {
+    background:
+        linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94)),
+        radial-gradient(circle at 92% 20%, rgba(16,199,194,.32), transparent 24%);
+    border: 1px solid rgba(16,199,194,.34);
+    border-radius: 24px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.32);
+    color: #fff;
+    padding: clamp(1.25rem, 4vw, 2rem);
+}
+.receipt-eyebrow {
+    color: var(--lime);
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .16em;
+    text-transform: uppercase;
 }
 .acct-title {
-    font-family: Georgia, serif;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #1c1c1c;
+    color: #fff;
+    font-size: clamp(2.1rem, 5vw, 4rem);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1;
 }
 .section-title {
-    font-family: Georgia, serif;
     font-size: 1.55rem;
-    font-weight: 800;
+    font-weight: 900;
+    color: var(--ink);
 }
 .gold-btn {
-    background: linear-gradient(135deg, #c48f22, #d8ab3b);
-    color: white;
+    background: var(--amber);
+    color: var(--night);
     border: none;
     border-radius: 10px;
     padding: .75rem 1rem;
-    font-weight: 800;
+    font-weight: 900;
 }
 .message-btn {
-    background: transparent;
-    border: 1px solid #c59a32;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(16,199,194,.55);
     border-radius: 12px;
     padding: .65rem .9rem;
-    color: #a57c18;
-    font-weight: 800;
+    color: var(--midnight);
+    font-weight: 900;
+}
+.receipt-hero .message-btn {
+    color: #dff8f7;
+}
+.message-btn:hover {
+    background: rgba(16,199,194,.16);
+    color: var(--ink);
+}
+.receipt-hero .message-btn:hover {
+    color: #fff;
 }
 .receipt-table th {
-    background: #f3ead7;
-    color: #6f5411;
+    background: #eef5f1;
+    color: var(--muted);
     border-bottom: none;
+    font-size: .78rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.receipt-table td {
+    color: var(--ink);
 }
 .status-pill {
     display: inline-flex;
     border-radius: 999px;
     padding: .25rem .65rem;
-    background: #fff0d6;
-    color: #8a5b00;
+    background: #eff8f1;
+    color: var(--midnight);
+    border: 1px solid rgba(16,199,194,.2);
     font-size: .78rem;
     font-weight: 900;
 }
+.form-control,
+.form-select,
+.soft-card input,
+.soft-card select,
+.soft-card textarea {
+    border: 1px solid rgba(23,34,51,.18);
+    border-radius: 10px;
+    max-width: 100%;
+    padding: .65rem .75rem;
+    width: 100%;
+}
+.form-control:focus,
+.form-select:focus,
+.soft-card input:focus,
+.soft-card select:focus,
+.soft-card textarea:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 .2rem rgba(16,199,194,.18);
+    outline: none;
+}
 </style>
 
-<div class="mb-4">
-    <div class="text-uppercase small fw-bold text-muted">Accounting</div>
+<div class="receipt-hero mb-4">
+    <div class="receipt-eyebrow">Accounting</div>
     <h1 class="acct-title mb-1">Receipt Upload & Review</h1>
-    <p class="text-muted mb-0">
+    <p class="mb-0" style="color:#d3dee6;">
         Store original receipts, add simple accounting details, and approve clean entries into the financial ledger.
     </p>
 </div>

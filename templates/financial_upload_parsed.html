@@ -3,12 +3,68 @@
 {% block content %}
 
 <style>
+:root {
+    --night: #10151f;
+    --midnight: #172233;
+    --panel: #f8fbf7;
+    --cyan: #10c7c2;
+    --lime: #a9d95b;
+    --amber: #ffb342;
+    --ink: #18202b;
+    --muted: #596772;
+}
+
+body {
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        var(--night);
+    color: var(--panel);
+}
+
+.page-shell {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
 .import-panel {
-    background: rgba(255,255,255,.92);
-    border: 1px solid rgba(188,150,45,.2);
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(16,199,194,.18);
     border-radius: 18px;
-    box-shadow: 0 8px 20px rgba(0,0,0,.06);
+    box-shadow: 0 18px 48px rgba(0,0,0,.24);
+    color: var(--ink);
     padding: 1rem;
+}
+
+.import-hero {
+    background:
+        linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94)),
+        radial-gradient(circle at 92% 20%, rgba(16,199,194,.32), transparent 24%);
+    border-color: rgba(16,199,194,.34);
+    color: #fff;
+    padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.import-hero .text-muted {
+    color: #d3dee6 !important;
+}
+
+.import-eyebrow {
+    color: var(--lime);
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.import-title {
+    color: #fff;
+    font-size: clamp(2rem, 5vw, 3.7rem);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1;
 }
 
 .mapping-grid {
@@ -18,47 +74,73 @@
 }
 
 .preview-table th {
-    background: #f3ead7;
-    color: #6f5411;
+    background: #eef5f1;
+    color: var(--muted);
+    font-size: .78rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.preview-table td {
+    color: var(--ink);
+}
+
+.form-control,
+.form-select {
+    border: 1px solid rgba(23,34,51,.18);
+    border-radius: 10px;
+    padding: .65rem .75rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 .2rem rgba(16,199,194,.18);
 }
 
 .gold-btn {
-    background: linear-gradient(135deg, #c48f22, #d8ab3b);
+    background: var(--amber);
     border: 0;
     border-radius: 12px;
-    color: #fff;
+    color: var(--night);
     font-weight: 900;
     padding: .85rem 1.2rem;
 }
 
 .message-btn {
-    background: transparent;
-    border: 1px solid #c59a32;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(16,199,194,.55);
     border-radius: 12px;
-    color: #a57c18;
+    color: #dff8f7;
     font-weight: 800;
     padding: .75rem 1rem;
     text-decoration: none;
 }
+
+.message-btn:hover {
+    background: rgba(16,199,194,.16);
+    color: #fff;
+}
+
 .instruction-box {
-    background: #fff8e8;
-    border: 1px solid rgba(197,154,50,.34);
-    border-left: 6px solid #c59a32;
+    background: #eff8f1;
+    border: 1px solid rgba(16,199,194,.24);
+    border-left: 6px solid var(--cyan);
     border-radius: 14px;
-    color: #302511;
+    color: var(--ink);
     padding: 1rem;
 }
 </style>
 
-<div class="import-panel mb-4">
+<div class="import-panel import-hero mb-4">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <div class="text-uppercase small fw-bold text-muted">Accounting Import Mapper</div>
-            <h1 class="fw-bold mb-1">{{ upload.name }}</h1>
+            <div class="import-eyebrow">Accounting Import Mapper</div>
+            <h1 class="import-title mb-2">{{ upload.name }}</h1>
             <p class="text-muted mb-0">
                 Property: <strong>{{ upload.property.name }}</strong>
-                {% if upload.parsed_at %} · Last imported {{ upload.parsed_at|date:"M j, Y g:i A" }}{% endif %}
-                · Ledger entries: {{ existing_entries }}
+                {% if upload.parsed_at %} | Last imported {{ upload.parsed_at|date:"M j, Y g:i A" }}{% endif %}
+                | Ledger entries: {{ existing_entries }}
             </p>
         </div>
         <a href="{% url 'financial_upload' %}" class="message-btn">Back to Imports</a>
