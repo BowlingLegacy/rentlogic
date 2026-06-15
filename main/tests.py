@@ -2922,6 +2922,7 @@ class LiveFlowTests(TestCase):
             "needs_custom_reports": "on",
             "desired_reports": ["valuation_estimate", "vendor_expense", "utility_cost_trend"],
             "offers_renters_insurance": "on",
+            "tenant_utility_setup_notes": "Power: Pacific Power. Water/sewer: city utility account.",
             "dashboard_goals": "Show NOI and rent collection by property.",
         })
 
@@ -2939,6 +2940,7 @@ class LiveFlowTests(TestCase):
         self.assertTrue(intake.needs_custom_reports)
         self.assertEqual(intake.desired_reports, "valuation_estimate, vendor_expense, utility_cost_trend")
         self.assertTrue(intake.offers_renters_insurance)
+        self.assertEqual(intake.tenant_utility_setup_notes, "Power: Pacific Power. Water/sewer: city utility account.")
         self.assertEqual(intake.lead_stage, "new")
 
     def test_existing_resident_intake_button_opens_for_new_property_and_saves_profile(self):
