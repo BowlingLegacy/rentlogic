@@ -7120,6 +7120,27 @@ class LiveFlowTests(TestCase):
     def test_password_reset_links_expire_after_thirty_minutes(self):
         self.assertEqual(settings.PASSWORD_RESET_TIMEOUT, 1800)
 
+    def test_password_reset_flow_templates_render(self):
+        User.objects.create_user(
+            username="reset-user",
+            email="reset-user@example.com",
+            password="OldPass123!",
+            role="tenant",
+        )
+
+        response = self.client.post(reverse("password_reset"), {"email": "reset-user@example.com"})
+        done_response = self.client.get(reverse("password_reset_done"))
+        invalid_response = self.client.get(reverse("password_reset_confirm", args=["bad-uid", "bad-token"]))
+        complete_response = self.client.get(reverse("password_reset_complete"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Rental Ledger Pro password reset", mail.outbox[0].subject)
+        self.assertIn("Use this link within 30 minutes", mail.outbox[0].body)
+        self.assertContains(done_response, "The link expires after 30 minutes.")
+        self.assertContains(invalid_response, "Reset Link Is Invalid")
+        self.assertContains(complete_response, "Password Updated")
+
     def test_admin_can_issue_property_owner_invite_from_intake(self):
         invite_admin = User.objects.create_superuser(
             username="invite-admin",
