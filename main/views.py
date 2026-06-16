@@ -5981,6 +5981,23 @@ def add_accounting_receipt_split(request, receipt_id):
 
 @login_required
 @user_passes_test(reporting_required)
+def delete_accounting_receipt_split(request, split_id):
+    if request.method != "POST":
+        return redirect("accounting_receipts")
+
+    split = get_object_or_404(
+        AccountingReceiptSplit.objects.select_related("receipt", "receipt__property"),
+        id=split_id,
+        receipt__property__in=staff_managed_properties(request.user),
+        receipt__status="needs_review",
+    )
+    split.delete()
+    messages.success(request, "Split line removed.")
+    return redirect("accounting_receipts")
+
+
+@login_required
+@user_passes_test(reporting_required)
 def approve_accounting_receipt(request, receipt_id):
     if request.method != "POST":
         return redirect("accounting_receipts")

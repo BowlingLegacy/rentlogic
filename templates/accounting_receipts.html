@@ -163,8 +163,20 @@ body {
     border-radius: 10px;
     display: grid;
     gap: .5rem;
-    grid-template-columns: minmax(140px, 1fr) minmax(110px, 1fr) auto;
+    grid-template-columns: minmax(140px, 1fr) minmax(110px, 1fr) auto auto;
     padding: .55rem .65rem;
+}
+.split-remove-form {
+    margin: 0;
+}
+.split-remove-btn {
+    background: #fff7e8;
+    border: 1px solid rgba(255,179,66,.42);
+    border-radius: 999px;
+    color: #8a5600;
+    font-size: .78rem;
+    font-weight: 900;
+    padding: .28rem .65rem;
 }
 .split-form-grid {
     display: grid;
@@ -313,6 +325,12 @@ body {
                                                             </div>
                                                             <div class="small text-muted">{{ split.description|default:"No description" }}</div>
                                                             <div class="fw-bold">${{ split.amount }}</div>
+                                                            {% if receipt.status == "needs_review" %}
+                                                                <form method="post" action="{% url 'delete_accounting_receipt_split' split.id %}" class="split-remove-form">
+                                                                    {% csrf_token %}
+                                                                    <button type="submit" class="split-remove-btn">Remove</button>
+                                                                </form>
+                                                            {% endif %}
                                                         </div>
                                                     {% endfor %}
                                                 </div>

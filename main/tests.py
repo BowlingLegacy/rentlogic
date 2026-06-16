@@ -5710,6 +5710,50 @@ class LiveFlowTests(TestCase):
         self.assertContains(report_response, "100.00")
         self.assertContains(report_response, "50.00")
 
+    def test_accounting_receipt_split_can_be_removed_before_approval(self):
+        landlord = User.objects.create_user(
+            username="remove-split-landlord",
+            email="remove-split-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Remove Split Property", landlord_email=landlord.email)
+        other_property = Property.objects.create(name="Hidden Remove Split Property", landlord_email="other@example.com")
+        category = ExpenseCategory.objects.create(name="Split Mistake Category", entry_type="operating_expense")
+        receipt = AccountingReceipt.objects.create(
+            property=property_obj,
+            receipt_file="accounting_receipts/split.pdf",
+            vendor="Split Vendor",
+            amount=Decimal("75.00"),
+        )
+        other_receipt = AccountingReceipt.objects.create(
+            property=other_property,
+            receipt_file="accounting_receipts/other-split.pdf",
+            vendor="Other Split Vendor",
+            amount=Decimal("75.00"),
+        )
+        split = AccountingReceiptSplit.objects.create(
+            receipt=receipt,
+            category=category,
+            amount=Decimal("75.00"),
+        )
+        other_split = AccountingReceiptSplit.objects.create(
+            receipt=other_receipt,
+            category=category,
+            amount=Decimal("75.00"),
+        )
+
+        self.client.login(username="remove-split-landlord", password="StrongPass123!")
+
+        blocked_response = self.client.post(reverse("delete_accounting_receipt_split", args=[other_split.id]))
+        response = self.client.post(reverse("delete_accounting_receipt_split", args=[split.id]))
+
+        self.assertEqual(blocked_response.status_code, 404)
+        self.assertRedirects(response, reverse("accounting_receipts"))
+        self.assertFalse(AccountingReceiptSplit.objects.filter(id=split.id).exists())
+        self.assertTrue(AccountingReceiptSplit.objects.filter(id=other_split.id).exists())
+
     def test_duplicate_receipt_approval_does_not_create_second_ledger_entry(self):
         landlord = User.objects.create_user(
             username="duplicate-receipt-landlord",
