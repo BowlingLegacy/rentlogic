@@ -2774,6 +2774,38 @@ class LiveFlowTests(TestCase):
         application.refresh_from_db()
         self.assertTrue(application.profile_photo.name)
 
+    def test_tenant_dashboard_prioritizes_app_actions(self):
+        user = User.objects.create_user(
+            username="app-resident",
+            email="app-resident@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        HousingApplication.objects.create(
+            user=user,
+            full_name="App Resident",
+            phone="5550113344",
+            email="app-resident@example.com",
+            age=41,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            balance=Decimal("25.00"),
+        )
+
+        self.client.login(username="app-resident", password="StrongPass123!")
+
+        response = self.client.get(reverse("tenant_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Resident App Dashboard")
+        self.assertContains(response, "What do you need today?")
+        self.assertContains(response, "Balance")
+        self.assertContains(response, "Inbox")
+        self.assertContains(response, "Documents")
+        self.assertContains(response, "Maintenance")
+        self.assertContains(response, "Open Full Payment Ledger")
+
     def test_superadmin_can_inspect_tenant_dashboard_by_resident_file(self):
         superuser = User.objects.create_user(
             username="superadmin",

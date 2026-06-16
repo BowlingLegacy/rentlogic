@@ -4198,6 +4198,9 @@ def tenant_dashboard(request):
     show_utilities = False
     utility_setup_items = []
     utility_setup_complete = False
+    inbox_count = 0
+    document_count = 0
+    signature_count = 0
 
     if application:
         payments = application.payments.all().order_by("-created_at")
@@ -4211,6 +4214,9 @@ def tenant_dashboard(request):
         show_utilities = resident_has_portal_utility_charge(application)
         utility_setup_items = resident_utility_setup_items(application)
         utility_setup_complete = bool(utility_setup_items) and all(item.completed_at for item in utility_setup_items)
+        document_count = application.documents.count() + application.signed_documents.count()
+        signature_count = application.signed_documents.filter(locked=False).count()
+        inbox_count = resident_messages.count() + document_count
 
         total_due = rent_due + deposit_due + utility_due
         if application.property:
@@ -4233,6 +4239,9 @@ def tenant_dashboard(request):
         "deposit_due": deposit_due,
         "utility_due": utility_due,
         "show_utilities": show_utilities,
+        "inbox_count": inbox_count,
+        "document_count": document_count,
+        "signature_count": signature_count,
         "utility_setup_items": utility_setup_items,
         "utility_setup_complete": utility_setup_complete,
         "stripe_public_key": settings.STRIPE_PUBLIC_KEY,

@@ -210,6 +210,160 @@ body {
     margin-top: auto;
 }
 
+.app-command-panel {
+    background: linear-gradient(135deg, rgba(248,251,247,.98), rgba(232,246,242,.96));
+    border: 1px solid rgba(16,199,194,.28);
+    border-radius: 18px;
+    box-shadow: 0 22px 58px rgba(0,0,0,.24);
+    color: #10151f;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+}
+
+.app-command-header {
+    align-items: center;
+    border-bottom: 1px solid rgba(16,199,194,.18);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+}
+
+.app-command-kicker {
+    color: #087a78;
+    font-size: .76rem;
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.app-command-title {
+    color: #10151f;
+    font-size: 1.65rem;
+    font-weight: 950;
+    line-height: 1.05;
+}
+
+.app-command-status {
+    background: #10151f;
+    border-radius: 999px;
+    color: #f8fbf7;
+    font-size: .82rem;
+    font-weight: 900;
+    padding: .45rem .8rem;
+    white-space: nowrap;
+}
+
+.app-action-grid {
+    display: grid;
+    gap: .9rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.app-action-card {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    border-radius: 14px;
+    color: #10151f;
+    display: flex;
+    flex-direction: column;
+    min-height: 178px;
+    padding: 1rem;
+    text-decoration: none;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.app-action-card:hover {
+    border-color: rgba(16,199,194,.55);
+    box-shadow: 0 14px 34px rgba(16,21,31,.15);
+    color: #10151f;
+    transform: translateY(-2px);
+}
+
+.app-action-icon {
+    align-items: center;
+    background: rgba(16,199,194,.12);
+    border-radius: 12px;
+    color: #087a78;
+    display: flex;
+    font-size: 1.2rem;
+    font-weight: 950;
+    height: 42px;
+    justify-content: center;
+    margin-bottom: .9rem;
+    width: 42px;
+}
+
+.app-action-label {
+    color: #596772;
+    font-size: .78rem;
+    font-weight: 950;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+
+.app-action-value {
+    font-size: 1.55rem;
+    font-weight: 950;
+    line-height: 1.1;
+    margin-top: .25rem;
+}
+
+.app-action-note {
+    color: #596772;
+    font-size: .9rem;
+    margin-top: .45rem;
+}
+
+.app-action-cta {
+    color: #087a78;
+    font-weight: 950;
+    margin-top: auto;
+    padding-top: .9rem;
+}
+
+.app-action-card.balance {
+    background: linear-gradient(135deg, #10151f, #172233);
+    color: #f8fbf7;
+}
+
+.app-action-card.balance .app-action-icon {
+    background: rgba(255,179,66,.18);
+    color: #ffb342;
+}
+
+.app-action-card.balance .app-action-label,
+.app-action-card.balance .app-action-note {
+    color: #d7e1e8;
+}
+
+.app-action-card.balance .app-action-cta {
+    color: #ffcf78;
+}
+
+.profile-summary {
+    display: grid;
+    gap: .8rem;
+}
+
+.profile-detail-toggle {
+    border-top: 1px solid rgba(16,199,194,0.18);
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+}
+
+.profile-detail-toggle summary {
+    color: #087a78;
+    cursor: pointer;
+    font-weight: 950;
+}
+
+.history-preview-note {
+    color: #596772;
+    font-size: .92rem;
+}
+
 .gold-btn {
     background: linear-gradient(135deg, #ffb342, #a9d95b);
     color: #10151f;
@@ -308,6 +462,19 @@ body {
         width: 145px;
         height: 105px;
     }
+
+    .app-command-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .app-action-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .app-action-card {
+        min-height: 148px;
+    }
 }
 </style>
 
@@ -356,6 +523,54 @@ body {
         </div>
     </div>
 
+    <div class="app-command-panel">
+        <div class="app-command-header">
+            <div>
+                <div class="app-command-kicker">Resident App Dashboard</div>
+                <div class="app-command-title">What do you need today?</div>
+            </div>
+            <div class="app-command-status">{{ application.space_type }} {{ application.space_label }}</div>
+        </div>
+
+        <div class="app-action-grid">
+            <a href="{{ resident_balance_url }}" class="app-action-card balance">
+                <div class="app-action-icon">$</div>
+                <div class="app-action-label">Balance</div>
+                <div class="app-action-value">${{ total_due }}</div>
+                <div class="app-action-note">
+                    {% if total_due > 0 %}Amount currently due{% else %}No balance due{% endif %}
+                </div>
+                <div class="app-action-cta">View and pay</div>
+            </a>
+
+            <a href="#resident-inbox" class="app-action-card">
+                <div class="app-action-icon">I</div>
+                <div class="app-action-label">Inbox</div>
+                <div class="app-action-value">{{ inbox_count }}</div>
+                <div class="app-action-note">Messages and resident notices</div>
+                <div class="app-action-cta">Open inbox</div>
+            </a>
+
+            <a href="#resident-inbox" class="app-action-card">
+                <div class="app-action-icon">D</div>
+                <div class="app-action-label">Documents</div>
+                <div class="app-action-value">{{ document_count }}</div>
+                <div class="app-action-note">
+                    {% if signature_count %}{{ signature_count }} need signature{% else %}Lease and resident forms{% endif %}
+                </div>
+                <div class="app-action-cta">View documents</div>
+            </a>
+
+            <a href="{{ resident_requests_url }}" class="app-action-card">
+                <div class="app-action-icon">M</div>
+                <div class="app-action-label">Maintenance</div>
+                <div class="app-action-value">Request</div>
+                <div class="app-action-note">Repairs, questions, and house issues</div>
+                <div class="app-action-cta">Open requests</div>
+            </a>
+        </div>
+    </div>
+
     <div class="row g-4">
 
         <div class="col-lg-3">
@@ -400,25 +615,25 @@ body {
 
                 <div class="profile-divider"></div>
 
-                <div class="profile-line">{{ application.email }}</div>
-                <div class="profile-line">{{ application.phone|phone_format }}</div>
-
-                <div class="profile-divider"></div>
-
-                <div class="profile-line">
-                    <strong>Space Type</strong><br>
-                    {{ application.space_type }}
+                <div class="profile-summary">
+                    <div class="profile-line">{{ application.email }}</div>
+                    <div class="profile-line">{{ application.phone|phone_format }}</div>
+                    <div class="profile-line"><strong>Status</strong><br>Active Resident</div>
                 </div>
 
-                <div class="profile-line">
-                    <strong>Room / Space</strong><br>
-                    {{ application.space_label }}
-                </div>
+                <details class="profile-detail-toggle">
+                    <summary>Profile details</summary>
+                    <div class="profile-divider"></div>
+                    <div class="profile-line">
+                        <strong>Space Type</strong><br>
+                        {{ application.space_type }}
+                    </div>
 
-                <div class="profile-line">
-                    <strong>Status</strong><br>
-                    Active Resident
-                </div>
+                    <div class="profile-line">
+                        <strong>Room / Space</strong><br>
+                        {{ application.space_label }}
+                    </div>
+                </details>
 
             </div>
         </div>
@@ -674,8 +889,11 @@ body {
                 <div class="col-lg-6">
                     <div id="payment-history" class="soft-card h-100">
                         <div class="p-4 border-bottom d-flex justify-content-between align-items-center gap-2">
-                            <div class="section-title">Payment History</div>
-                            <a href="{{ resident_payment_history_url }}" class="gold-link">Print History</a>
+                            <div>
+                                <div class="section-title">Payment History</div>
+                                <div class="history-preview-note">Latest activity only. Open the full ledger for all payments and printing.</div>
+                            </div>
+                            <a href="{{ resident_payment_history_url }}" class="gold-link">Full History</a>
                         </div>
 
                         <div class="table-responsive">
@@ -690,7 +908,7 @@ body {
                                 </thead>
 
                                 <tbody>
-                                    {% for payment in payments %}
+                                    {% for payment in payments|slice:":5" %}
                                     <tr>
                                         <td>{{ payment.created_at|date:"M j, Y" }}</td>
                                         <td>{{ payment.get_payment_type_display }}</td>
@@ -706,6 +924,12 @@ body {
                                     {% endfor %}
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="p-4 border-top">
+                            <a href="{{ resident_payment_history_url }}" class="message-btn d-block text-center text-decoration-none">
+                                Open Full Payment Ledger
+                            </a>
                         </div>
                     </div>
                 </div>
