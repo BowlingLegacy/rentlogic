@@ -1682,7 +1682,49 @@ def property_owner_intake(request):
     form = PropertyOwnerIntakeForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
-        form.save()
+        intake = form.save()
+        lead_email = getattr(settings, "RENTAL_LEDGER_LEAD_EMAIL", "") or getattr(settings, "DEFAULT_FROM_EMAIL", None)
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
+        summary_lines = [
+            f"Name: {intake.full_name}",
+            f"Company: {intake.company_name or '-'}",
+            f"Email: {intake.email}",
+            f"Phone: {intake.phone}",
+            f"Properties: {intake.property_count}",
+            f"Units: {intake.total_units}",
+            f"Property types: {intake.property_types or '-'}",
+            f"Current software: {intake.current_software or '-'}",
+            f"Desired reports: {intake.desired_reports or '-'}",
+            "",
+            "Dashboard goals:",
+            intake.dashboard_goals or "-",
+            "",
+            "Current pain points:",
+            intake.current_pain_points or "-",
+            "",
+            "Migration notes:",
+            intake.migration_notes or "-",
+        ]
+        if lead_email:
+            send_mail(
+                "New Rental Ledger Pro owner questionnaire",
+                "\n".join(summary_lines),
+                from_email,
+                [lead_email],
+                fail_silently=True,
+            )
+        send_mail(
+            "Rental Ledger Pro questionnaire received",
+            (
+                f"Hi {intake.full_name},\n\n"
+                "We received your Rental Ledger Pro property owner questionnaire. "
+                "We will review your property, reporting, migration, and dashboard needs and follow up with the next step.\n\n"
+                "Rental Ledger Pro"
+            ),
+            from_email,
+            [intake.email],
+            fail_silently=True,
+        )
         messages.success(request, "Your property owner questionnaire has been submitted.")
         return redirect("property_owner_intake_success")
 

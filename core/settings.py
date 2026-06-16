@@ -175,6 +175,7 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
     EMAIL_HOST_USER,
 )
+RENTAL_LEDGER_LEAD_EMAIL = os.environ.get("RENTAL_LEDGER_LEAD_EMAIL", "michael@bowlinglegacy.com")
 
 if DEMO_MODE:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
