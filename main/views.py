@@ -2418,6 +2418,55 @@ def landlord_resident_files(request):
     return render(request, "landlord_resident_files.html", context)
 
 
+def prepare_and_send_resident_app_setup_code(request, application):
+    if not application.user:
+        return {
+            "sent": False,
+            "skipped": True,
+            "reason": "no portal user",
+            "code": "",
+            "email_sent": False,
+            "sms_log": None,
+        }
+
+    if application.user.has_usable_password():
+        return {
+            "sent": False,
+            "skipped": True,
+            "reason": "login already completed",
+            "code": "",
+            "email_sent": False,
+            "sms_log": None,
+        }
+
+    application.user.refresh_portal_setup_code()
+    email_sent = False
+    sms_log = None
+
+    try:
+        email_sent = send_resident_app_setup_email(request, application)
+    except Exception:
+        email_sent = False
+
+    if application.phone:
+        setup_url = request.build_absolute_uri(reverse("enter_invite_code"))
+        sms_body = (
+            "Rental Ledger Pro: Your setup code is "
+            f"{application.user.portal_setup_code}. Enter it here: {setup_url} "
+            "Your 30-minute setup window starts when the code is accepted. Reply STOP to opt out."
+        )
+        sms_log = send_sms_message(application, sms_body[:1500], request.user)
+
+    return {
+        "sent": bool(email_sent or sms_log),
+        "skipped": False,
+        "reason": "",
+        "code": application.user.portal_setup_code,
+        "email_sent": email_sent,
+        "sms_log": sms_log,
+    }
+
+
 @login_required
 @user_passes_test(staff_required)
 def send_resident_app_setup_code(request, application_id):
@@ -2439,37 +2488,76 @@ def send_resident_app_setup_code(request, application_id):
         messages.info(request, "This resident already has a portal login. Use password reset if they cannot sign in.")
         return redirect("landlord_resident_files")
 
-    application.user.refresh_portal_setup_code()
-    email_sent = False
-    sms_log = None
-
-    try:
-        email_sent = send_resident_app_setup_email(request, application)
-    except Exception:
-        email_sent = False
-
-    if application.phone:
-        setup_url = request.build_absolute_uri(reverse("enter_invite_code"))
-        sms_body = (
-            "Rental Ledger Pro: Your setup code is "
-            f"{application.user.portal_setup_code}. Enter it here: {setup_url} "
-            "Your 30-minute setup window starts when the code is accepted. Reply STOP to opt out."
-        )
-        sms_log = send_sms_message(application, sms_body[:1500], request.user)
+    result = prepare_and_send_resident_app_setup_code(request, application)
 
     delivery_notes = []
-    if email_sent:
+    if result["email_sent"]:
         delivery_notes.append("email sent")
 
-    if sms_log:
-        delivery_notes.append(f"SMS {sms_log.get_status_display().lower()}")
+    if result["sms_log"]:
+        delivery_notes.append(f"SMS {result['sms_log'].get_status_display().lower()}")
 
     delivery_text = ", ".join(delivery_notes) if delivery_notes else "no message was sent"
     messages.success(
         request,
-        f"App setup code ready for {application.full_name}: {application.user.portal_setup_code}. Delivery: {delivery_text}.",
+        f"App setup code ready for {application.full_name}: {result['code']}. Delivery: {delivery_text}.",
     )
     return redirect("landlord_resident_files")
+
+
+@login_required
+@user_passes_test(staff_required)
+def bulk_send_resident_app_setup_codes(request):
+    if request.method != "POST":
+        return redirect("landlord_resident_files")
+
+    selected_ids = request.POST.getlist("resident_ids")
+    current_filter = request.POST.get("current_filter", "all")
+    redirect_url = f"{reverse('landlord_resident_files')}?filter={current_filter}"
+
+    if not selected_ids:
+        messages.error(request, "Select at least one resident before sending setup codes.")
+        return redirect(redirect_url)
+
+    applications = list(
+        HousingApplication.objects
+        .select_related("property", "user")
+        .filter(
+            id__in=selected_ids,
+            property__in=staff_managed_properties(request.user),
+            resident_file_status="active",
+        )
+    )
+
+    sent_count = 0
+    skipped_count = 0
+    email_count = 0
+    sms_attempt_count = 0
+    skipped_names = []
+
+    for application in applications:
+        result = prepare_and_send_resident_app_setup_code(request, application)
+
+        if result["skipped"]:
+            skipped_count += 1
+            skipped_names.append(f"{application.full_name} ({result['reason']})")
+            continue
+
+        sent_count += 1
+        if result["email_sent"]:
+            email_count += 1
+        if result["sms_log"]:
+            sms_attempt_count += 1
+
+    summary = (
+        f"Bulk app setup codes complete. Ready: {sent_count}. "
+        f"Email sent: {email_count}. SMS attempted: {sms_attempt_count}. Skipped: {skipped_count}."
+    )
+    if skipped_names:
+        summary = f"{summary} Skipped: {', '.join(skipped_names[:5])}"
+
+    messages.success(request, summary)
+    return redirect(redirect_url)
 
 
 @login_required

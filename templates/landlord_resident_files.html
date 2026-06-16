@@ -69,55 +69,75 @@
                     {% endfor %}
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Resident</th>
-                            <th>Property</th>
-                            <th>Unit</th>
-                            <th>Rent</th>
-                            <th>Balance</th>
-                            <th>Portal</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for resident in applications %}
-                        <tr>
-                            <td><strong>{{ resident.full_name }}</strong><br><span class="text-muted small">{{ resident.email }}</span></td>
-                            <td>{{ resident.property.name|default:"No Property" }}</td>
-                            <td>{{ resident.space_type }} {{ resident.space_label }}</td>
-                            <td>${{ resident.monthly_rent }}</td>
-                            <td>${{ resident.balance }}</td>
-                            <td>{% if resident.user %}Linked{% else %}No Login{% endif %}</td>
-                            <td class="d-flex gap-2 flex-wrap">
-                                <a href="{% url 'application_detail' resident.id %}" class="btn btn-outline-secondary btn-sm">Open</a>
-                                <a href="{% url 'transfer_resident_room' resident.id %}" class="btn btn-outline-primary btn-sm">Move Room</a>
-                                <a href="{% url 'archive_resident_move_out' resident.id %}" class="btn btn-outline-danger btn-sm">Move Out / Archive</a>
-                                <a href="{% url 'edit_resident_balances' resident.id %}" class="btn btn-outline-primary btn-sm">Edit Balances</a>
-                                <a href="{% url 'printable_application' resident.id %}" class="btn btn-outline-secondary btn-sm">Print</a>
-                                <a href="{% url 'record_manual_payment' %}?application={{ resident.id }}" class="btn btn-outline-primary btn-sm">Record Payment</a>
-                                {% if request.user.is_superuser or request.user.role == "admin" %}
-                                    <a href="{% url 'tenant_dashboard' %}?resident={{ resident.id }}" class="btn btn-dark btn-sm">Inspect Tenant Dashboard</a>
-                                {% endif %}
-                                {% if resident.user and not resident.user.has_usable_password %}
-                                    <form method="post" action="{% url 'send_resident_app_setup_code' resident.id %}" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-success btn-sm">Send App Setup Code</button>
-                                    </form>
-                                {% endif %}
-                                {% if not resident.user %}
-                                    <a href="{% url 'landlord_create_tenant' %}?application={{ resident.id }}" class="btn btn-primary btn-sm">Create File</a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="7" class="text-muted">No resident files found.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <form id="bulk-setup-code-form" method="post" action="{% url 'bulk_send_resident_app_setup_codes' %}">
+                {% csrf_token %}
+                <input type="hidden" name="current_filter" value="{{ resident_file_filter }}">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <div class="text-muted small">Select residents below, then send setup codes in one action.</div>
+                    <button type="submit" class="btn btn-success btn-sm">Send Setup Codes to Selected</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Select</th>
+                                <th>Resident</th>
+                                <th>Property</th>
+                                <th>Unit</th>
+                                <th>Rent</th>
+                                <th>Balance</th>
+                                <th>Portal</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for resident in applications %}
+                            <tr>
+                                <td>
+                                    {% if resident.user and not resident.user.has_usable_password %}
+                                        <input type="checkbox" name="resident_ids" value="{{ resident.id }}" aria-label="Select {{ resident.full_name }}">
+                                    {% else %}
+                                        <span class="text-muted small">-</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ resident.full_name }}</strong><br><span class="text-muted small">{{ resident.email }}</span></td>
+                                <td>{{ resident.property.name|default:"No Property" }}</td>
+                                <td>{{ resident.space_type }} {{ resident.space_label }}</td>
+                                <td>${{ resident.monthly_rent }}</td>
+                                <td>${{ resident.balance }}</td>
+                                <td>{% if resident.user %}{% if resident.user.has_usable_password %}Has Login{% else %}Needs Login{% endif %}{% else %}No Login{% endif %}</td>
+                                <td class="d-flex gap-2 flex-wrap">
+                                    <a href="{% url 'application_detail' resident.id %}" class="btn btn-outline-secondary btn-sm">Open</a>
+                                    <a href="{% url 'transfer_resident_room' resident.id %}" class="btn btn-outline-primary btn-sm">Move Room</a>
+                                    <a href="{% url 'archive_resident_move_out' resident.id %}" class="btn btn-outline-danger btn-sm">Move Out / Archive</a>
+                                    <a href="{% url 'edit_resident_balances' resident.id %}" class="btn btn-outline-primary btn-sm">Edit Balances</a>
+                                    <a href="{% url 'printable_application' resident.id %}" class="btn btn-outline-secondary btn-sm">Print</a>
+                                    <a href="{% url 'record_manual_payment' %}?application={{ resident.id }}" class="btn btn-outline-primary btn-sm">Record Payment</a>
+                                    {% if request.user.is_superuser or request.user.role == "admin" %}
+                                        <a href="{% url 'tenant_dashboard' %}?resident={{ resident.id }}" class="btn btn-dark btn-sm">Inspect Tenant Dashboard</a>
+                                    {% endif %}
+                                    {% if resident.user and not resident.user.has_usable_password %}
+                                        <button type="submit" form="single-setup-code-{{ resident.id }}" class="btn btn-success btn-sm">Send App Setup Code</button>
+                                    {% endif %}
+                                    {% if not resident.user %}
+                                        <a href="{% url 'landlord_create_tenant' %}?application={{ resident.id }}" class="btn btn-primary btn-sm">Create File</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="8" class="text-muted">No resident files found.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+            {% for resident in applications %}
+                {% if resident.user and not resident.user.has_usable_password %}
+                    <form id="single-setup-code-{{ resident.id }}" method="post" action="{% url 'send_resident_app_setup_code' resident.id %}">
+                        {% csrf_token %}
+                    </form>
+                {% endif %}
+            {% endfor %}
         </div>
     </div>
 

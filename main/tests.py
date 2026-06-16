@@ -3406,6 +3406,88 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "Needs Login")
         self.assertEqual(response.context["resident_file_filter"], "needs_login")
 
+    def test_landlord_can_bulk_send_app_setup_codes_to_selected_residents(self):
+        landlord = User.objects.create_user(
+            username="bulk-code-landlord",
+            email="bulk-code-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Bulk Code Property", landlord_email=landlord.email)
+        pending_one = User.objects.create_user(
+            username="pending-bulk-one",
+            email="pending-bulk-one@example.com",
+            password=None,
+            role="tenant",
+        )
+        pending_two = User.objects.create_user(
+            username="pending-bulk-two",
+            email="pending-bulk-two@example.com",
+            password=None,
+            role="tenant",
+        )
+        completed_user = User.objects.create_user(
+            username="completed-bulk",
+            email="completed-bulk@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        pending_application_one = HousingApplication.objects.create(
+            property=property_obj,
+            user=pending_one,
+            full_name="Pending Bulk One",
+            phone="",
+            email="pending-bulk-one@example.com",
+            age=42,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+        )
+        pending_application_two = HousingApplication.objects.create(
+            property=property_obj,
+            user=pending_two,
+            full_name="Pending Bulk Two",
+            phone="",
+            email="pending-bulk-two@example.com",
+            age=43,
+            income_source="Employment",
+            monthly_income=Decimal("3100.00"),
+            housing_need="Current resident.",
+        )
+        completed_application = HousingApplication.objects.create(
+            property=property_obj,
+            user=completed_user,
+            full_name="Completed Bulk Resident",
+            phone="",
+            email="completed-bulk@example.com",
+            age=44,
+            income_source="Employment",
+            monthly_income=Decimal("3200.00"),
+            housing_need="Current resident.",
+        )
+
+        self.client.login(username="bulk-code-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("bulk_send_resident_app_setup_codes"), {
+            "current_filter": "needs_login",
+            "resident_ids": [
+                str(pending_application_one.id),
+                str(pending_application_two.id),
+                str(completed_application.id),
+            ],
+        })
+
+        self.assertRedirects(response, f"{reverse('landlord_resident_files')}?filter=needs_login")
+        pending_one.refresh_from_db()
+        pending_two.refresh_from_db()
+        completed_user.refresh_from_db()
+        self.assertTrue(pending_one.portal_setup_code)
+        self.assertTrue(pending_two.portal_setup_code)
+        self.assertFalse(completed_user.portal_setup_code)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertIn(pending_one.portal_setup_code, mail.outbox[0].body)
+        self.assertIn(pending_two.portal_setup_code, mail.outbox[1].body)
+
     def test_superadmin_resident_inspection_hides_unconverted_applications(self):
         superuser = User.objects.create_user(
             username="resident-inspection-superadmin",
