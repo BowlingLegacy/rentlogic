@@ -4,6 +4,7 @@ from io import BytesIO, StringIO
 from unittest.mock import patch
 
 from django.contrib import admin
+from django.conf import settings
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -7097,6 +7098,9 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "Contact Rental Ledger Pro")
         self.assertContains(response, "michael@bowlinglegacy.com")
         self.assertContains(response, "(541) 326-8047")
+
+    def test_password_reset_links_expire_after_thirty_minutes(self):
+        self.assertEqual(settings.PASSWORD_RESET_TIMEOUT, 1800)
 
     def test_admin_can_issue_property_owner_invite_from_intake(self):
         invite_admin = User.objects.create_superuser(
