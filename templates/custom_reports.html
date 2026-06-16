@@ -170,6 +170,115 @@ body {
     color: var(--midnight);
 }
 
+.report-launcher {
+    background: linear-gradient(135deg, rgba(248,251,247,.98), rgba(232,246,242,.96));
+    border: 1px solid rgba(16,199,194,.28);
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.22);
+    color: var(--ink);
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.launcher-head {
+    align-items: center;
+    border-bottom: 1px solid rgba(16,199,194,.18);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: .9rem;
+}
+
+.launcher-title {
+    color: var(--ink);
+    font-size: 1.55rem;
+    font-weight: 950;
+    line-height: 1.08;
+}
+
+.launcher-note {
+    color: var(--muted);
+    font-size: .95rem;
+}
+
+.launcher-grid {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.launcher-card {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    border-radius: 14px;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    min-height: 132px;
+    padding: .95rem;
+    text-decoration: none;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.launcher-card:hover {
+    border-color: rgba(16,199,194,.55);
+    box-shadow: 0 14px 34px rgba(16,21,31,.15);
+    color: var(--ink);
+    transform: translateY(-2px);
+}
+
+.launcher-card.primary {
+    background: linear-gradient(135deg, var(--night), var(--midnight));
+    color: var(--panel);
+}
+
+.launcher-card.primary .launcher-label,
+.launcher-card.primary .launcher-copy {
+    color: #d7e1e8;
+}
+
+.launcher-label {
+    color: var(--muted);
+    font-size: .7rem;
+    font-weight: 950;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+}
+
+.launcher-name {
+    font-size: 1.2rem;
+    font-weight: 950;
+    line-height: 1.1;
+    margin-top: .25rem;
+}
+
+.launcher-copy {
+    color: var(--muted);
+    font-size: .85rem;
+    margin-top: .4rem;
+}
+
+.launcher-go {
+    color: #087a78;
+    font-weight: 950;
+    margin-top: auto;
+    padding-top: .65rem;
+}
+
+.launcher-card.primary .launcher-go {
+    color: #ffcf78;
+}
+
+@media (max-width: 992px) {
+    .launcher-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .launcher-head { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 576px) {
+    .launcher-grid { grid-template-columns: 1fr; }
+}
+
 @media print {
     @page {
         size: landscape;
@@ -225,6 +334,74 @@ body {
 </style>
 
 <div class="report-shell">
+    <section class="report-launcher">
+        <div class="launcher-head">
+            <div>
+                <div class="report-eyebrow">Report Launcher</div>
+                <div class="launcher-title">Start from the report owners ask for most.</div>
+            </div>
+            <div class="launcher-note">Each card opens the builder with that report selected.</div>
+        </div>
+
+        <div class="launcher-grid">
+            <a href="{% url 't12_report' %}" class="launcher-card primary">
+                <div class="launcher-label">Financial</div>
+                <div class="launcher-name">T-12 Report</div>
+                <div class="launcher-copy">Income, expenses, NOI, debt, and cash flow.</div>
+                <div class="launcher-go">Open T-12</div>
+            </a>
+
+            <a href="{% url 'rent_roll' %}" class="launcher-card">
+                <div class="launcher-label">Rent</div>
+                <div class="launcher-name">Rent Roll</div>
+                <div class="launcher-copy">Units, residents, deposits, balances, and rent.</div>
+                <div class="launcher-go">Open rent roll</div>
+            </a>
+
+            <a href="?report_type=payment_summary" class="launcher-card">
+                <div class="launcher-label">Ledger</div>
+                <div class="launcher-name">Payment Summary</div>
+                <div class="launcher-copy">Cash, check, card, deposits, rent, and utilities.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=resident_directory" class="launcher-card">
+                <div class="launcher-label">Residents</div>
+                <div class="launcher-name">Resident Directory</div>
+                <div class="launcher-copy">Roster export with units, contacts, and move-in data.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=vendor_expense" class="launcher-card">
+                <div class="launcher-label">Expense</div>
+                <div class="launcher-name">Vendor Expense</div>
+                <div class="launcher-copy">Vendor spend grouped by property and category.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=receipt_expense_detail" class="launcher-card">
+                <div class="launcher-label">Receipts</div>
+                <div class="launcher-name">Receipt Detail</div>
+                <div class="launcher-copy">Receipt-backed costs with vendor and category detail.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=valuation_estimate" class="launcher-card">
+                <div class="launcher-label">Value</div>
+                <div class="launcher-name">Valuation Estimate</div>
+                <div class="launcher-copy">NOI-supported estimate using a cap-rate method.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=occupancy_vacancy" class="launcher-card">
+                <div class="launcher-label">Property</div>
+                <div class="launcher-name">Occupancy / Vacancy</div>
+                <div class="launcher-copy">Occupied units, vacant units, and occupancy rate.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+        </div>
+    </section>
+
     <section class="soft-card p-4 mb-4 report-controls">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
             <div>

@@ -4549,6 +4549,32 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "(555) 011-3344")
         self.assertNotContains(response, "Hidden Resident")
 
+    def test_custom_reports_show_report_launcher(self):
+        landlord = User.objects.create_user(
+            username="launcher-landlord",
+            email="launcher-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        Property.objects.create(name="Launcher Property", landlord_email=landlord.email)
+
+        self.client.login(username="launcher-landlord", password="StrongPass123!")
+
+        response = self.client.get(reverse("custom_reports"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Report Launcher")
+        self.assertContains(response, "Start from the report owners ask for most.")
+        self.assertContains(response, "T-12 Report")
+        self.assertContains(response, "Rent Roll")
+        self.assertContains(response, "Payment Summary")
+        self.assertContains(response, "Resident Directory")
+        self.assertContains(response, "Vendor Expense")
+        self.assertContains(response, "Receipt Detail")
+        self.assertContains(response, "Valuation Estimate")
+        self.assertContains(response, "Occupancy / Vacancy")
+
     def test_custom_reports_scope_to_property_owner_and_block_residents(self):
         owner = User.objects.create_user(
             username="report-owner",
