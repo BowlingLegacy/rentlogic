@@ -1603,6 +1603,89 @@ class LiveFlowTests(TestCase):
         self.assertContains(resident_files, "Archived Resident Files")
         self.assertContains(resident_files, "Open Archive")
 
+    def test_landlord_can_send_app_setup_code_from_resident_file(self):
+        landlord = User.objects.create_user(
+            username="setup-code-landlord",
+            email="setup-code-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Setup Code Property", landlord_email=landlord.email)
+        tenant_user = User.objects.create_user(
+            username="pending-setup-code-resident",
+            email="setup-code@example.com",
+            password=None,
+            role="tenant",
+        )
+        resident = HousingApplication.objects.create(
+            property=property_obj,
+            user=tenant_user,
+            full_name="Setup Code Resident",
+            phone="555-0770",
+            email="setup-code@example.com",
+            age=50,
+            space_type="Room",
+            space_label="E",
+            monthly_rent=Decimal("500.00"),
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            sms_opted_in=False,
+        )
+
+        self.client.login(username="setup-code-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("send_resident_app_setup_code", args=[resident.id]))
+
+        self.assertRedirects(response, reverse("landlord_resident_files"))
+        tenant_user.refresh_from_db()
+        self.assertTrue(tenant_user.portal_setup_code)
+        self.assertIsNotNone(tenant_user.portal_setup_code_created_at)
+        self.assertIsNone(tenant_user.portal_setup_code_activated_at)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(tenant_user.portal_setup_code, mail.outbox[0].body)
+        sms_log = SmsMessageLog.objects.get(application=resident)
+        self.assertEqual(sms_log.status, "skipped_no_consent")
+
+    def test_landlord_does_not_send_app_setup_code_to_completed_login(self):
+        landlord = User.objects.create_user(
+            username="completed-code-landlord",
+            email="completed-code-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Completed Code Property", landlord_email=landlord.email)
+        tenant_user = User.objects.create_user(
+            username="completed-code-resident",
+            email="completed-code@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        resident = HousingApplication.objects.create(
+            property=property_obj,
+            user=tenant_user,
+            full_name="Completed Code Resident",
+            phone="555-0771",
+            email="completed-code@example.com",
+            age=50,
+            space_type="Room",
+            space_label="F",
+            monthly_rent=Decimal("500.00"),
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+        )
+
+        self.client.login(username="completed-code-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("send_resident_app_setup_code", args=[resident.id]))
+
+        self.assertRedirects(response, reverse("landlord_resident_files"))
+        tenant_user.refresh_from_db()
+        self.assertFalse(tenant_user.portal_setup_code)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertFalse(SmsMessageLog.objects.filter(application=resident).exists())
+
     def test_landlord_can_upload_and_review_tenant_file_packet(self):
         landlord = User.objects.create_user(
             username="packet-landlord",

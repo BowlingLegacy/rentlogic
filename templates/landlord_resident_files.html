@@ -87,6 +87,12 @@
                                 {% if request.user.is_superuser or request.user.role == "admin" %}
                                     <a href="{% url 'tenant_dashboard' %}?resident={{ resident.id }}" class="btn btn-dark btn-sm">Inspect Tenant Dashboard</a>
                                 {% endif %}
+                                {% if resident.user and not resident.user.has_usable_password %}
+                                    <form method="post" action="{% url 'send_resident_app_setup_code' resident.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success btn-sm">Send App Setup Code</button>
+                                    </form>
+                                {% endif %}
                                 {% if not resident.user %}
                                     <a href="{% url 'landlord_create_tenant' %}?application={{ resident.id }}" class="btn btn-primary btn-sm">Create File</a>
                                 {% endif %}

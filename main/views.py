@@ -170,6 +170,34 @@ Bowling Legacy Housing
     return True
 
 
+def send_resident_app_setup_email(request, application):
+    if not application.user or not application.user.email or not application.user.portal_setup_code:
+        return False
+
+    setup_url = request.build_absolute_uri(reverse("enter_invite_code"))
+    send_mail(
+        "Your Rental Ledger Pro setup code",
+        f"""Hello {application.full_name},
+
+Your Rental Ledger Pro app setup code is:
+
+{application.user.portal_setup_code}
+
+Setup page:
+{setup_url}
+
+Enter the code to begin setup. Your 30-minute setup window starts when the code is accepted.
+
+Thank you,
+Rental Ledger Pro
+""",
+        getattr(settings, "DEFAULT_FROM_EMAIL", None),
+        [application.user.email],
+        fail_silently=False,
+    )
+    return True
+
+
 def money(value):
     if value is None:
         return Decimal("0.00")
@@ -2324,6 +2352,60 @@ def landlord_attention(request):
 @user_passes_test(staff_required)
 def landlord_resident_files(request):
     return render(request, "landlord_resident_files.html", get_landlord_workspace_context(request.user))
+
+
+@login_required
+@user_passes_test(staff_required)
+def send_resident_app_setup_code(request, application_id):
+    application = get_object_or_404(
+        HousingApplication.objects.select_related("property", "user"),
+        id=application_id,
+        property__in=staff_managed_properties(request.user),
+        resident_file_status="active",
+    )
+
+    if request.method != "POST":
+        return redirect("landlord_resident_files")
+
+    if not application.user:
+        messages.error(request, "Create or connect a portal user before sending an app setup code.")
+        return redirect("landlord_resident_files")
+
+    if application.user.has_usable_password():
+        messages.info(request, "This resident already has a portal login. Use password reset if they cannot sign in.")
+        return redirect("landlord_resident_files")
+
+    application.user.refresh_portal_setup_code()
+    email_sent = False
+    sms_log = None
+
+    try:
+        email_sent = send_resident_app_setup_email(request, application)
+    except Exception:
+        email_sent = False
+
+    if application.phone:
+        setup_url = request.build_absolute_uri(reverse("enter_invite_code"))
+        sms_body = (
+            "Rental Ledger Pro: Your setup code is "
+            f"{application.user.portal_setup_code}. Enter it here: {setup_url} "
+            "Your 30-minute setup window starts when the code is accepted. Reply STOP to opt out."
+        )
+        sms_log = send_sms_message(application, sms_body[:1500], request.user)
+
+    delivery_notes = []
+    if email_sent:
+        delivery_notes.append("email sent")
+
+    if sms_log:
+        delivery_notes.append(f"SMS {sms_log.get_status_display().lower()}")
+
+    delivery_text = ", ".join(delivery_notes) if delivery_notes else "no message was sent"
+    messages.success(
+        request,
+        f"App setup code ready for {application.full_name}: {application.user.portal_setup_code}. Delivery: {delivery_text}.",
+    )
+    return redirect("landlord_resident_files")
 
 
 @login_required
