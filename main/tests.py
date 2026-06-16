@@ -7147,6 +7147,14 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "michael@bowlinglegacy.com")
         self.assertContains(response, "(541) 326-8047")
 
+    @override_settings(DEMO_PUBLIC_URL="https://rentalledger-demo.onrender.com/demo/")
+    def test_rental_ledger_contact_page_links_to_public_demo_when_configured(self):
+        response = self.client.get(reverse("rental_ledger_contact"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Open Demo")
+        self.assertContains(response, "https://rentalledger-demo.onrender.com/demo/")
+
     def test_password_reset_links_expire_after_thirty_minutes(self):
         self.assertEqual(settings.PASSWORD_RESET_TIMEOUT, 1800)
 

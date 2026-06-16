@@ -329,6 +329,7 @@
                 <p>Start with the owner intake if you want a structured setup path for properties, units, resident data, reports, and accounting records.</p>
                 <div class="actions">
                     <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Intake</a>
+                    <a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Open Demo</a>
                     <a class="button secondary" href="mailto:michael@bowlinglegacy.com?subject=Rental%20Ledger%20Pro%20Demo">Email Michael</a>
                 </div>
             </section>
