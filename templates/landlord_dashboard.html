@@ -125,6 +125,120 @@ body {
     margin-bottom: 1.5rem;
 }
 .metric-grid { grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); }
+.command-deck {
+    background: linear-gradient(135deg, rgba(248,251,247,.98), rgba(232,246,242,.96));
+    border: 1px solid rgba(16,199,194,.28);
+    border-radius: 18px;
+    box-shadow: 0 22px 58px rgba(0,0,0,.24);
+    color: #10151f;
+    margin-bottom: 1.5rem;
+    padding: 1.2rem;
+}
+.command-head {
+    align-items: center;
+    border-bottom: 1px solid rgba(16,199,194,.18);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+}
+.command-kicker {
+    color: #087a78;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.command-title {
+    color: #10151f;
+    font-size: 1.75rem;
+    font-weight: 950;
+    line-height: 1.05;
+}
+.command-pill {
+    background: #10151f;
+    border-radius: 999px;
+    color: #f8fbf7;
+    font-size: .82rem;
+    font-weight: 900;
+    padding: .45rem .85rem;
+    white-space: nowrap;
+}
+.command-grid {
+    display: grid;
+    gap: .9rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.command-card {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    border-radius: 14px;
+    color: #10151f;
+    display: flex;
+    flex-direction: column;
+    min-height: 158px;
+    padding: 1rem;
+    text-decoration: none;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.command-card:hover {
+    border-color: rgba(16,199,194,.55);
+    box-shadow: 0 14px 34px rgba(16,21,31,.15);
+    color: #10151f;
+    transform: translateY(-2px);
+}
+.command-card.primary {
+    background: linear-gradient(135deg, #10151f, #172233);
+    color: #f8fbf7;
+}
+.command-card.primary .command-label,
+.command-card.primary .command-note {
+    color: #d7e1e8;
+}
+.command-card.primary .command-go {
+    color: #ffcf78;
+}
+.command-icon {
+    align-items: center;
+    background: rgba(16,199,194,.12);
+    border-radius: 12px;
+    color: #087a78;
+    display: flex;
+    font-weight: 950;
+    height: 38px;
+    justify-content: center;
+    margin-bottom: .8rem;
+    width: 38px;
+}
+.command-card.primary .command-icon {
+    background: rgba(255,179,66,.18);
+    color: #ffb342;
+}
+.command-label {
+    color: #596772;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+.command-value {
+    font-size: 1.35rem;
+    font-weight: 950;
+    line-height: 1.1;
+    margin-top: .2rem;
+}
+.command-note {
+    color: #596772;
+    font-size: .85rem;
+    margin-top: .35rem;
+}
+.command-go {
+    color: #087a78;
+    font-weight: 950;
+    margin-top: auto;
+    padding-top: .75rem;
+}
 .metric-card {
     background: rgba(248,251,247,.96);
     border: 1px solid rgba(255,255,255,.16);
@@ -206,9 +320,13 @@ body {
     .ops-shell { grid-template-columns: 1fr; }
     .ops-sidebar { min-height: auto; }
     .metric-grid, .workspace-grid { grid-template-columns: 1fr 1fr; }
+    .command-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .command-head { align-items: flex-start; flex-direction: column; }
 }
 @media (max-width: 576px) {
     .metric-grid, .workspace-grid { grid-template-columns: 1fr; }
+    .command-grid { grid-template-columns: 1fr; }
+    .command-card { min-height: 138px; }
 }
 </style>
 
@@ -249,6 +367,66 @@ body {
                 <div class="ops-eyebrow">Landlord Operations</div>
                 <h1 class="ops-title">Welcome back, {{ user.username }}</h1>
                 <p class="ops-text mb-0">Choose a workspace below. Each item opens its own page so the dashboard stays clean.</p>
+            </section>
+
+            <section class="command-deck">
+                <div class="command-head">
+                    <div>
+                        <div class="command-kicker">Today Command Center</div>
+                        <div class="command-title">Run the property from one screen.</div>
+                    </div>
+                    <div class="command-pill">{{ properties|length }} propert{{ properties|length|pluralize:"y,ies" }}</div>
+                </div>
+
+                <div class="command-grid">
+                    <a href="{% url 'landlord_attention' %}" class="command-card primary">
+                        <div class="command-icon">!</div>
+                        <div class="command-label">Needs Action</div>
+                        <div class="command-value">{{ attention_count }}</div>
+                        <div class="command-note">Messages, docs, and setup work</div>
+                        <div class="command-go">Open queue</div>
+                    </a>
+
+                    <a href="{% url 'record_manual_payment' %}" class="command-card">
+                        <div class="command-icon">$</div>
+                        <div class="command-label">Payment</div>
+                        <div class="command-value">Record</div>
+                        <div class="command-note">Cash, check, split rent, utilities</div>
+                        <div class="command-go">Enter payment</div>
+                    </a>
+
+                    <a href="{% url 'landlord_resident_files' %}" class="command-card">
+                        <div class="command-icon">R</div>
+                        <div class="command-label">Residents</div>
+                        <div class="command-value">{{ applications.count }}</div>
+                        <div class="command-note">Files, rooms, app codes, move-outs</div>
+                        <div class="command-go">Open files</div>
+                    </a>
+
+                    <a href="{% url 'accounting_receipts' %}" class="command-card">
+                        <div class="command-icon">#</div>
+                        <div class="command-label">Receipts</div>
+                        <div class="command-value">Upload</div>
+                        <div class="command-note">Expense proof and review queue</div>
+                        <div class="command-go">Add receipt</div>
+                    </a>
+
+                    <a href="{% url 'custom_reports' %}" class="command-card">
+                        <div class="command-icon">T</div>
+                        <div class="command-label">Reports</div>
+                        <div class="command-value">Build</div>
+                        <div class="command-note">Rent roll, phone list, expenses</div>
+                        <div class="command-go">Create report</div>
+                    </a>
+
+                    <a href="{% url 'listing_center' %}" class="command-card">
+                        <div class="command-icon">L</div>
+                        <div class="command-label">Vacancy</div>
+                        <div class="command-value">List</div>
+                        <div class="command-note">Publish and manage openings</div>
+                        <div class="command-go">Open listings</div>
+                    </a>
+                </div>
             </section>
 
             <div class="metric-grid">

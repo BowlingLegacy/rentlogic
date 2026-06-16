@@ -1128,6 +1128,30 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "Uploaded ID")
         self.assertContains(response, "Mark Reviewed")
 
+    def test_landlord_dashboard_prioritizes_command_center(self):
+        staff_user = User.objects.create_user(
+            username="command-staff",
+            email="command-staff@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        Property.objects.create(name="Command Property", landlord_email=staff_user.email)
+
+        self.client.login(username="command-staff", password="StrongPass123!")
+
+        response = self.client.get(reverse("landlord_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Today Command Center")
+        self.assertContains(response, "Run the property from one screen.")
+        self.assertContains(response, "Needs Action")
+        self.assertContains(response, "Payment")
+        self.assertContains(response, "Residents")
+        self.assertContains(response, "Receipts")
+        self.assertContains(response, "Reports")
+        self.assertContains(response, "Vacancy")
+
     def test_landlord_attention_collapses_duplicate_profile_setups_and_applications(self):
         staff_user = User.objects.create_user(
             username="dedupe-staff",
