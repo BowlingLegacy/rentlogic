@@ -3045,6 +3045,14 @@ class LiveFlowTests(TestCase):
         dashboard_response = self.client.get(reverse("property_owner_dashboard"))
         self.assertEqual(dashboard_response.status_code, 200)
         self.assertContains(dashboard_response, "No properties are connected to this owner yet.")
+        self.assertContains(dashboard_response, "Owner Command Center")
+        self.assertContains(dashboard_response, "Build the portfolio and keep the numbers clean.")
+        self.assertContains(dashboard_response, "Setup")
+        self.assertContains(dashboard_response, "Property")
+        self.assertContains(dashboard_response, "Reports")
+        self.assertContains(dashboard_response, "Accounting")
+        self.assertContains(dashboard_response, "Vacancy")
+        self.assertContains(dashboard_response, "Operations")
 
     def test_property_owner_can_add_property_invite_landlord_and_upload_financial_file(self):
         owner = User.objects.create_user(

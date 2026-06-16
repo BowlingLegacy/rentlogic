@@ -130,6 +130,128 @@
     margin-bottom: 1rem;
     padding: 1rem;
 }
+.owner-command {
+    background: linear-gradient(135deg, rgba(248,251,247,.98), rgba(232,246,242,.96));
+    border: 1px solid rgba(16,199,194,.28);
+    border-radius: 18px;
+    box-shadow: 0 22px 58px rgba(0,0,0,.24);
+    color: #10151f;
+    margin-bottom: 1rem;
+    padding: 1.2rem;
+}
+.owner-command-head {
+    align-items: center;
+    border-bottom: 1px solid rgba(16,199,194,.18);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+}
+.owner-command-kicker {
+    color: #087a78;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.owner-command-title {
+    color: #10151f;
+    font-size: 1.75rem;
+    font-weight: 950;
+    line-height: 1.05;
+}
+.owner-command-pill {
+    background: #10151f;
+    border-radius: 999px;
+    color: #f8fbf7;
+    font-size: .82rem;
+    font-weight: 900;
+    padding: .45rem .85rem;
+    white-space: nowrap;
+}
+.owner-command-grid {
+    display: grid;
+    gap: .9rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.owner-command-card {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    border-radius: 14px;
+    color: #10151f;
+    display: flex;
+    flex-direction: column;
+    min-height: 158px;
+    padding: 1rem;
+    text-decoration: none;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.owner-command-card:hover {
+    border-color: rgba(16,199,194,.55);
+    box-shadow: 0 14px 34px rgba(16,21,31,.15);
+    color: #10151f;
+    transform: translateY(-2px);
+}
+.owner-command-card.primary {
+    background: linear-gradient(135deg, #10151f, #172233);
+    color: #f8fbf7;
+}
+.owner-command-card.primary .owner-command-label,
+.owner-command-card.primary .owner-command-note {
+    color: #d7e1e8;
+}
+.owner-command-card.primary .owner-command-go {
+    color: #ffcf78;
+}
+.owner-command-icon {
+    align-items: center;
+    background: rgba(16,199,194,.12);
+    border-radius: 12px;
+    color: #087a78;
+    display: flex;
+    font-weight: 950;
+    height: 38px;
+    justify-content: center;
+    margin-bottom: .8rem;
+    width: 38px;
+}
+.owner-command-card.primary .owner-command-icon {
+    background: rgba(255,179,66,.18);
+    color: #ffb342;
+}
+.owner-command-label {
+    color: #596772;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+.owner-command-value {
+    font-size: 1.35rem;
+    font-weight: 950;
+    line-height: 1.1;
+    margin-top: .2rem;
+}
+.owner-command-note {
+    color: #596772;
+    font-size: .85rem;
+    margin-top: .35rem;
+}
+.owner-command-go {
+    color: #087a78;
+    font-weight: 950;
+    margin-top: auto;
+    padding-top: .75rem;
+}
+@media (max-width: 992px) {
+    .owner-command-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .owner-command-head { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 576px) {
+    .owner-command-grid { grid-template-columns: 1fr; }
+    .owner-command-card { min-height: 138px; }
+}
 </style>
 
 <div class="owner-shell">
@@ -147,6 +269,66 @@
             <a href="{% url 'rent_roll' %}" class="btn-owner">Monthly Rent Roll</a>
         </div>
     </div>
+
+    <section class="owner-command">
+        <div class="owner-command-head">
+            <div>
+                <div class="owner-command-kicker">Owner Command Center</div>
+                <div class="owner-command-title">Build the portfolio and keep the numbers clean.</div>
+            </div>
+            <div class="owner-command-pill">{{ total_properties }} propert{{ total_properties|pluralize:"y,ies" }}</div>
+        </div>
+
+        <div class="owner-command-grid">
+            <a href="{% url 'owner_onboarding_wizard' %}" class="owner-command-card primary">
+                <div class="owner-command-icon">1</div>
+                <div class="owner-command-label">Setup</div>
+                <div class="owner-command-value">Wizard</div>
+                <div class="owner-command-note">Turn owner intake into a working dashboard</div>
+                <div class="owner-command-go">Open checklist</div>
+            </a>
+
+            <a href="{% url 'owner_property_create' %}" class="owner-command-card">
+                <div class="owner-command-icon">P</div>
+                <div class="owner-command-label">Property</div>
+                <div class="owner-command-value">Add</div>
+                <div class="owner-command-note">Create a property folder and public page</div>
+                <div class="owner-command-go">Add property</div>
+            </a>
+
+            <a href="{% url 'custom_reports' %}" class="owner-command-card">
+                <div class="owner-command-icon">R</div>
+                <div class="owner-command-label">Reports</div>
+                <div class="owner-command-value">Build</div>
+                <div class="owner-command-note">T-12, rent roll, valuation support</div>
+                <div class="owner-command-go">Open reports</div>
+            </a>
+
+            <a href="{% url 'owner_financial_upload' %}" class="owner-command-card">
+                <div class="owner-command-icon">$</div>
+                <div class="owner-command-label">Accounting</div>
+                <div class="owner-command-value">Upload</div>
+                <div class="owner-command-note">Statements, spreadsheets, and source files</div>
+                <div class="owner-command-go">Upload files</div>
+            </a>
+
+            <a href="{% url 'listing_center' %}" class="owner-command-card">
+                <div class="owner-command-icon">L</div>
+                <div class="owner-command-label">Vacancy</div>
+                <div class="owner-command-value">List</div>
+                <div class="owner-command-note">Publish openings and route applicants</div>
+                <div class="owner-command-go">Open listings</div>
+            </a>
+
+            <a href="{% url 'landlord_dashboard' %}" class="owner-command-card">
+                <div class="owner-command-icon">O</div>
+                <div class="owner-command-label">Operations</div>
+                <div class="owner-command-value">Daily</div>
+                <div class="owner-command-note">Payments, residents, messages, receipts</div>
+                <div class="owner-command-go">Open operations</div>
+            </a>
+        </div>
+    </section>
 
     <div class="owner-actions">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
