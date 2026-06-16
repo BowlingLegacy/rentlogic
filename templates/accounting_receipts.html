@@ -144,6 +144,43 @@ body {
     box-shadow: 0 0 0 .2rem rgba(16,199,194,.18);
     outline: none;
 }
+.split-panel {
+    background: #f3faf7;
+    border: 1px solid rgba(16,199,194,.22);
+    border-radius: 14px;
+    color: var(--ink);
+    padding: .85rem;
+}
+.split-list {
+    display: grid;
+    gap: .45rem;
+    margin-bottom: .85rem;
+}
+.split-item {
+    align-items: center;
+    background: #fff;
+    border: 1px solid rgba(23,34,51,.1);
+    border-radius: 10px;
+    display: grid;
+    gap: .5rem;
+    grid-template-columns: minmax(140px, 1fr) minmax(110px, 1fr) auto;
+    padding: .55rem .65rem;
+}
+.split-form-grid {
+    display: grid;
+    gap: .55rem;
+    grid-template-columns: 1fr 1fr 1fr 1.2fr .75fr auto;
+}
+.split-form-grid .message-btn {
+    align-self: end;
+    white-space: nowrap;
+}
+@media (max-width: 992px) {
+    .split-form-grid,
+    .split-item {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
 
 <div class="receipt-hero mb-4">
@@ -247,13 +284,65 @@ body {
                                             {% csrf_token %}
                                             <button type="submit" class="message-btn">Read Text</button>
                                         </form>
-                                    {% elif receipt.financial_entry %}
-                                        Ledgered
-                                    {% else %}
-                                        -
-                                    {% endif %}
+                            {% elif receipt.financial_entry %}
+                                Ledgered
+                            {% else %}
+                                -
+                            {% endif %}
                                 </td>
                             </tr>
+                            {% if receipt.status == "needs_review" or receipt.splits.all %}
+                                <tr>
+                                    <td colspan="9">
+                                        <div class="split-panel">
+                                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                                <div>
+                                                    <strong>Invoice Category Splits</strong>
+                                                    <div class="small text-muted">Use this when one invoice covers multiple categories, such as internet, cable, phone, and fees.</div>
+                                                </div>
+                                                <span class="status-pill">{{ receipt.splits.count }} split{{ receipt.splits.count|pluralize }}</span>
+                                            </div>
+
+                                            {% if receipt.splits.all %}
+                                                <div class="split-list">
+                                                    {% for split in receipt.splits.all %}
+                                                        <div class="split-item">
+                                                            <div>
+                                                                <strong>{% if split.category %}{{ split.category.name }}{% else %}Uncategorized{% endif %}</strong>
+                                                                <div class="small text-muted">{{ split.get_entry_type_display }}</div>
+                                                            </div>
+                                                            <div class="small text-muted">{{ split.description|default:"No description" }}</div>
+                                                            <div class="fw-bold">${{ split.amount }}</div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if receipt.status == "needs_review" %}
+                                                <form method="post" action="{% url 'add_accounting_receipt_split' receipt.id %}" class="split-form-grid">
+                                                    {% csrf_token %}
+                                                    <select name="entry_type" class="form-select" aria-label="Split accounting type">
+                                                        <option value="operating_expense">Operating Expense</option>
+                                                        <option value="debt_service">Debt Service</option>
+                                                        <option value="capital_expense">Capital Expense</option>
+                                                        <option value="other">Other</option>
+                                                    </select>
+                                                    <select name="category" class="form-select" aria-label="Split category">
+                                                        <option value="">Category</option>
+                                                        {% for category in expense_categories %}
+                                                            <option value="{{ category.id }}">{{ category.get_entry_type_display }} | {{ category.name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <input type="text" name="new_category" class="form-control" placeholder="New category">
+                                                    <input type="text" name="description" class="form-control" placeholder="Split description">
+                                                    <input type="number" name="amount" class="form-control" step="0.01" min="0" placeholder="Amount">
+                                                    <button type="submit" class="message-btn">Add Split</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endif %}
                         {% empty %}
                             <tr>
                                 <td colspan="9" class="text-muted p-4">No receipts uploaded yet.</td>

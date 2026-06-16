@@ -13,7 +13,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import AccountingReceipt, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
+from .models import AccountingReceipt, AccountingReceiptSplit, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
 from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, payment_amount_for_month, prorated_monthly_charge, rent_roll_rows_for_properties, t12_report_rows
 
 
@@ -5653,6 +5653,62 @@ class LiveFlowTests(TestCase):
         self.assertEqual(receipt.financial_entry.property_name, property_obj.name)
         self.assertEqual(receipt.financial_entry.category, "Repairs")
         self.assertEqual(receipt.financial_entry.amount, Decimal("225.00"))
+
+    def test_accounting_receipt_can_be_split_across_categories(self):
+        landlord = User.objects.create_user(
+            username="split-receipt-landlord",
+            email="split-receipt-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Split Receipt Property", landlord_email=landlord.email)
+        internet = ExpenseCategory.objects.create(name="Internet", entry_type="operating_expense")
+        phone = ExpenseCategory.objects.create(name="House Phone", entry_type="operating_expense")
+        receipt = AccountingReceipt.objects.create(
+            property=property_obj,
+            receipt_file="accounting_receipts/combined.pdf",
+            vendor="Combined Utility Vendor",
+            receipt_date=timezone.datetime(2026, 6, 10).date(),
+            description="Combined internet and phone invoice",
+            amount=Decimal("150.00"),
+            payment_method="check",
+        )
+
+        self.client.login(username="split-receipt-landlord", password="StrongPass123!")
+
+        first_split = self.client.post(reverse("add_accounting_receipt_split", args=[receipt.id]), {
+            "entry_type": "operating_expense",
+            "category": internet.id,
+            "description": "Internet service",
+            "amount": "100.00",
+        })
+        second_split = self.client.post(reverse("add_accounting_receipt_split", args=[receipt.id]), {
+            "entry_type": "operating_expense",
+            "category": phone.id,
+            "description": "House phone service",
+            "amount": "50.00",
+        })
+        approve_response = self.client.post(reverse("approve_accounting_receipt", args=[receipt.id]))
+
+        self.assertRedirects(first_split, reverse("accounting_receipts"))
+        self.assertRedirects(second_split, reverse("accounting_receipts"))
+        self.assertRedirects(approve_response, reverse("accounting_receipts"))
+        receipt.refresh_from_db()
+        self.assertEqual(receipt.status, "approved")
+        self.assertEqual(AccountingReceiptSplit.objects.filter(receipt=receipt).count(), 2)
+        entries = FinancialEntry.objects.filter(upload=receipt.financial_upload).order_by("amount")
+        self.assertEqual(entries.count(), 2)
+        self.assertEqual(set(entries.values_list("category", flat=True)), {"Internet", "House Phone"})
+        self.assertEqual(entries.aggregate(total=Sum("amount"))["total"], Decimal("150.00"))
+        report_response = self.client.get(reverse("custom_reports"), {
+            "report_type": "receipt_expense_detail",
+            "property_id": property_obj.id,
+        })
+        self.assertContains(report_response, "Internet service")
+        self.assertContains(report_response, "House phone service")
+        self.assertContains(report_response, "100.00")
+        self.assertContains(report_response, "50.00")
 
     def test_duplicate_receipt_approval_does_not_create_second_ledger_entry(self):
         landlord = User.objects.create_user(

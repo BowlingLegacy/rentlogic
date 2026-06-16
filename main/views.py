@@ -74,6 +74,7 @@ from .models import (
     FinancialUpload,
     FinancialEntry,
     AccountingReceipt,
+    AccountingReceiptSplit,
     ExpenseCategory,
     ResidentMessage,
     ResidentMessageReply,
@@ -5225,6 +5226,7 @@ def custom_reports(request):
             receipts = (
                 AccountingReceipt.objects
                 .select_related("property", "category")
+                .prefetch_related("splits", "splits__category")
                 .filter(property__in=filtered_properties)
                 .order_by("property__name", "-receipt_date", "vendor", "-uploaded_at")
             )
@@ -5232,20 +5234,39 @@ def custom_reports(request):
                 receipts = receipts.filter(receipt_date__gte=start_date)
             if end_date:
                 receipts = receipts.filter(receipt_date__lte=end_date)
+            receipt_total = Decimal("0.00")
             for receipt in receipts:
-                report_rows.append([
-                    receipt.receipt_date or timezone.localtime(receipt.uploaded_at).date(),
-                    receipt.property.name,
-                    receipt.vendor or "Unassigned Vendor",
-                    receipt.category.name if receipt.category else "Unassigned Category",
-                    receipt.get_entry_type_display(),
-                    receipt.description,
-                    receipt.amount,
-                    receipt.get_payment_method_display(),
-                    receipt.get_status_display(),
-                    receipt.get_ocr_status_display(),
-                ])
-            totals = {"Receipt Total": receipts.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")}
+                split_lines = list(receipt.splits.all())
+                if split_lines:
+                    for split in split_lines:
+                        receipt_total += split.amount
+                        report_rows.append([
+                            receipt.receipt_date or timezone.localtime(receipt.uploaded_at).date(),
+                            receipt.property.name,
+                            receipt.vendor or "Unassigned Vendor",
+                            split.category.name if split.category else "Unassigned Category",
+                            split.get_entry_type_display(),
+                            split.description or receipt.description,
+                            split.amount,
+                            receipt.get_payment_method_display(),
+                            receipt.get_status_display(),
+                            receipt.get_ocr_status_display(),
+                        ])
+                else:
+                    receipt_total += receipt.amount
+                    report_rows.append([
+                        receipt.receipt_date or timezone.localtime(receipt.uploaded_at).date(),
+                        receipt.property.name,
+                        receipt.vendor or "Unassigned Vendor",
+                        receipt.category.name if receipt.category else "Unassigned Category",
+                        receipt.get_entry_type_display(),
+                        receipt.description,
+                        receipt.amount,
+                        receipt.get_payment_method_display(),
+                        receipt.get_status_display(),
+                        receipt.get_ocr_status_display(),
+                    ])
+            totals = {"Receipt Total": receipt_total}
 
         elif report_type == "vendor_directory":
             report_title = "Vendor Directory"
@@ -5886,14 +5907,76 @@ def accounting_receipts(request):
     receipts = (
         AccountingReceipt.objects
         .select_related("property", "category", "uploaded_by", "financial_entry")
+        .prefetch_related("splits", "splits__category")
         .filter(property__in=properties)
         .order_by("status", "-uploaded_at")
     )
+    expense_categories = ExpenseCategory.objects.filter(is_active=True).order_by("entry_type", "name")
 
     return render(request, "accounting_receipts.html", {
         "form": form,
         "receipts": receipts,
+        "expense_categories": expense_categories,
     })
+
+
+@login_required
+@user_passes_test(reporting_required)
+def add_accounting_receipt_split(request, receipt_id):
+    if request.method != "POST":
+        return redirect("accounting_receipts")
+
+    receipt = get_object_or_404(
+        AccountingReceipt.objects.select_related("property"),
+        id=receipt_id,
+        property__in=staff_managed_properties(request.user),
+        status="needs_review",
+    )
+
+    raw_amount = (request.POST.get("amount") or "").strip()
+    try:
+        amount = Decimal(raw_amount)
+    except (InvalidOperation, TypeError):
+        messages.error(request, "Enter a valid split amount.")
+        return redirect("accounting_receipts")
+
+    if amount <= 0:
+        messages.error(request, "Split amount must be greater than zero.")
+        return redirect("accounting_receipts")
+
+    entry_type = request.POST.get("entry_type") or "operating_expense"
+    valid_entry_types = {choice[0] for choice in ExpenseCategory.ENTRY_TYPE_CHOICES}
+    if entry_type not in valid_entry_types:
+        entry_type = "operating_expense"
+
+    category = None
+    category_id = request.POST.get("category")
+    if category_id:
+        category = ExpenseCategory.objects.filter(id=category_id, is_active=True).first()
+
+    new_category = (request.POST.get("new_category") or "").strip()
+    if new_category:
+        category = ExpenseCategory.objects.filter(name__iexact=new_category).first()
+        if not category:
+            category = ExpenseCategory.objects.create(
+                name=new_category,
+                entry_type=entry_type,
+                created_by=request.user,
+            )
+
+    if not category:
+        messages.error(request, "Choose or create a category for this split.")
+        return redirect("accounting_receipts")
+
+    AccountingReceiptSplit.objects.create(
+        receipt=receipt,
+        category=category,
+        entry_type=entry_type,
+        description=(request.POST.get("description") or "").strip(),
+        amount=amount,
+    )
+    messages.success(request, "Split line added to receipt.")
+    return redirect("accounting_receipts")
 
 
 @login_required
@@ -5903,12 +5986,19 @@ def approve_accounting_receipt(request, receipt_id):
         return redirect("accounting_receipts")
 
     receipt = get_object_or_404(
-        AccountingReceipt.objects.select_related("property", "category", "financial_entry"),
+        AccountingReceipt.objects.select_related("property", "category", "financial_entry").prefetch_related("splits", "splits__category", "splits__financial_entry"),
         id=receipt_id,
         property__in=staff_managed_properties(request.user),
     )
 
-    if not receipt.category:
+    split_lines = list(receipt.splits.all())
+    split_total = sum((split.amount for split in split_lines), Decimal("0.00"))
+
+    if split_lines and split_total != receipt.amount:
+        messages.error(request, f"Split total must equal the receipt amount before approval. Current split total is ${split_total}.")
+        return redirect("accounting_receipts")
+
+    if not split_lines and not receipt.category:
         messages.error(request, "Choose or create a category before approving this receipt.")
         return redirect("accounting_receipts")
 
@@ -5925,7 +6015,7 @@ def approve_accounting_receipt(request, receipt_id):
             parsed_at=timezone.now(),
         )
 
-    if not receipt.financial_entry and duplicate_receipt_financial_entry_exists(receipt):
+    if not split_lines and not receipt.financial_entry and duplicate_receipt_financial_entry_exists(receipt):
         receipt.status = "ignored"
         receipt.reviewed_by = request.user
         receipt.reviewed_at = timezone.now()
@@ -5933,7 +6023,31 @@ def approve_accounting_receipt(request, receipt_id):
         messages.warning(request, "Receipt matched an existing ledger entry and was marked as duplicate instead of being counted again.")
         return redirect("accounting_receipts")
 
-    if not receipt.financial_entry:
+    if split_lines:
+        for index, split in enumerate(split_lines, start=1):
+            if split.financial_entry:
+                continue
+
+            split.financial_entry = FinancialEntry.objects.create(
+                upload=receipt.financial_upload,
+                ledger_scope=receipt.financial_upload.ledger_scope,
+                property_name=receipt.property.name,
+                sheet_name="Receipt Upload",
+                row_number=(receipt.id * 1000) + index,
+                entry_date=receipt.receipt_date,
+                month=receipt.receipt_date.month if receipt.receipt_date else None,
+                year=receipt.receipt_date.year if receipt.receipt_date else None,
+                entry_type=split.entry_type,
+                category=split.category.name if split.category else "",
+                description=split.description or receipt.description or receipt.vendor,
+                amount=split.amount,
+            )
+            split.save(update_fields=["financial_entry"])
+
+            if not receipt.financial_entry:
+                receipt.financial_entry = split.financial_entry
+
+    elif not receipt.financial_entry:
         receipt.financial_entry = FinancialEntry.objects.create(
             upload=receipt.financial_upload,
             ledger_scope=receipt.financial_upload.ledger_scope,
