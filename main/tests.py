@@ -234,7 +234,7 @@ class LiveFlowTests(TestCase):
         self.assertEqual(application.user.username, "resident")
         self.assertFalse(User.objects.filter(id=temp_user.id).exists())
 
-    def test_invite_code_expires_after_30_minutes(self):
+    def test_invite_code_expires_30_minutes_after_setup_starts(self):
         temp_user = User.objects.create_user(
             username="expired-applicant",
             email="expired@example.com",
@@ -242,8 +242,8 @@ class LiveFlowTests(TestCase):
             role="tenant",
         )
         temp_user.refresh_invite_code()
-        temp_user.invite_code_created_at = timezone.now() - timezone.timedelta(minutes=31)
-        temp_user.save(update_fields=["invite_code_created_at"])
+        temp_user.invite_code_activated_at = timezone.now() - timezone.timedelta(minutes=31)
+        temp_user.save(update_fields=["invite_code_activated_at"])
         HousingApplication.objects.create(
             user=temp_user,
             full_name="Expired Applicant",
@@ -260,6 +260,35 @@ class LiveFlowTests(TestCase):
         })
 
         self.assertRedirects(response, reverse("request_invite_code"))
+
+    def test_unopened_invite_code_remains_available_before_outer_window_expires(self):
+        temp_user = User.objects.create_user(
+            username="waiting-applicant",
+            email="waiting@example.com",
+            password=None,
+            role="tenant",
+        )
+        temp_user.refresh_invite_code()
+        temp_user.invite_code_created_at = timezone.now() - timezone.timedelta(hours=4)
+        temp_user.save(update_fields=["invite_code_created_at"])
+        HousingApplication.objects.create(
+            user=temp_user,
+            full_name="Waiting Applicant",
+            phone="555-0100",
+            email="waiting@example.com",
+            age=42,
+            income_source="Employment",
+            monthly_income=Decimal("2500.00"),
+            housing_need="Needs a room.",
+        )
+
+        response = self.client.post(reverse("enter_invite_code"), {
+            "invite_code": temp_user.invite_code,
+        })
+
+        self.assertRedirects(response, reverse("signup"))
+        temp_user.refresh_from_db()
+        self.assertIsNotNone(temp_user.invite_code_activated_at)
 
     def test_portal_setup_code_allows_resident_to_create_account(self):
         temp_user = User.objects.create_user(
@@ -312,6 +341,33 @@ class LiveFlowTests(TestCase):
             full_name="Expired Mobile Applicant",
             phone="555-0102",
             email="expired-mobile@example.com",
+            age=42,
+            income_source="Employment",
+            monthly_income=Decimal("2500.00"),
+            housing_need="Needs a room.",
+        )
+
+        response = self.client.post(reverse("enter_invite_code"), {
+            "invite_code": temp_user.portal_setup_code,
+        })
+
+        self.assertRedirects(response, reverse("request_invite_code"))
+
+    def test_portal_setup_code_expires_30_minutes_after_setup_starts(self):
+        temp_user = User.objects.create_user(
+            username="started-mobile-applicant",
+            email="started-mobile@example.com",
+            password=None,
+            role="tenant",
+        )
+        temp_user.refresh_portal_setup_code()
+        temp_user.portal_setup_code_activated_at = timezone.now() - timezone.timedelta(minutes=31)
+        temp_user.save(update_fields=["portal_setup_code_activated_at"])
+        HousingApplication.objects.create(
+            user=temp_user,
+            full_name="Started Mobile Applicant",
+            phone="555-0103",
+            email="started-mobile@example.com",
             age=42,
             income_source="Employment",
             monthly_income=Decimal("2500.00"),

@@ -1997,6 +1997,11 @@ def enter_invite_code(request):
             messages.error(request, "No approved portal intake is connected to this code yet.")
             return redirect("enter_invite_code")
 
+        if code_type == "portal_setup":
+            user_with_code.activate_portal_setup_code()
+        else:
+            user_with_code.activate_invite_code()
+
         request.session["pending_portal_user_id"] = user_with_code.id
         request.session["pending_resident_user_id"] = user_with_code.id
         request.session["pending_portal_code_type"] = code_type
