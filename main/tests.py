@@ -3212,6 +3212,24 @@ class LiveFlowTests(TestCase):
         self.assertEqual(intake.tenant_utility_setup_notes, "Power: Pacific Power. Water/sewer: city utility account.")
         self.assertEqual(intake.lead_stage, "new")
 
+    def test_property_owner_intake_accepts_blank_property_counts(self):
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Early Lead",
+            "company_name": "Blank Count Holdings",
+            "email": "blank-count@example.com",
+            "phone": "555-0194",
+            "property_count": "",
+            "total_units": "",
+            "needs_accounting": "on",
+            "dashboard_goals": "I want to see if this fits before counting every unit.",
+        })
+
+        self.assertRedirects(response, reverse("property_owner_intake_success"))
+        intake = PropertyOwnerIntake.objects.get(email="blank-count@example.com")
+        self.assertEqual(intake.property_count, 1)
+        self.assertEqual(intake.total_units, 0)
+        self.assertTrue(intake.needs_accounting)
+
     def test_existing_resident_intake_button_opens_for_new_property_and_saves_profile(self):
         property_obj = Property.objects.create(name="Painted Lady Inn")
         CurrentResidentRosterEntry.objects.create(

@@ -542,6 +542,18 @@ class PropertyOwnerIntakeForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
         label="Reports you want available",
     )
+    property_count = forms.IntegerField(
+        required=False,
+        min_value=1,
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+        label="How many properties do you manage or own?",
+    )
+    total_units = forms.IntegerField(
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+        label="Approximate total units",
+    )
 
     class Meta:
         model = PropertyOwnerIntake
@@ -633,6 +645,12 @@ class PropertyOwnerIntakeForm(forms.ModelForm):
 
     def clean_desired_reports(self):
         return ", ".join(self.cleaned_data.get("desired_reports") or [])
+
+    def clean_property_count(self):
+        return self.cleaned_data.get("property_count") or 1
+
+    def clean_total_units(self):
+        return self.cleaned_data.get("total_units") or 0
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
