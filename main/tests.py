@@ -6446,6 +6446,14 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "Try Demo")
         self.assertContains(response, "https://bowlinglegacy-demo.onrender.com/demo/")
 
+    def test_rental_ledger_contact_page_shows_direct_contact_info(self):
+        response = self.client.get(reverse("rental_ledger_contact"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Contact Rental Ledger Pro")
+        self.assertContains(response, "michael@bowlinglegacy.com")
+        self.assertContains(response, "(541) 326-8047")
+
     def test_admin_can_issue_property_owner_invite_from_intake(self):
         invite_admin = User.objects.create_superuser(
             username="invite-admin",

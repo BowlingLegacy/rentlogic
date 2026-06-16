@@ -9,6 +9,7 @@ from . import blog_views
 urlpatterns = [
     path("", views.home, name="home"),
     path("rental-ledger-pro/", views.rental_ledger_pro_home, name="rental_ledger_pro_home"),
+    path("rental-ledger-pro/contact/", views.rental_ledger_contact, name="rental_ledger_contact"),
     path("rental-ledger-pro/demo/", views.rental_ledger_demo, name="rental_ledger_demo"),
     path("rental-ledger-pro/demo/reports/<slug:report_slug>/", views.rental_ledger_demo_report, name="rental_ledger_demo_report"),
     path("rental-ledger-pro/<slug:page_slug>/", views.rental_ledger_product_page, name="rental_ledger_product_page"),

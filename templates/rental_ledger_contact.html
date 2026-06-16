@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contact Rental Ledger Pro</title>
+    <style>
+        :root {
+            --night: #10151f;
+            --midnight: #172233;
+            --ink: #202a38;
+            --panel: #f8fbf7;
+            --cyan: #10c7c2;
+            --lime: #a9d95b;
+            --amber: #ffb342;
+            --violet: #7664ff;
+            --muted: #6a7480;
+            --line: rgba(255,255,255,.16);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(circle at 88% 12%, rgba(118,100,255,.22), transparent 28%),
+                radial-gradient(circle at 12% 28%, rgba(16,199,194,.20), transparent 30%),
+                linear-gradient(135deg, #10151f 0%, #172233 58%, #0f1b29 100%);
+            color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            min-height: 100vh;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 34px;
+            background: rgba(16, 21, 31, .84);
+            border-bottom: 1px solid var(--line);
+            backdrop-filter: blur(14px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 950;
+        }
+
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--cyan), var(--lime) 45%, var(--amber));
+            color: #10151f;
+            display: grid;
+            place-items: center;
+            font-weight: 950;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .nav a {
+            color: #dce7ef;
+            text-decoration: none;
+            font-weight: 850;
+        }
+
+        .hero {
+            padding: 78px 34px 36px;
+        }
+
+        .inner {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            background: var(--lime);
+            color: #111;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            font-weight: 950;
+        }
+
+        h1 {
+            font-size: clamp(2.55rem, 6vw, 6.2rem);
+            line-height: .92;
+            max-width: 920px;
+            margin: 18px 0 18px;
+            letter-spacing: 0;
+        }
+
+        .lead {
+            color: #d5e3ea;
+            font-size: clamp(1.02rem, 2vw, 1.28rem);
+            line-height: 1.65;
+            max-width: 760px;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1.08fr .92fr;
+            gap: 22px;
+            align-items: stretch;
+            padding: 20px 34px 70px;
+        }
+
+        .contact-card,
+        .action-panel,
+        .note-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(248, 251, 247, .96);
+            color: var(--ink);
+            box-shadow: 0 30px 80px rgba(0,0,0,.24);
+        }
+
+        .contact-card {
+            padding: 28px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .contact-row {
+            display: grid;
+            grid-template-columns: 52px 1fr;
+            gap: 15px;
+            align-items: center;
+            border: 1px solid rgba(32,42,56,.12);
+            border-radius: 8px;
+            padding: 16px;
+            background: #fff;
+        }
+
+        .icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            background: var(--night);
+            color: var(--lime);
+            font-weight: 950;
+        }
+
+        .contact-row small {
+            display: block;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            font-weight: 900;
+            font-size: .72rem;
+            margin-bottom: 5px;
+        }
+
+        .contact-row a,
+        .contact-row strong {
+            color: var(--ink);
+            font-size: 1.1rem;
+            font-weight: 950;
+            text-decoration: none;
+        }
+
+        .side-stack {
+            display: grid;
+            gap: 22px;
+        }
+
+        .action-panel {
+            padding: 26px;
+            background:
+                linear-gradient(135deg, rgba(16,199,194,.16), rgba(255,179,66,.16)),
+                #f8fbf7;
+        }
+
+        .action-panel h2,
+        .note-card h2 {
+            margin: 0 0 12px;
+            font-size: 1.6rem;
+        }
+
+        .action-panel p,
+        .note-card p {
+            color: #43505e;
+            line-height: 1.55;
+            margin: 0 0 18px;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 950;
+        }
+
+        .button.primary {
+            background: var(--amber);
+            color: #111;
+        }
+
+        .button.secondary {
+            background: var(--night);
+            color: #fff;
+        }
+
+        .note-card {
+            padding: 24px;
+        }
+
+        .service-list {
+            display: grid;
+            gap: 10px;
+            margin: 18px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .service-list li {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            border-bottom: 1px solid rgba(32,42,56,.12);
+            padding-bottom: 10px;
+            color: #43505e;
+            font-weight: 800;
+        }
+
+        .service-list span {
+            color: var(--ink);
+            font-weight: 950;
+        }
+
+        @media (max-width: 860px) {
+            .nav {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 16px;
+            }
+
+            .hero,
+            .contact-grid {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a class="brand" href="{% url 'rental_ledger_pro_home' %}"><span class="brand-mark">RL</span> Rental Ledger Pro</a>
+        <div class="nav-links">
+            <a href="{% url 'rental_ledger_product_page' 'financial-command' %}">Financial</a>
+            <a href="{% url 'rental_ledger_product_page' 'operations-hub' %}">Operations</a>
+            <a href="{% url 'rental_ledger_product_page' 'property-app' %}">Property App</a>
+            <a href="{% url 'rental_ledger_demo' %}">Demo</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="inner">
+            <div class="eyebrow">Direct Contact</div>
+            <h1>Talk to the person building the system.</h1>
+            <p class="lead">Rental Ledger Pro is built for owners who need cleaner records, better resident workflows, and reports that make property performance easier to understand. Reach Michael directly for demos, onboarding, and property data migration questions.</p>
+        </div>
+    </header>
+
+    <main class="contact-grid inner">
+        <section class="contact-card" aria-label="Rental Ledger Pro contact information">
+            <div class="contact-row">
+                <div class="icon">M</div>
+                <div>
+                    <small>Direct Contact</small>
+                    <strong>Michael, Bowling Legacy LLC</strong>
+                </div>
+            </div>
+            <div class="contact-row">
+                <div class="icon">TEL</div>
+                <div>
+                    <small>Call or Text</small>
+                    <a href="tel:+15413268047">(541) 326-8047</a>
+                </div>
+            </div>
+            <div class="contact-row">
+                <div class="icon">@</div>
+                <div>
+                    <small>Email</small>
+                    <a href="mailto:michael@bowlinglegacy.com">michael@bowlinglegacy.com</a>
+                </div>
+            </div>
+            <div class="contact-row">
+                <div class="icon">OR</div>
+                <div>
+                    <small>Business Address</small>
+                    <strong>1005 W Main St, Medford, OR</strong>
+                </div>
+            </div>
+        </section>
+
+        <aside class="side-stack">
+            <section class="action-panel">
+                <h2>Bring a property into the system.</h2>
+                <p>Start with the owner intake if you want a structured setup path for properties, units, resident data, reports, and accounting records.</p>
+                <div class="actions">
+                    <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Intake</a>
+                    <a class="button secondary" href="mailto:michael@bowlinglegacy.com?subject=Rental%20Ledger%20Pro%20Demo">Email Michael</a>
+                </div>
+            </section>
+
+            <section class="note-card">
+                <h2>Best first topics</h2>
+                <p>A short call is usually enough to map the first setup path and decide what records should be imported first.</p>
+                <ul class="service-list">
+                    <li><span>Reports</span> T-12, rent roll, valuation support</li>
+                    <li><span>Operations</span> resident files, messages, maintenance</li>
+                    <li><span>Data</span> spreadsheets, receipts, current tenant lists</li>
+                    <li><span>Launch</span> property app and resident onboarding</li>
+                </ul>
+            </section>
+        </aside>
+    </main>
+</body>
+</html>
