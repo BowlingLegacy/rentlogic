@@ -5911,6 +5911,10 @@ def accounting_receipts(request):
         .filter(property__in=properties)
         .order_by("status", "-uploaded_at")
     )
+    for receipt in receipts:
+        receipt.split_total = sum((split.amount for split in receipt.splits.all()), Decimal("0.00"))
+        receipt.split_remaining = receipt.amount - receipt.split_total
+        receipt.split_is_balanced = receipt.splits.exists() and receipt.split_remaining == Decimal("0.00")
     expense_categories = ExpenseCategory.objects.filter(is_active=True).order_by("entry_type", "name")
 
     return render(request, "accounting_receipts.html", {

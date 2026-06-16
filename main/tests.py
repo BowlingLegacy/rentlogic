@@ -5754,6 +5754,40 @@ class LiveFlowTests(TestCase):
         self.assertFalse(AccountingReceiptSplit.objects.filter(id=split.id).exists())
         self.assertTrue(AccountingReceiptSplit.objects.filter(id=other_split.id).exists())
 
+    def test_accounting_receipts_show_split_allocation_status(self):
+        landlord = User.objects.create_user(
+            username="split-status-landlord",
+            email="split-status-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Split Status Property", landlord_email=landlord.email)
+        category = ExpenseCategory.objects.create(name="Split Status Category", entry_type="operating_expense")
+        receipt = AccountingReceipt.objects.create(
+            property=property_obj,
+            receipt_file="accounting_receipts/status.pdf",
+            vendor="Split Status Vendor",
+            amount=Decimal("100.00"),
+        )
+        AccountingReceiptSplit.objects.create(
+            receipt=receipt,
+            category=category,
+            amount=Decimal("60.00"),
+        )
+
+        self.client.login(username="split-status-landlord", password="StrongPass123!")
+
+        response = self.client.get(reverse("accounting_receipts"))
+
+        self.assertContains(response, "Receipt Total")
+        self.assertContains(response, "$100.00")
+        self.assertContains(response, "Allocated")
+        self.assertContains(response, "$60.00")
+        self.assertContains(response, "Remaining")
+        self.assertContains(response, "$40.00")
+        self.assertContains(response, "remaining")
+
     def test_duplicate_receipt_approval_does_not_create_second_ledger_entry(self):
         landlord = User.objects.create_user(
             username="duplicate-receipt-landlord",

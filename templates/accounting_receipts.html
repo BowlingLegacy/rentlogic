@@ -178,6 +178,38 @@ body {
     font-weight: 900;
     padding: .28rem .65rem;
 }
+.split-summary-grid {
+    display: grid;
+    gap: .55rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: .7rem 0 .85rem;
+}
+.split-summary-card {
+    background: #fff;
+    border: 1px solid rgba(23,34,51,.1);
+    border-radius: 11px;
+    padding: .6rem .7rem;
+}
+.split-summary-label {
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 950;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+.split-summary-value {
+    color: var(--midnight);
+    font-size: 1.05rem;
+    font-weight: 950;
+}
+.split-balanced {
+    background: #eff8f1;
+    border-color: rgba(16,199,194,.32);
+}
+.split-unbalanced {
+    background: #fff7e8;
+    border-color: rgba(255,179,66,.42);
+}
 .split-form-grid {
     display: grid;
     gap: .55rem;
@@ -190,6 +222,9 @@ body {
 @media (max-width: 992px) {
     .split-form-grid,
     .split-item {
+        grid-template-columns: 1fr;
+    }
+    .split-summary-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -312,7 +347,30 @@ body {
                                                     <strong>Invoice Category Splits</strong>
                                                     <div class="small text-muted">Use this when one invoice covers multiple categories, such as internet, cable, phone, and fees.</div>
                                                 </div>
-                                                <span class="status-pill">{{ receipt.splits.count }} split{{ receipt.splits.count|pluralize }}</span>
+                                                {% if receipt.splits.count %}
+                                                    {% if receipt.split_is_balanced %}
+                                                        <span class="status-pill split-balanced">Balanced</span>
+                                                    {% else %}
+                                                        <span class="status-pill split-unbalanced">${{ receipt.split_remaining }} remaining</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="status-pill">No splits</span>
+                                                {% endif %}
+                                            </div>
+
+                                            <div class="split-summary-grid">
+                                                <div class="split-summary-card">
+                                                    <div class="split-summary-label">Receipt Total</div>
+                                                    <div class="split-summary-value">${{ receipt.amount }}</div>
+                                                </div>
+                                                <div class="split-summary-card">
+                                                    <div class="split-summary-label">Allocated</div>
+                                                    <div class="split-summary-value">${{ receipt.split_total }}</div>
+                                                </div>
+                                                <div class="split-summary-card {% if receipt.splits.count and receipt.split_is_balanced %}split-balanced{% elif receipt.splits.count %}split-unbalanced{% endif %}">
+                                                    <div class="split-summary-label">Remaining</div>
+                                                    <div class="split-summary-value">${{ receipt.split_remaining }}</div>
+                                                </div>
                                             </div>
 
                                             {% if receipt.splits.all %}
