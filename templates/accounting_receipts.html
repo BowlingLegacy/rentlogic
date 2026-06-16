@@ -215,6 +215,25 @@ body {
     gap: .55rem;
     grid-template-columns: 1fr 1fr 1fr 1.2fr .75fr auto;
 }
+.receipt-edit-form {
+    background: #fff;
+    border: 1px solid rgba(23,34,51,.1);
+    border-radius: 14px;
+    margin-bottom: .85rem;
+    padding: .8rem;
+}
+.receipt-edit-grid {
+    display: grid;
+    gap: .55rem;
+    grid-template-columns: 1fr 1fr .9fr 1fr 1fr;
+}
+.receipt-edit-grid textarea {
+    min-height: 44px;
+}
+.receipt-edit-actions {
+    align-items: end;
+    display: flex;
+}
 .split-form-grid .message-btn {
     align-self: end;
     white-space: nowrap;
@@ -225,6 +244,9 @@ body {
         grid-template-columns: 1fr;
     }
     .split-summary-grid {
+        grid-template-columns: 1fr;
+    }
+    .receipt-edit-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -372,6 +394,45 @@ body {
                                                     <div class="split-summary-value">${{ receipt.split_remaining }}</div>
                                                 </div>
                                             </div>
+
+                                            {% if receipt.status == "needs_review" %}
+                                                <form method="post" action="{% url 'update_accounting_receipt_details' receipt.id %}" class="receipt-edit-form">
+                                                    {% csrf_token %}
+                                                    <div class="fw-bold mb-2">Correct Receipt Details Before Approval</div>
+                                                    <div class="receipt-edit-grid">
+                                                        <input type="text" name="vendor" class="form-control" value="{{ receipt.vendor }}" placeholder="Vendor">
+                                                        <input type="date" name="receipt_date" class="form-control" value="{% if receipt.receipt_date %}{{ receipt.receipt_date|date:'Y-m-d' }}{% endif %}">
+                                                        <input type="number" name="amount" class="form-control" step="0.01" min="0" value="{{ receipt.amount }}" placeholder="Amount">
+                                                        <select name="entry_type" class="form-select" aria-label="Receipt accounting type">
+                                                            <option value="operating_expense" {% if receipt.entry_type == "operating_expense" %}selected{% endif %}>Operating Expense</option>
+                                                            <option value="debt_service" {% if receipt.entry_type == "debt_service" %}selected{% endif %}>Debt Service</option>
+                                                            <option value="capital_expense" {% if receipt.entry_type == "capital_expense" %}selected{% endif %}>Capital Expense</option>
+                                                            <option value="other" {% if receipt.entry_type == "other" %}selected{% endif %}>Other</option>
+                                                        </select>
+                                                        <select name="payment_method" class="form-select" aria-label="Payment method">
+                                                            <option value="other" {% if receipt.payment_method == "other" %}selected{% endif %}>Other</option>
+                                                            <option value="cash" {% if receipt.payment_method == "cash" %}selected{% endif %}>Cash</option>
+                                                            <option value="check" {% if receipt.payment_method == "check" %}selected{% endif %}>Check</option>
+                                                            <option value="bank_transfer" {% if receipt.payment_method == "bank_transfer" %}selected{% endif %}>Bank Transfer</option>
+                                                            <option value="cashapp" {% if receipt.payment_method == "cashapp" %}selected{% endif %}>Cash App</option>
+                                                            <option value="stripe_card" {% if receipt.payment_method == "stripe_card" %}selected{% endif %}>Stripe Card</option>
+                                                            <option value="stripe_cashapp" {% if receipt.payment_method == "stripe_cashapp" %}selected{% endif %}>Stripe Cash App</option>
+                                                        </select>
+                                                        <select name="category" class="form-select" aria-label="Receipt category">
+                                                            <option value="">Category</option>
+                                                            {% for category in expense_categories %}
+                                                                <option value="{{ category.id }}" {% if receipt.category_id == category.id %}selected{% endif %}>{{ category.get_entry_type_display }} | {{ category.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <input type="text" name="new_category" class="form-control" placeholder="New category">
+                                                        <input type="text" name="description" class="form-control" value="{{ receipt.description }}" placeholder="Description">
+                                                        <input type="text" name="notes" class="form-control" value="{{ receipt.notes }}" placeholder="Notes">
+                                                        <div class="receipt-edit-actions">
+                                                            <button type="submit" class="message-btn w-100">Save Details</button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            {% endif %}
 
                                             {% if receipt.splits.all %}
                                                 <div class="split-list">

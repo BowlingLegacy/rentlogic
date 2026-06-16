@@ -5673,6 +5673,69 @@ class LiveFlowTests(TestCase):
         self.assertEqual(receipt.financial_entry.category, "Repairs")
         self.assertEqual(receipt.financial_entry.amount, Decimal("225.00"))
 
+    def test_accounting_receipt_details_can_be_corrected_before_approval(self):
+        landlord = User.objects.create_user(
+            username="correct-receipt-landlord",
+            email="correct-receipt-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Correct Receipt Property", landlord_email=landlord.email)
+        other_property = Property.objects.create(name="Hidden Correct Receipt Property", landlord_email="other@example.com")
+        room_furnishings = ExpenseCategory.objects.create(name="Room Furnishings", entry_type="operating_expense")
+        power = ExpenseCategory.objects.create(name="Power", entry_type="operating_expense")
+        receipt = AccountingReceipt.objects.create(
+            property=property_obj,
+            receipt_file="accounting_receipts/power.pdf",
+            vendor="Pacific Power",
+            receipt_date=date(2026, 6, 14),
+            category=room_furnishings,
+            entry_type="operating_expense",
+            description="Wrong category",
+            amount=Decimal("180.00"),
+            payment_method="other",
+        )
+        other_receipt = AccountingReceipt.objects.create(
+            property=other_property,
+            receipt_file="accounting_receipts/hidden-power.pdf",
+            vendor="Hidden Power",
+            amount=Decimal("10.00"),
+        )
+
+        self.client.login(username="correct-receipt-landlord", password="StrongPass123!")
+
+        blocked_response = self.client.post(reverse("update_accounting_receipt_details", args=[other_receipt.id]), {
+            "vendor": "Blocked",
+            "receipt_date": "2026-06-15",
+            "amount": "199.99",
+            "entry_type": "operating_expense",
+            "category": power.id,
+            "description": "Blocked update",
+            "payment_method": "bank_transfer",
+            "notes": "Should not save",
+        })
+        response = self.client.post(reverse("update_accounting_receipt_details", args=[receipt.id]), {
+            "vendor": "Pacific Power",
+            "receipt_date": "2026-06-15",
+            "amount": "199.99",
+            "entry_type": "operating_expense",
+            "category": power.id,
+            "description": "June power bill",
+            "payment_method": "bank_transfer",
+            "notes": "Corrected from Room Furnishings to Power",
+        })
+
+        self.assertEqual(blocked_response.status_code, 404)
+        self.assertRedirects(response, reverse("accounting_receipts"))
+        receipt.refresh_from_db()
+        self.assertEqual(receipt.receipt_date, date(2026, 6, 15))
+        self.assertEqual(receipt.amount, Decimal("199.99"))
+        self.assertEqual(receipt.category, power)
+        self.assertEqual(receipt.description, "June power bill")
+        self.assertEqual(receipt.payment_method, "bank_transfer")
+        self.assertEqual(receipt.notes, "Corrected from Room Furnishings to Power")
+
     def test_accounting_receipt_can_be_split_across_categories(self):
         landlord = User.objects.create_user(
             username="split-receipt-landlord",

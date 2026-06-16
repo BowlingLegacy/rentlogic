@@ -117,6 +117,7 @@ urlpatterns = [
     path("financial-upload/", views.financial_upload, name="financial_upload"),
     path("financial-upload/<int:upload_id>/parse/", views.parse_financial_upload, name="parse_financial_upload"),
     path("accounting/receipts/", views.accounting_receipts, name="accounting_receipts"),
+    path("accounting/receipts/<int:receipt_id>/update/", views.update_accounting_receipt_details, name="update_accounting_receipt_details"),
     path("accounting/receipts/<int:receipt_id>/splits/add/", views.add_accounting_receipt_split, name="add_accounting_receipt_split"),
     path("accounting/receipt-splits/<int:split_id>/delete/", views.delete_accounting_receipt_split, name="delete_accounting_receipt_split"),
     path("accounting/receipts/<int:receipt_id>/approve/", views.approve_accounting_receipt, name="approve_accounting_receipt"),

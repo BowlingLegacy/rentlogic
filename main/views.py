@@ -6002,6 +6002,87 @@ def delete_accounting_receipt_split(request, split_id):
 
 @login_required
 @user_passes_test(reporting_required)
+def update_accounting_receipt_details(request, receipt_id):
+    if request.method != "POST":
+        return redirect("accounting_receipts")
+
+    receipt = get_object_or_404(
+        AccountingReceipt.objects.select_related("property"),
+        id=receipt_id,
+        property__in=staff_managed_properties(request.user),
+        status="needs_review",
+    )
+
+    raw_amount = (request.POST.get("amount") or "").strip()
+    try:
+        amount = Decimal(raw_amount)
+    except (InvalidOperation, TypeError):
+        messages.error(request, "Enter a valid receipt amount.")
+        return redirect("accounting_receipts")
+
+    if amount < 0:
+        messages.error(request, "Receipt amount cannot be negative.")
+        return redirect("accounting_receipts")
+
+    raw_receipt_date = (request.POST.get("receipt_date") or "").strip()
+    receipt_date = None
+    if raw_receipt_date:
+        try:
+            receipt_date = date.fromisoformat(raw_receipt_date)
+        except ValueError:
+            messages.error(request, "Enter a valid receipt date.")
+            return redirect("accounting_receipts")
+
+    entry_type = request.POST.get("entry_type") or receipt.entry_type
+    valid_entry_types = {choice[0] for choice in ExpenseCategory.ENTRY_TYPE_CHOICES}
+    if entry_type not in valid_entry_types:
+        entry_type = receipt.entry_type
+
+    category = None
+    category_id = request.POST.get("category")
+    if category_id:
+        category = ExpenseCategory.objects.filter(id=category_id, is_active=True).first()
+
+    new_category = (request.POST.get("new_category") or "").strip()
+    if new_category:
+        category = ExpenseCategory.objects.filter(name__iexact=new_category).first()
+        if not category:
+            category = ExpenseCategory.objects.create(
+                name=new_category,
+                entry_type=entry_type,
+                created_by=request.user,
+            )
+
+    payment_method = request.POST.get("payment_method") or receipt.payment_method
+    valid_payment_methods = {choice[0] for choice in AccountingReceipt.PAYMENT_METHOD_CHOICES}
+    if payment_method not in valid_payment_methods:
+        payment_method = receipt.payment_method
+
+    receipt.vendor = (request.POST.get("vendor") or "").strip()
+    receipt.receipt_date = receipt_date
+    receipt.entry_type = entry_type
+    receipt.category = category
+    receipt.description = (request.POST.get("description") or "").strip()
+    receipt.amount = amount
+    receipt.payment_method = payment_method
+    receipt.notes = (request.POST.get("notes") or "").strip()
+    receipt.save(update_fields=[
+        "vendor",
+        "receipt_date",
+        "entry_type",
+        "category",
+        "description",
+        "amount",
+        "payment_method",
+        "notes",
+    ])
+
+    messages.success(request, "Receipt details updated.")
+    return redirect("accounting_receipts")
+
+
+@login_required
+@user_passes_test(reporting_required)
 def approve_accounting_receipt(request, receipt_id):
     if request.method != "POST":
         return redirect("accounting_receipts")
