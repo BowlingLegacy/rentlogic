@@ -5481,6 +5481,25 @@ class LiveFlowTests(TestCase):
         self.assertEqual(receipt.category.name, "Plumbing Repairs")
         self.assertTrue(receipt.receipt_file.name)
 
+    def test_accounting_receipts_include_standard_utility_categories(self):
+        landlord = User.objects.create_user(
+            username="standard-category-landlord",
+            email="standard-category-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        Property.objects.create(name="Standard Category Property", landlord_email=landlord.email)
+
+        self.client.login(username="standard-category-landlord", password="StrongPass123!")
+
+        response = self.client.get(reverse("accounting_receipts"))
+
+        self.assertEqual(response.status_code, 200)
+        for category_name in ["Power", "Gas", "Water", "Sewer", "Trash", "Internet", "Cable", "House Phone", "Account Fees"]:
+            self.assertTrue(ExpenseCategory.objects.filter(name=category_name, entry_type="operating_expense").exists())
+            self.assertContains(response, category_name)
+
     def test_accounting_receipt_upload_extracts_text_suggestions(self):
         landlord = User.objects.create_user(
             username="ocr-receipt-landlord",

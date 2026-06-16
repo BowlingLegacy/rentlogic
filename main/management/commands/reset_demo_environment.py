@@ -247,7 +247,22 @@ class Command(BaseCommand):
                 entry_type="capital_expense" if name == "Capital Improvements" else "operating_expense",
                 created_by=admin,
             )
-            for name in ["Repairs", "Utilities", "Insurance", "Capital Improvements", "Turnover Supplies", "Landscaping"]
+            for name in [
+                "Repairs",
+                "Power",
+                "Gas",
+                "Water",
+                "Sewer",
+                "Trash",
+                "Internet",
+                "Cable",
+                "House Phone",
+                "Account Fees",
+                "Insurance",
+                "Capital Improvements",
+                "Turnover Supplies",
+                "Landscaping",
+            ]
         }
 
         for property_index, spec in enumerate(property_specs, start=1):
@@ -427,7 +442,8 @@ class Command(BaseCommand):
             )
             receipt_specs = [
                 ("Lowe's", "Turnover Supplies", "Fresh paint, blinds, and bath hardware", "384.22", "2026-06-02"),
-                ("City Utility", "Utilities", "Water and sewer bill", "522.18", "2026-06-03"),
+                ("City Utility", "Water", "Water bill", "322.18", "2026-06-03"),
+                ("City Utility", "Sewer", "Sewer bill", "200.00", "2026-06-03"),
                 ("Greenline Grounds", "Landscaping", "Monthly grounds service", "275.00", "2026-06-04"),
                 ("North Star Mechanical", "Capital Improvements", "HVAC compressor deposit", "1840.00", "2026-06-05"),
             ]
