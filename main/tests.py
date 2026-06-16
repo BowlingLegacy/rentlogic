@@ -3236,6 +3236,14 @@ class LiveFlowTests(TestCase):
         self.assertEqual(intake.total_units, 0)
         self.assertTrue(intake.needs_accounting)
 
+    def test_property_owner_intake_success_page_has_next_steps(self):
+        response = self.client.get(reverse("property_owner_intake_success"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Watch your email")
+        self.assertContains(response, "Open Demo")
+        self.assertContains(response, "Contact Rental Ledger Pro")
+
     def test_existing_resident_intake_button_opens_for_new_property_and_saves_profile(self):
         property_obj = Property.objects.create(name="Painted Lady Inn")
         CurrentResidentRosterEntry.objects.create(
