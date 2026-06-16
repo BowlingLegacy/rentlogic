@@ -7123,6 +7123,22 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "Try Demo")
         self.assertContains(response, "https://bowlinglegacy-demo.onrender.com/demo/")
 
+    @override_settings(RENTAL_LEDGER_SITE=True, DEMO_PUBLIC_URL="https://rentalledger-demo.onrender.com/demo/")
+    def test_rental_ledger_home_uses_public_demo_link_when_configured(self):
+        response = self.client.get(reverse("rental_ledger_pro_home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "https://rentalledger-demo.onrender.com/demo/")
+        self.assertContains(response, "Launch Demo")
+
+    @override_settings(DEMO_PUBLIC_URL="https://rentalledger-demo.onrender.com/demo/")
+    def test_rental_ledger_demo_page_links_to_public_demo_when_configured(self):
+        response = self.client.get(reverse("rental_ledger_demo"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "The isolated interactive demo opens in a separate temporary workspace.")
+        self.assertContains(response, "https://rentalledger-demo.onrender.com/demo/")
+
     def test_rental_ledger_contact_page_shows_direct_contact_info(self):
         response = self.client.get(reverse("rental_ledger_contact"))
 

@@ -654,7 +654,7 @@
             <a href="#workflow">Workflow</a>
             <a href="{% url 'rental_ledger_contact' %}">Contact</a>
             <a href="{% url 'property_owner_intake' %}">Request Demo</a>
-            <a class="demo" href="{% url 'rental_ledger_demo' %}">Launch Demo</a>
+            <a class="demo" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Launch Demo</a>
         </div>
     </nav>
 
@@ -667,6 +667,7 @@
                 <div class="actions">
                     <a class="button primary" href="#platform">See the System</a>
                     <a class="button secondary" href="{% url 'property_owner_intake' %}">Request Demo</a>
+                    <a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Launch Demo</a>
                 </div>
             </div>
 

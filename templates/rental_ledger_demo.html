@@ -305,10 +305,19 @@
         <div class="inner">
             <div class="eyebrow">Demo Preview</div>
             <h1>See how Rental Ledger Pro connects reports, operations, and residents.</h1>
-            <p>This public preview shows the product flow without exposing real resident or property data. The interactive demo environment can be connected after the Rental Ledger Pro demo database is fully configured.</p>
+            <p>
+                This public preview shows the product flow without exposing real resident or property data.
+                {% if demo_public_url %}
+                    The isolated interactive demo opens in a separate temporary workspace.
+                {% else %}
+                    The interactive demo environment can be connected after the Rental Ledger Pro demo database is configured.
+                {% endif %}
+            </p>
             <div class="actions">
                 <a class="button primary" href="#preview">View Sample Data</a>
-                {% if interactive_demo_enabled %}
+                {% if demo_public_url %}
+                    <a class="button secondary" href="{{ demo_public_url }}">Open Interactive Demo</a>
+                {% elif interactive_demo_enabled %}
                     <a class="button secondary" href="{% url 'demo_entry' %}">Open Interactive Demo</a>
                 {% else %}
                     <a class="button secondary" href="#reports">View Demo Reports</a>
