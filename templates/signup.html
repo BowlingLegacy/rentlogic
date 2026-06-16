@@ -1,82 +1,414 @@
-{% extends "base.html" %}
-{% block content %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Account | Rental Ledger Pro</title>
+    <style>
+        :root {
+            --night: #10151f;
+            --midnight: #172233;
+            --ink: #202a38;
+            --panel: #f8fbf7;
+            --cyan: #10c7c2;
+            --lime: #a9d95b;
+            --amber: #ffb342;
+            --violet: #7664ff;
+            --muted: #6a7480;
+            --line: rgba(255,255,255,.16);
+        }
 
-<h2 class="mb-4">Create Your Account</h2>
+        * { box-sizing: border-box; }
 
-{% if application %}
-<div class="alert alert-info" style="max-width: 500px;">
-  Finish setting up portal access for {{ application.full_name }}.
-</div>
-{% elif pending_role %}
-<div class="alert alert-info" style="max-width: 500px;">
-  Finish setting up your {{ pending_role }} portal access.
-</div>
-{% endif %}
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 16% 18%, rgba(16,199,194,.22), transparent 30%),
+                radial-gradient(circle at 84% 14%, rgba(118,100,255,.24), transparent 32%),
+                linear-gradient(135deg, #10151f 0%, #172233 62%, #0d1927 100%);
+            color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+        }
 
-<div class="card shadow-sm" style="max-width: 500px;">
-  <div class="card-body">
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 34px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(16, 21, 31, .84);
+        }
 
-    <form method="post">
-      {% csrf_token %}
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 950;
+        }
 
-      {% if form.non_field_errors %}
-        <div class="alert alert-danger">
-          {{ form.non_field_errors }}
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--cyan), var(--lime) 45%, var(--amber));
+            color: #10151f;
+            display: grid;
+            place-items: center;
+            font-weight: 950;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .nav-links a {
+            color: #dce7ef;
+            text-decoration: none;
+            font-weight: 850;
+        }
+
+        .shell {
+            width: min(1120px, calc(100% - 32px));
+            min-height: calc(100vh - 72px);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: .92fr 1.08fr;
+            gap: 28px;
+            align-items: center;
+            padding: 42px 0 58px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            background: var(--lime);
+            color: #111;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: .76rem;
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            font-weight: 950;
+        }
+
+        h1 {
+            font-size: clamp(2.35rem, 5.2vw, 5.1rem);
+            line-height: .92;
+            margin: 18px 0;
+            max-width: 660px;
+        }
+
+        .lead {
+            color: #d5e3ea;
+            font-size: 1.12rem;
+            line-height: 1.62;
+            max-width: 600px;
+        }
+
+        .setup-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 16px;
+            background: rgba(255,255,255,.09);
+            margin-top: 28px;
+            max-width: 610px;
+        }
+
+        .setup-card h2 {
+            margin: 0 0 12px;
+            font-size: 1.2rem;
+        }
+
+        .step-list {
+            display: grid;
+            gap: 10px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .step-list li {
+            display: grid;
+            grid-template-columns: 32px 1fr;
+            gap: 10px;
+            align-items: start;
+            color: #d7e5ed;
+            line-height: 1.45;
+        }
+
+        .step-list span {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            background: var(--amber);
+            color: #111;
+            font-weight: 950;
+        }
+
+        .form-panel {
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 10px;
+            padding: 12px;
+            background: rgba(255,255,255,.12);
+            box-shadow: 0 30px 80px rgba(0,0,0,.28);
+        }
+
+        .form-card {
+            border-radius: 8px;
+            background: rgba(248, 251, 247, .98);
+            color: var(--ink);
+            padding: 30px;
+        }
+
+        .form-card h2 {
+            margin: 0 0 8px;
+            font-size: 2rem;
+        }
+
+        .account-context {
+            border-radius: 8px;
+            padding: 14px;
+            background: linear-gradient(135deg, rgba(16,199,194,.16), rgba(255,179,66,.18));
+            color: #33404c;
+            line-height: 1.5;
+            margin: 0 0 18px;
+            font-weight: 800;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            color: var(--ink);
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            border: 1px solid rgba(32,42,56,.22);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 1rem;
+            color: var(--ink);
+            background: #fff;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 4px rgba(16,199,194,.16);
+        }
+
+        .field-hint,
+        .form-text {
+            color: var(--muted);
+            line-height: 1.45;
+            font-size: .9rem;
+            margin-top: 7px;
+        }
+
+        .error-box,
+        .text-danger {
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #ffe6df;
+            color: #7a2417;
+            border: 1px solid #ffc1b4;
+            font-weight: 800;
+            margin-top: 8px;
+        }
+
+        .form-check {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid rgba(32,42,56,.12);
+            border-radius: 8px;
+            padding: 12px;
+            background: #fff;
+            margin-bottom: 18px;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--cyan);
+        }
+
+        .form-check-label {
+            color: var(--ink);
+            font-weight: 950;
+        }
+
+        .submit-button {
+            width: 100%;
+            min-height: 50px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--amber);
+            color: #111;
+            font-size: 1rem;
+            font-weight: 950;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            filter: brightness(.97);
+        }
+
+        .after-note {
+            margin-top: 16px;
+            color: #52606d;
+            line-height: 1.5;
+            font-size: .95rem;
+        }
+
+        @media (max-width: 900px) {
+            .nav {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 16px;
+            }
+
+            .shell {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .form-card {
+                padding: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a class="brand" href="{% url 'rental_ledger_pro_home' %}">
+            <span class="brand-mark">RL</span>
+            Rental Ledger Pro
+        </a>
+        <div class="nav-links">
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'rental_ledger_contact' %}">Contact</a>
         </div>
-      {% endif %}
+    </nav>
 
-      {% for field in form %}
-        <div class="mb-3">
-          <label class="form-label fw-bold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    <main class="shell">
+        <section>
+            <div class="eyebrow">Final setup step</div>
+            <h1>Create the login you will use going forward.</h1>
+            <p class="lead">
+                Your access code has already connected you to the right file.
+                Now create a username and password so the portal can take you
+                directly to the correct dashboard.
+            </p>
 
-          {% if field.name == "password1" or field.name == "password2" %}
-            {{ field }}
-          {% else %}
-            {{ field }}
-          {% endif %}
+            <div class="setup-card">
+                <h2>What happens next</h2>
+                <ul class="step-list">
+                    <li><span>1</span><div>Create a username you can remember. Your email address is usually easiest.</div></li>
+                    <li><span>2</span><div>Enter the same password twice. Use the checkbox to make sure it is typed correctly.</div></li>
+                    <li><span>3</span><div>After setup, Rental Ledger Pro opens your tenant, owner, landlord, or assistant dashboard.</div></li>
+                </ul>
+            </div>
+        </section>
 
-          {% if field.help_text %}
-            <div class="form-text">{{ field.help_text|safe }}</div>
-          {% endif %}
+        <section class="form-panel" aria-label="Create account">
+            <div class="form-card">
+                <h2>Create Account</h2>
 
-          {% if field.errors %}
-            <div class="text-danger small mt-1">{{ field.errors }}</div>
-          {% endif %}
-        </div>
-      {% endfor %}
+                {% if application %}
+                    <div class="account-context">
+                        Finish setup for {{ application.full_name }}{% if application.property %} at {{ application.property.name }}{% endif %}{% if application.space_label %}, {{ application.space_type }} {{ application.space_label }}{% endif %}.
+                    </div>
+                {% elif pending_role %}
+                    <div class="account-context">
+                        Finish setting up your {{ pending_role }} portal access.
+                    </div>
+                {% endif %}
 
-      <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" id="show-passwords">
-        <label class="form-check-label fw-bold" for="show-passwords">
-          Show password while I check it
-        </label>
-      </div>
+                <form method="post">
+                    {% csrf_token %}
 
-      <button type="submit" class="btn btn-success w-100 mt-2">
-        Create Account
-      </button>
-    </form>
+                    {% if form.non_field_errors %}
+                        <div class="error-box">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
 
-  </div>
-</div>
+                    {% for field in form %}
+                        <div class="field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const toggle = document.getElementById("show-passwords");
-  const passwordFields = document.querySelectorAll('input[name="password1"], input[name="password2"]');
+                            {% if field.name == "username" %}
+                                <div class="field-hint">Use something easy to remember. Your email address is a good choice.</div>
+                            {% elif field.name == "email" %}
+                                <div class="field-hint">Use the email you want attached to this portal account.</div>
+                            {% elif field.name == "password1" %}
+                                <div class="field-hint">Use at least 8 characters. A mix of words and numbers is easier to remember.</div>
+                            {% elif field.name == "password2" %}
+                                <div class="field-hint">Type the same password again to confirm it.</div>
+                            {% endif %}
 
-  passwordFields.forEach(function (field) {
-    field.classList.add("form-control");
-  });
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text|safe }}</div>
+                            {% endif %}
 
-  if (toggle) {
-    toggle.addEventListener("change", function () {
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="show-passwords">
+                        <label class="form-check-label" for="show-passwords">
+                            Show password while I check it
+                        </label>
+                    </div>
+
+                    <button type="submit" class="submit-button">Create Account and Open Dashboard</button>
+                </form>
+
+                <div class="after-note">
+                    If setup does not finish before the window expires, request a new code from your property manager and start again.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const toggle = document.getElementById("show-passwords");
+      const passwordFields = document.querySelectorAll('input[name="password1"], input[name="password2"]');
+
       passwordFields.forEach(function (field) {
-        field.type = toggle.checked ? "text" : "password";
+        field.classList.add("form-control");
       });
-    });
-  }
-});
-</script>
 
-{% endblock %}
+      if (toggle) {
+        toggle.addEventListener("change", function () {
+          passwordFields.forEach(function (field) {
+            field.type = toggle.checked ? "text" : "password";
+          });
+        });
+      }
+    });
+    </script>
+</body>
+</html>

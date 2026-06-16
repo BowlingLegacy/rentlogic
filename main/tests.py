@@ -220,6 +220,8 @@ class LiveFlowTests(TestCase):
         setup_page = self.client.get(reverse("signup"))
         self.assertContains(setup_page, "Show password while I check it")
         self.assertContains(setup_page, "show-passwords")
+        self.assertContains(setup_page, "Create Account and Open Dashboard")
+        self.assertContains(setup_page, "Use something easy to remember")
 
         response = self.client.post(reverse("signup"), {
             "username": "resident",
