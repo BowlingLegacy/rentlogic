@@ -2336,6 +2336,48 @@ def get_landlord_workspace_context(user):
     }
 
 
+def resident_file_filter_choices():
+    return [
+        ("all", "All Active"),
+        ("needs_login", "Needs Login"),
+        ("has_login", "Has Login"),
+        ("missing_phone", "Missing Phone"),
+        ("missing_email", "Missing Email"),
+        ("sms_opted_in", "SMS Opted In"),
+        ("sms_not_opted_in", "SMS Not Opted In"),
+    ]
+
+
+def filtered_resident_files_for_page(residents, filter_key):
+    residents = list(residents)
+
+    if filter_key == "needs_login":
+        return [
+            resident for resident in residents
+            if resident.user and not resident.user.has_usable_password()
+        ]
+
+    if filter_key == "has_login":
+        return [
+            resident for resident in residents
+            if resident.user and resident.user.has_usable_password()
+        ]
+
+    if filter_key == "missing_phone":
+        return [resident for resident in residents if not (resident.phone or "").strip()]
+
+    if filter_key == "missing_email":
+        return [resident for resident in residents if not (resident.email or "").strip()]
+
+    if filter_key == "sms_opted_in":
+        return [resident for resident in residents if resident.sms_opted_in]
+
+    if filter_key == "sms_not_opted_in":
+        return [resident for resident in residents if not resident.sms_opted_in]
+
+    return residents
+
+
 @login_required
 @user_passes_test(staff_required)
 def landlord_dashboard(request):
@@ -2351,7 +2393,29 @@ def landlord_attention(request):
 @login_required
 @user_passes_test(staff_required)
 def landlord_resident_files(request):
-    return render(request, "landlord_resident_files.html", get_landlord_workspace_context(request.user))
+    context = get_landlord_workspace_context(request.user)
+    all_applications = context["applications"]
+    selected_filter = request.GET.get("filter", "all")
+    valid_filters = {key for key, _label in resident_file_filter_choices()}
+    if selected_filter not in valid_filters:
+        selected_filter = "all"
+
+    filter_counts = {
+        key: len(filtered_resident_files_for_page(all_applications, key))
+        for key, _label in resident_file_filter_choices()
+    }
+    context["applications"] = filtered_resident_files_for_page(all_applications, selected_filter)
+    context["resident_file_filter"] = selected_filter
+    context["resident_file_filters"] = [
+        {
+            "key": key,
+            "label": label,
+            "count": filter_counts[key],
+            "active": key == selected_filter,
+        }
+        for key, label in resident_file_filter_choices()
+    ]
+    return render(request, "landlord_resident_files.html", context)
 
 
 @login_required

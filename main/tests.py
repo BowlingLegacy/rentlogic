@@ -3354,6 +3354,58 @@ class LiveFlowTests(TestCase):
         self.assertNotContains(resident_files, "Applicant Only")
         self.assertContains(attention, "Applicant Only")
 
+    def test_resident_files_can_filter_by_setup_status(self):
+        landlord = User.objects.create_user(
+            username="resident-files-setup-filter-landlord",
+            email="resident-files-setup-filter@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Resident Setup Filter Property", landlord_email=landlord.email)
+        pending_user = User.objects.create_user(
+            username="pending-setup-filter",
+            email="pending-setup-filter@example.com",
+            password=None,
+            role="tenant",
+        )
+        completed_user = User.objects.create_user(
+            username="completed-setup-filter",
+            email="completed-setup-filter@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        HousingApplication.objects.create(
+            property=property_obj,
+            user=pending_user,
+            full_name="Pending Setup Resident",
+            phone="555-0661",
+            email="pending-setup-filter@example.com",
+            age=42,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+        )
+        HousingApplication.objects.create(
+            property=property_obj,
+            user=completed_user,
+            full_name="Completed Setup Resident",
+            phone="555-0662",
+            email="completed-setup-filter@example.com",
+            age=43,
+            income_source="Employment",
+            monthly_income=Decimal("3100.00"),
+            housing_need="Current resident.",
+        )
+
+        self.client.login(username="resident-files-setup-filter-landlord", password="StrongPass123!")
+        response = self.client.get(f"{reverse('landlord_resident_files')}?filter=needs_login")
+
+        self.assertContains(response, "Pending Setup Resident")
+        self.assertNotContains(response, "Completed Setup Resident")
+        self.assertContains(response, "Needs Login")
+        self.assertEqual(response.context["resident_file_filter"], "needs_login")
+
     def test_superadmin_resident_inspection_hides_unconverted_applications(self):
         superuser = User.objects.create_user(
             username="resident-inspection-superadmin",

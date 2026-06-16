@@ -55,6 +55,20 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div>
+                    <h2 class="h5 fw-bold mb-1">Active Resident Files</h2>
+                    <p class="text-muted mb-0">Filter by setup status or missing contact details.</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    {% for option in resident_file_filters %}
+                        <a href="{% url 'landlord_resident_files' %}?filter={{ option.key }}"
+                           class="btn btn-sm {% if option.active %}btn-dark{% else %}btn-outline-dark{% endif %}">
+                            {{ option.label }} <span class="badge {% if option.active %}text-bg-light{% else %}text-bg-secondary{% endif %}">{{ option.count }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table align-middle">
                     <thead>
