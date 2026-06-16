@@ -59,6 +59,9 @@ class User(AbstractUser):
     invite_code = models.CharField(max_length=6, blank=True, null=True, unique=True)
     invite_code_created_at = models.DateTimeField(blank=True, null=True)
     invite_code_used_at = models.DateTimeField(blank=True, null=True)
+    portal_setup_code = models.CharField(max_length=10, blank=True, null=True, unique=True)
+    portal_setup_code_created_at = models.DateTimeField(blank=True, null=True)
+    portal_setup_code_used_at = models.DateTimeField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if self.role in ["tenant", "property_owner"]:
@@ -74,11 +77,24 @@ class User(AbstractUser):
             if not cls.objects.filter(invite_code=code).exists():
                 return code
 
+    @classmethod
+    def generate_unique_portal_setup_code(cls):
+        while True:
+            code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if not cls.objects.filter(portal_setup_code=code).exists():
+                return code
+
     def refresh_invite_code(self):
         self.invite_code = self.generate_unique_code()
         self.invite_code_created_at = timezone.now()
         self.invite_code_used_at = None
         self.save(update_fields=["invite_code", "invite_code_created_at", "invite_code_used_at"])
+
+    def refresh_portal_setup_code(self):
+        self.portal_setup_code = self.generate_unique_portal_setup_code()
+        self.portal_setup_code_created_at = timezone.now()
+        self.portal_setup_code_used_at = None
+        self.save(update_fields=["portal_setup_code", "portal_setup_code_created_at", "portal_setup_code_used_at"])
 
     def invite_code_is_valid(self):
         if not self.invite_code or self.invite_code_used_at or not self.invite_code_created_at:
@@ -86,10 +102,21 @@ class User(AbstractUser):
 
         return timezone.now() <= self.invite_code_created_at + timezone.timedelta(minutes=30)
 
+    def portal_setup_code_is_valid(self):
+        if not self.portal_setup_code or self.portal_setup_code_used_at or not self.portal_setup_code_created_at:
+            return False
+
+        return timezone.now() <= self.portal_setup_code_created_at + timezone.timedelta(days=14)
+
     def mark_invite_code_used(self):
         self.invite_code_used_at = timezone.now()
         self.invite_code = None
         self.save(update_fields=["invite_code", "invite_code_used_at"])
+
+    def mark_portal_setup_code_used(self):
+        self.portal_setup_code_used_at = timezone.now()
+        self.portal_setup_code = None
+        self.save(update_fields=["portal_setup_code", "portal_setup_code_used_at"])
 
     def __str__(self):
         return self.username

@@ -261,6 +261,69 @@ class LiveFlowTests(TestCase):
 
         self.assertRedirects(response, reverse("request_invite_code"))
 
+    def test_portal_setup_code_allows_resident_to_create_account(self):
+        temp_user = User.objects.create_user(
+            username="mobile-applicant",
+            email="mobile@example.com",
+            password=None,
+            role="tenant",
+        )
+        temp_user.refresh_portal_setup_code()
+        application = HousingApplication.objects.create(
+            user=temp_user,
+            full_name="Mobile Applicant",
+            phone="555-0101",
+            email="mobile@example.com",
+            age=42,
+            income_source="Employment",
+            monthly_income=Decimal("2500.00"),
+            housing_need="Needs a room.",
+        )
+
+        spaced_code = f"{temp_user.portal_setup_code[:4]}-{temp_user.portal_setup_code[4:]}"
+        response = self.client.post(reverse("enter_invite_code"), {"invite_code": spaced_code})
+
+        self.assertRedirects(response, reverse("signup"))
+
+        response = self.client.post(reverse("signup"), {
+            "username": "mobile-resident",
+            "email": "mobile@example.com",
+            "password1": "StrongPass123!",
+            "password2": "StrongPass123!",
+        })
+
+        self.assertRedirects(response, reverse("tenant_dashboard"))
+        application.refresh_from_db()
+        self.assertEqual(application.user.username, "mobile-resident")
+        self.assertFalse(User.objects.filter(id=temp_user.id).exists())
+
+    def test_portal_setup_code_expires_after_14_days(self):
+        temp_user = User.objects.create_user(
+            username="expired-mobile-applicant",
+            email="expired-mobile@example.com",
+            password=None,
+            role="tenant",
+        )
+        temp_user.refresh_portal_setup_code()
+        temp_user.portal_setup_code_created_at = timezone.now() - timezone.timedelta(days=15)
+        temp_user.save(update_fields=["portal_setup_code_created_at"])
+        HousingApplication.objects.create(
+            user=temp_user,
+            full_name="Expired Mobile Applicant",
+            phone="555-0102",
+            email="expired-mobile@example.com",
+            age=42,
+            income_source="Employment",
+            monthly_income=Decimal("2500.00"),
+            housing_need="Needs a room.",
+        )
+
+        response = self.client.post(reverse("enter_invite_code"), {
+            "invite_code": temp_user.portal_setup_code,
+        })
+
+        self.assertRedirects(response, reverse("request_invite_code"))
+
     def test_property_owner_invite_code_creates_owner_login(self):
         temp_user = User.objects.create_user(
             username="pending-owner",

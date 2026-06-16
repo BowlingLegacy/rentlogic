@@ -1859,6 +1859,7 @@ def logout_view(request):
 def signup(request):
     pending_user_id = request.session.get("pending_portal_user_id") or request.session.get("pending_resident_user_id")
     pending_profile_id = request.session.get("pending_resident_profile_id")
+    pending_code_type = request.session.get("pending_portal_code_type", "invite")
 
     if not pending_user_id:
         messages.error(request, "Please enter your invite code before creating an account.")
@@ -1879,10 +1880,17 @@ def signup(request):
         messages.error(request, "No portal intake is connected to this code yet.")
         return redirect("enter_invite_code")
 
-    if not pending_user.invite_code_is_valid():
+    pending_code_is_valid = (
+        pending_user.portal_setup_code_is_valid()
+        if pending_code_type == "portal_setup"
+        else pending_user.invite_code_is_valid()
+    )
+
+    if not pending_code_is_valid:
         request.session.pop("pending_portal_user_id", None)
         request.session.pop("pending_resident_user_id", None)
         request.session.pop("pending_resident_profile_id", None)
+        request.session.pop("pending_portal_code_type", None)
         messages.error(request, "That invite code expired. Request a new code to continue.")
         return redirect("request_invite_code")
 
@@ -1918,11 +1926,15 @@ def signup(request):
             if not pending_user.has_usable_password() and pending_user.id != user.id:
                 pending_user.delete()
             else:
-                pending_user.mark_invite_code_used()
+                if pending_code_type == "portal_setup":
+                    pending_user.mark_portal_setup_code_used()
+                else:
+                    pending_user.mark_invite_code_used()
 
             request.session.pop("pending_portal_user_id", None)
             request.session.pop("pending_resident_user_id", None)
             request.session.pop("pending_resident_profile_id", None)
+            request.session.pop("pending_portal_code_type", None)
 
             login(request, user)
             messages.success(request, "Your portal account is ready.")
@@ -1952,14 +1964,25 @@ def enter_invite_code(request):
     form = InviteCodeForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
-        code = form.cleaned_data["invite_code"].upper()
+        code = form.cleaned_data["invite_code"]
+        code_type = "invite"
         user_with_code = User.objects.filter(invite_code=code).first()
+
+        if not user_with_code:
+            code_type = "portal_setup"
+            user_with_code = User.objects.filter(portal_setup_code=code).first()
 
         if not user_with_code:
             messages.error(request, "Invalid access code.")
             return redirect("enter_invite_code")
 
-        if not user_with_code.invite_code_is_valid():
+        code_is_valid = (
+            user_with_code.portal_setup_code_is_valid()
+            if code_type == "portal_setup"
+            else user_with_code.invite_code_is_valid()
+        )
+
+        if not code_is_valid:
             messages.error(request, "That invite code expired. Request a new code to continue.")
             return redirect("request_invite_code")
 
@@ -1976,6 +1999,7 @@ def enter_invite_code(request):
 
         request.session["pending_portal_user_id"] = user_with_code.id
         request.session["pending_resident_user_id"] = user_with_code.id
+        request.session["pending_portal_code_type"] = code_type
         if profile:
             request.session["pending_resident_profile_id"] = profile.id
         else:

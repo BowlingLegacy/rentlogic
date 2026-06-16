@@ -1460,13 +1460,18 @@ class AdverseActionNoticeForm(forms.ModelForm):
 
 class InviteCodeForm(forms.Form):
     invite_code = forms.CharField(
-        max_length=6,
-        label="Enter your invite code",
+        max_length=20,
+        label="Enter your access code",
         widget=forms.TextInput(attrs={
             "class": "form-control",
-            "placeholder": "Enter invite code",
+            "placeholder": "Enter access code",
+            "autocomplete": "one-time-code",
         }),
     )
+
+    def clean_invite_code(self):
+        code = self.cleaned_data["invite_code"].upper()
+        return "".join(character for character in code if character.isalnum())
 
 
 class ReplacementInviteCodeForm(forms.Form):
