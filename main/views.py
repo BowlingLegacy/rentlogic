@@ -176,6 +176,14 @@ def send_resident_app_setup_email(request, application):
         return False
 
     setup_url = request.build_absolute_uri(reverse("enter_invite_code"))
+    app_lines = []
+    if getattr(settings, "APP_STORE_URL", ""):
+        app_lines.append(f"Apple App Store: {settings.APP_STORE_URL}")
+    if getattr(settings, "GOOGLE_PLAY_URL", ""):
+        app_lines.append(f"Google Play: {settings.GOOGLE_PLAY_URL}")
+    if not app_lines:
+        app_lines.append(f"Setup page: {setup_url}")
+    app_downloads = "\n".join(app_lines)
     send_mail(
         "Your Rental Ledger Pro setup code",
         f"""Hello {application.full_name},
@@ -184,10 +192,10 @@ Your Rental Ledger Pro app setup code is:
 
 {application.user.portal_setup_code}
 
-Setup page:
-{setup_url}
+Download or open Rental Ledger Pro:
+{app_downloads}
 
-Enter the code to begin setup. Your 30-minute setup window starts when the code is accepted.
+Copy and paste the code into the app or setup page, then press enter. Your 30-minute setup window starts when the code is accepted.
 
 Thank you,
 Rental Ledger Pro
@@ -2493,10 +2501,18 @@ def prepare_and_send_resident_app_setup_code(request, application):
 
     if application.phone:
         setup_url = request.build_absolute_uri(reverse("enter_invite_code"))
+        app_links = []
+        if getattr(settings, "APP_STORE_URL", ""):
+            app_links.append(f"iPhone: {settings.APP_STORE_URL}")
+        if getattr(settings, "GOOGLE_PLAY_URL", ""):
+            app_links.append(f"Android: {settings.GOOGLE_PLAY_URL}")
+        if not app_links:
+            app_links.append(f"Setup: {setup_url}")
         sms_body = (
             "Rental Ledger Pro: Your setup code is "
-            f"{application.user.portal_setup_code}. Enter it here: {setup_url} "
-            "Your 30-minute setup window starts when the code is accepted. Reply STOP to opt out."
+            f"{application.user.portal_setup_code}. "
+            f"{' '.join(app_links)} "
+            "Copy/paste the code into the app and press enter. Reply STOP to opt out."
         )
         sms_log = send_sms_message(application, sms_body[:1500], request.user)
 
@@ -6877,6 +6893,15 @@ def import_current_resident_roster_rows(property_obj, row_iterable, user):
         last_month_rent_paid = roster_bool_value(normalized_row, "last month paid", "last month rent paid")
         last_month_rent_amount = roster_money_value(normalized_row, "last month rent", "last month amount")
         outstanding_balance = roster_money_value(normalized_row, "outstanding balance", "balance", "amount owed")
+        sms_consent = roster_bool_value(
+            normalized_row,
+            "sms consent",
+            "sms opt in",
+            "sms_opted_in",
+            "text permission",
+            "text consent",
+            "can text",
+        )
 
         if not first_name or not last_name:
             skipped += 1
@@ -6900,6 +6925,7 @@ def import_current_resident_roster_rows(property_obj, row_iterable, user):
                 "last_month_rent_paid": last_month_rent_paid,
                 "last_month_rent_amount": last_month_rent_amount,
                 "outstanding_balance": outstanding_balance,
+                "sms_consent": sms_consent,
                 "is_active": True,
                 "uploaded_by": user,
             },
@@ -6979,7 +7005,6 @@ def sync_current_resident_roster_entry(roster_entry, user):
         "deposit_paid": min(roster_entry.deposit_held, roster_entry.deposit_required),
         "utility_monthly": roster_entry.monthly_utilities,
         "utility_balance": roster_entry.current_utility_balance,
-        "communication_preference": "sms" if roster_entry.phone else "portal",
         "income_source": "Current resident roster import",
         "monthly_income": Decimal("0.00"),
         "housing_need": "Existing resident imported from approved roster.",
@@ -7004,6 +7029,12 @@ def sync_current_resident_roster_entry(roster_entry, user):
 
     if application.user and not application.user.has_usable_password() and not application.user.invite_code:
         application.user.refresh_invite_code()
+
+    if roster_entry.sms_consent and roster_entry.phone and not application.sms_opted_in:
+        application.sms_opted_in = True
+        application.sms_opted_in_at = timezone.now()
+        application.communication_preference = "sms"
+        application.save(update_fields=["sms_opted_in", "sms_opted_in_at", "communication_preference"])
 
     return application
 

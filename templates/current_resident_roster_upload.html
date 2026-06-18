@@ -21,8 +21,9 @@
 
     <div class="alert alert-info">
         Accepted CSV/XLSX headers include:
-        <strong>name, first_name, last_name, phone, email, unit, monthly_rent, rent_due_day, monthly_utilities, rent_balance, utility_balance, deposit_required, deposit_held, last_month_rent_paid, last_month_rent, outstanding_balance</strong>.
+        <strong>name, first_name, last_name, phone, email, unit, monthly_rent, rent_due_day, monthly_utilities, rent_balance, utility_balance, deposit_required, deposit_held, last_month_rent_paid, last_month_rent, outstanding_balance, sms_consent</strong>.
         Common headers like Tenant Name, Room, Unit Number, Rent, Balance, Deposit Paid, and Phone Number are also accepted.
+        For setup texts, include <strong>sms_consent</strong> as yes/true only when you have documented permission to text that resident.
         Uploading a corrected list replaces the active approved list for that property.
     </div>
 
@@ -60,6 +61,7 @@
                     <th>Utilities</th>
                     <th>Rent Balance</th>
                     <th>Deposit Held</th>
+                    <th>Text OK</th>
                     <th>Setup Code</th>
                 </tr>
             </thead>
@@ -75,6 +77,7 @@
                         <td>${{ entry.monthly_utilities }}</td>
                         <td>${{ entry.current_rent_balance }}</td>
                         <td>${{ entry.deposit_held }}</td>
+                        <td>{% if entry.sms_consent %}Yes{% else %}No{% endif %}</td>
                         <td>
                             {% with app=entry.synced_application %}
                                 {% if app and app.user and app.user.invite_code %}
@@ -89,7 +92,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="10" class="text-muted">No approved current resident list has been uploaded yet.</td>
+                        <td colspan="11" class="text-muted">No approved current resident list has been uploaded yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>

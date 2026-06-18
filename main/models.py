@@ -1228,6 +1228,7 @@ class CurrentResidentRosterEntry(models.Model):
     last_month_rent_paid = models.BooleanField(default=False)
     last_month_rent_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     outstanding_balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    sms_consent = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     uploaded_by = models.ForeignKey(
         "User",

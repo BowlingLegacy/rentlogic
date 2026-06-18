@@ -1630,6 +1630,7 @@ class LiveFlowTests(TestCase):
         self.assertContains(resident_files, "Archived Resident Files")
         self.assertContains(resident_files, "Open Archive")
 
+    @override_settings(APP_STORE_URL="https://apps.apple.com/app/rental-ledger-pro", GOOGLE_PLAY_URL="https://play.google.com/store/apps/details?id=com.rentalledgerpro")
     def test_landlord_can_send_app_setup_code_from_resident_file(self):
         landlord = User.objects.create_user(
             username="setup-code-landlord",
@@ -1671,8 +1672,12 @@ class LiveFlowTests(TestCase):
         self.assertIsNone(tenant_user.portal_setup_code_activated_at)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(tenant_user.portal_setup_code, mail.outbox[0].body)
+        self.assertIn("Apple App Store: https://apps.apple.com/app/rental-ledger-pro", mail.outbox[0].body)
+        self.assertIn("Google Play: https://play.google.com/store/apps/details?id=com.rentalledgerpro", mail.outbox[0].body)
         sms_log = SmsMessageLog.objects.get(application=resident)
         self.assertEqual(sms_log.status, "skipped_no_consent")
+        self.assertIn("iPhone: https://apps.apple.com/app/rental-ledger-pro", sms_log.body)
+        self.assertIn("Android: https://play.google.com/store/apps/details?id=com.rentalledgerpro", sms_log.body)
 
     def test_landlord_does_not_send_app_setup_code_to_completed_login(self):
         landlord = User.objects.create_user(
@@ -6952,8 +6957,8 @@ class LiveFlowTests(TestCase):
             "financial-roster.csv",
             (
                 b"name,phone,unit,monthly_rent,rent_due_day,monthly_utilities,rent_balance,utility_balance,"
-                b"deposit_required,deposit_held,last_month_rent_paid,last_month_rent,outstanding_balance\n"
-                b"Current Resident,555-111-2222,B,650.00,1,55.00,25.00,0.00,450.00,450.00,yes,650.00,25.00\n"
+                b"deposit_required,deposit_held,last_month_rent_paid,last_month_rent,outstanding_balance,sms_consent\n"
+                b"Current Resident,555-111-2222,B,650.00,1,55.00,25.00,0.00,450.00,450.00,yes,650.00,25.00,yes\n"
             ),
             content_type="text/csv",
         )
@@ -6969,6 +6974,7 @@ class LiveFlowTests(TestCase):
         self.assertEqual(roster_entry.monthly_rent, Decimal("650.00"))
         self.assertEqual(roster_entry.deposit_held, Decimal("450.00"))
         self.assertTrue(roster_entry.last_month_rent_paid)
+        self.assertTrue(roster_entry.sms_consent)
 
         room_setting = PropertyRoomRent.objects.get(property=property_obj, room_unit_label="B")
         self.assertEqual(room_setting.monthly_rent, Decimal("650.00"))
@@ -6981,6 +6987,9 @@ class LiveFlowTests(TestCase):
         self.assertEqual(application.balance, Decimal("25.00"))
         self.assertEqual(application.utility_monthly, Decimal("55.00"))
         self.assertEqual(application.deposit_paid, Decimal("450.00"))
+        self.assertTrue(application.sms_opted_in)
+        self.assertIsNotNone(application.sms_opted_in_at)
+        self.assertEqual(application.communication_preference, "sms")
         self.assertIn("Last month rent paid/held", application.additional_notes)
         self.assertIsNotNone(application.user)
         self.assertTrue(application.user.invite_code)

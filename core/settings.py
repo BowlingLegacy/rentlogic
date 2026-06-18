@@ -22,6 +22,8 @@ RENTAL_LEDGER_SITE = env_bool("RENTAL_LEDGER_SITE")
 DEMO_SESSION_SECONDS = int(os.environ.get("DEMO_SESSION_SECONDS", "7200"))
 DEMO_ADMIN_USERNAME = os.environ.get("DEMO_ADMIN_USERNAME", "demo-admin")
 DEMO_PUBLIC_URL = os.environ.get("DEMO_PUBLIC_URL", "").strip()
+APP_STORE_URL = os.environ.get("APP_STORE_URL", "").strip()
+GOOGLE_PLAY_URL = os.environ.get("GOOGLE_PLAY_URL", "").strip()
 
 ALLOWED_HOSTS = [
     "localhost",
