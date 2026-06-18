@@ -33,21 +33,21 @@ def send_portal_access_invite_email(user, full_name, role_label):
         user.refresh_invite_code()
 
     send_mail(
-        f"Your Bowling Legacy {role_label} Portal Access Code",
+        f"Your Rental Ledger Pro {role_label} Portal Access Code",
         f"""Hello {full_name or role_label},
 
-Your Bowling Legacy {role_label.lower()} portal access code is:
+Your Rental Ledger Pro {role_label.lower()} portal access code is:
 
 {user.invite_code}
 
 Portal setup:
-https://bowlinglegacy.com/enter-invite-code/
+https://rentalledgerpro.com/enter-invite-code/
 
 This code is single-use and expires 30 minutes after it is issued. If it expires, request a new code from the invite-code page.
 If this email is not in your inbox, check your junk or spam folder.
 
 Thank you,
-Bowling Legacy Housing
+Rental Ledger Pro
 """,
         getattr(settings, "DEFAULT_FROM_EMAIL", None),
         [user.email],
@@ -55,3 +55,4 @@ Bowling Legacy Housing
     )
 
     return True
+

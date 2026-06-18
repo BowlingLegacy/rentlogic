@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Rental Ledger Pro</title>
+  <desc id="desc">Rental Ledger Pro RLP monogram logo.</desc>
+  <defs>
+    <linearGradient id="rlpGradient" x1="44" y1="44" x2="276" y2="276" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10c7c2"/>
+      <stop offset=".52" stop-color="#7d6bff"/>
+      <stop offset="1" stop-color="#ffb342"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="272" height="272" rx="48" fill="#10151f"/>
+  <rect x="36" y="36" width="248" height="248" rx="38" fill="url(#rlpGradient)" opacity=".96"/>
+  <rect x="54" y="54" width="212" height="212" rx="28" fill="#10151f" opacity=".94"/>
+  <path d="M86 218V100h58c27 0 46 16 46 40 0 17-9 30-24 36l32 42h-32l-28-37h-22v37H86zm30-62h27c11 0 18-6 18-16s-7-16-18-16h-27v32z" fill="#f8fbf7"/>
+  <path d="M208 218V100h30v92h48v26h-78z" fill="#ffb342"/>
+  <path d="M86 248h148" stroke="#10c7c2" stroke-width="12" stroke-linecap="round"/>
+</svg>

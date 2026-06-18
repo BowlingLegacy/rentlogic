@@ -94,7 +94,7 @@ Use this direct link. If you are not already signed in, the site will ask for yo
 {property_url}
 
 Thank you,
-Bowling Legacy Housing
+Rental Ledger Pro
 """,
                 getattr(settings, "DEFAULT_FROM_EMAIL", None),
                 [resident.email],
@@ -105,7 +105,7 @@ Bowling Legacy Housing
         sms_log = send_sms_message(
             resident,
             (
-                f"Bowling Legacy: New {post.property.name} community update posted. "
+                f"Rental Ledger Pro: New {post.property.name} community update posted. "
                 f"Log in to view it: {property_url} Reply STOP to opt out."
             )[:1500],
             request.user,
@@ -222,3 +222,4 @@ def delete_blog_comment(request, comment_id):
         messages.success(request, "Comment deleted.")
 
     return redirect("property_blog_manager")
+

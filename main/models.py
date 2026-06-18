@@ -694,7 +694,7 @@ class SignedDocument(models.Model):
     DOCUMENT_TYPE_CHOICES = [
         ("lease", "Resident Lease Agreement"),
         ("emergency_contact", "Emergency Contact Form"),
-        ("painted_lady_acknowledgment", "Painted Lady Acknowledgment"),
+        ("painted_lady_acknowledgment", "Property Acknowledgment"),
         ("lead_disclosure", "Lead Disclosure"),
         ("asbestos_disclosure", "Asbestos Disclosure"),
         ("house_rules", "House Rules"),
@@ -1374,7 +1374,7 @@ class FinancialEntry(models.Model):
 
     upload = models.ForeignKey(FinancialUpload, on_delete=models.CASCADE, related_name="entries")
     ledger_scope = models.CharField(max_length=30, choices=FinancialUpload.LEDGER_SCOPE_CHOICES, default="property")
-    property_name = models.CharField(max_length=255, blank=True, default="Painted Lady")
+    property_name = models.CharField(max_length=255, blank=True, default="Rental Property")
     sheet_name = models.CharField(max_length=255)
     row_number = models.IntegerField(default=0)
 

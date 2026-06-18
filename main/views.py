@@ -116,7 +116,7 @@ def notify_resident_of_portal_reply(request, resident_message):
         f"New secure portal reply: {resident_message.subject}",
         f"""Hello {application.full_name},
 
-You have a new secure reply in your Bowling Legacy resident portal.
+You have a new secure reply in your Rental Ledger Pro resident portal.
 
 Use this direct link to open My Requests. If you are not already signed in, the site will ask for your login first and then take you to the message area:
 {dashboard_url}
@@ -124,7 +124,7 @@ Use this direct link to open My Requests. If you are not already signed in, the 
 For privacy, the reply content is stored inside your portal rather than in this email.
 
 Thank you,
-Bowling Legacy Housing
+Rental Ledger Pro
 """,
         getattr(settings, "DEFAULT_FROM_EMAIL", None),
         [application.email],
@@ -136,7 +136,7 @@ Bowling Legacy Housing
 def notify_resident_of_portal_reply_sms(request, resident_message):
     portal_url = request.build_absolute_uri(reverse("resident_requests"))
     body = (
-        "Bowling Legacy: You have a new secure portal reply. "
+        "Rental Ledger Pro: You have a new secure portal reply. "
         f"Log in to view it: {portal_url} Reply STOP to opt out."
     )
     return send_sms_message(
@@ -162,7 +162,7 @@ Use this direct link. If you are not already signed in, the site will ask for yo
 {target_url}
 
 Thank you,
-Bowling Legacy Housing
+Rental Ledger Pro
 """,
         getattr(settings, "DEFAULT_FROM_EMAIL", None),
         [application.email],
@@ -1275,27 +1275,7 @@ def prorated_monthly_charge(monthly_amount, start_date):
 
 
 def home(request):
-    if getattr(settings, "RENTAL_LEDGER_SITE", False):
-        return rental_ledger_pro_home(request)
-
-    properties = Property.objects.all()
-    posts = BlogPost.objects.filter(property__isnull=True).order_by("-created_at")[:5]
-    painted_lady_profile_property = (
-        properties
-        .filter(name__icontains="painted lady")
-        .order_by("name")
-        .first()
-    )
-
-    return render(request, "home.html", {
-        "properties": properties,
-        "posts": posts,
-        "painted_lady_profile_property": painted_lady_profile_property,
-        "painted_lady_profile_open": bool(
-            painted_lady_profile_property
-            and property_existing_resident_intake_open(painted_lady_profile_property)
-        ),
-    })
+    return rental_ledger_pro_home(request)
 
 
 RENTAL_LEDGER_PRODUCT_PAGES = {
@@ -4055,7 +4035,7 @@ def group_resident_message(request):
                 request,
                 application,
                 f"New secure portal message: {form.cleaned_data['subject']}",
-                "You have a new secure message in your Bowling Legacy resident portal.",
+                "You have a new secure message in your Rental Ledger Pro resident portal.",
                 "resident_requests",
             )
 
@@ -4570,7 +4550,7 @@ def upload_resident_document(request):
         locked=False,
     )
 
-    owner_email = "BowlingLegacyLLC@outlook.com"
+    owner_email = settings.RENTAL_LEDGER_LEAD_EMAIL
     if application.property and application.property.owner_email:
         owner_email = application.property.owner_email
 
@@ -4630,7 +4610,7 @@ def submit_resident_message(request):
         locked=True,
     )
 
-    owner_email = "BowlingLegacyLLC@outlook.com"
+    owner_email = settings.RENTAL_LEDGER_LEAD_EMAIL
     if application.property and application.property.owner_email:
         owner_email = application.property.owner_email
 
@@ -6654,7 +6634,7 @@ def ensure_existing_resident_onboarding_documents(application):
     document_specs = [
         ("lease", "Resident Lease Agreement"),
         ("emergency_contact", "Emergency Contact Sheet"),
-        ("painted_lady_acknowledgment", "Who We Are / Painted Lady Acknowledgment"),
+        ("painted_lady_acknowledgment", "Property Acknowledgment"),
     ]
 
     for document_type, title in document_specs:
@@ -7849,7 +7829,7 @@ def stripe_webhook(request):
     apply_completed_payment_to_balance(payment)
 
     application = payment.application
-    owner_email = "BowlingLegacyLLC@outlook.com"
+    owner_email = settings.RENTAL_LEDGER_LEAD_EMAIL
 
     if application.property and application.property.owner_email:
         owner_email = application.property.owner_email
@@ -7871,3 +7851,5 @@ ${payment.amount}
     )
 
     return HttpResponse(status=200)
+
+

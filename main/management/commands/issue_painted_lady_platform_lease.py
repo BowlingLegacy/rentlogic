@@ -5,7 +5,7 @@ from main.models import HousingApplication, Property, SignedDocument
 
 
 class Command(BaseCommand):
-    help = "Issue the June 2026 Painted Lady platform lease update to resident inboxes."
+    help = "Issue a platform lease update to resident inboxes."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -15,7 +15,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--property-name",
-            default="The Painted Lady Inn",
+            default="",
             help="Property name to issue the lease update for.",
         )
 

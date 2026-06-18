@@ -19,21 +19,21 @@ def send_resident_invite_email(application):
         application.user.refresh_invite_code()
 
     send_mail(
-        "Your Bowling Legacy Resident Portal Access Code",
+        "Your Rental Ledger Pro Resident Portal Access Code",
         f"""Hello {application.full_name},
 
-Your Bowling Legacy resident portal access code is:
+Your Rental Ledger Pro resident portal access code is:
 
 {application.user.invite_code}
 
 Portal setup:
-https://bowlinglegacy.com/enter-invite-code/
+https://rentalledgerpro.com/enter-invite-code/
 
 This code is single-use and expires 30 minutes after it is issued. If it expires, request a new code from the invite-code page.
 If this email is not in your inbox, check your junk or spam folder.
 
 Thank you,
-Bowling Legacy Housing
+Rental Ledger Pro
 """,
         getattr(settings, "DEFAULT_FROM_EMAIL", None),
         [application.user.email],
@@ -47,7 +47,7 @@ def ensure_onboarding_documents(application):
     document_specs = [
         ("lease", "Resident Lease Agreement"),
         ("emergency_contact", "Emergency Contact Sheet"),
-        ("painted_lady_acknowledgment", "Who We Are / Painted Lady Acknowledgment"),
+        ("painted_lady_acknowledgment", "Property Acknowledgment"),
     ]
 
     for document_type, title in document_specs:
@@ -224,3 +224,4 @@ def create_tenant(request):
         "form": form,
         "application": application,
     })
+

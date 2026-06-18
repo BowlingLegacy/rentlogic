@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
             y = 800
             lines = [
-                "Bowling Legacy Housing Application",
+                "Rental Ledger Pro Application",
                 "",
                 f"Applicant: {app.full_name}",
                 f"Phone: {app.phone}",
@@ -93,3 +93,4 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"Done. Created: {created_count}, repaired: {repaired_count}, skipped: {skipped_count}"
         ))
+
