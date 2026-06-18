@@ -66,7 +66,10 @@ class User(AbstractUser):
     portal_setup_code_used_at = models.DateTimeField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        if self.role in ["tenant", "property_owner"]:
+        if self.is_superuser:
+            self.role = "admin"
+            self.is_staff = True
+        elif self.role in ["tenant", "property_owner"]:
             self.is_staff = False
             self.is_superuser = False
 

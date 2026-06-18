@@ -56,6 +56,17 @@ class LiveFlowTests(TestCase):
         application = HousingApplication.objects.get(email="applicant@example.com")
         self.assertEqual(application.property, property_obj)
 
+    def test_superuser_save_keeps_admin_role_and_staff_flags(self):
+        user = User.objects.create_superuser(
+            username="new-platform-admin",
+            email="admin@example.com",
+            password="StrongPass123!",
+        )
+
+        self.assertEqual(user.role, "admin")
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.is_superuser)
+
     def test_public_privacy_and_terms_pages_render(self):
         privacy_response = self.client.get(reverse("privacy_policy"))
         terms_response = self.client.get(reverse("terms_of_service"))
