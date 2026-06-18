@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -106,7 +107,30 @@ WSGI_APPLICATION = "core.wsgi.application"
 # ---------------------------------------------------------
 # DATABASE — RENDER POSTGRES WITH SSL REQUIRED
 # ---------------------------------------------------------
-if os.environ.get("POSTGRES_HOST"):
+database_url = (
+    os.environ.get("DATABASE_URL")
+    or os.environ.get("POSTGRES_URL")
+    or os.environ.get("POSTGRES_INTERNAL_URL")
+    or os.environ.get("POSTGRES_EXTERNAL_URL")
+    or ""
+).strip()
+
+if database_url:
+    parsed_database_url = urlparse(database_url)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": unquote(parsed_database_url.path.lstrip("/")),
+            "USER": unquote(parsed_database_url.username or ""),
+            "PASSWORD": unquote(parsed_database_url.password or ""),
+            "HOST": parsed_database_url.hostname or "",
+            "PORT": str(parsed_database_url.port or 5432),
+            "OPTIONS": {
+                "sslmode": "require",
+            },
+        }
+    }
+elif os.environ.get("POSTGRES_HOST"):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
