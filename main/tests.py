@@ -6908,6 +6908,58 @@ class LiveFlowTests(TestCase):
         self.assertEqual(application.full_name, "Roster Resident")
         self.assertIsNotNone(application.user)
 
+    def test_landlord_can_download_current_resident_roster_template(self):
+        landlord = User.objects.create_user(
+            username="roster-template-landlord",
+            email="roster-template-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        Property.objects.create(name="Roster Template Property", landlord_email=landlord.email)
+
+        self.client.login(username="roster-template-landlord", password="StrongPass123!")
+        response = self.client.get(reverse("current_resident_roster_template"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("rental-ledger-resident-roster-template.csv", response["Content-Disposition"])
+        self.assertContains(response, "sms_consent")
+        self.assertContains(response, "Jane Resident")
+
+    def test_current_resident_roster_preview_does_not_commit_records(self):
+        landlord = User.objects.create_user(
+            username="roster-preview-landlord",
+            email="roster-preview-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Roster Preview Property", landlord_email=landlord.email)
+        roster_file = SimpleUploadedFile(
+            "preview.csv",
+            (
+                b"name,email,phone,unit,monthly_rent,sms_consent\n"
+                b"Preview Resident,preview@example.com,5415550111,B,650.00,yes\n"
+                b"Preview Resident,preview@example.com,5415550111,B,650.00,yes\n"
+            ),
+            content_type="text/csv",
+        )
+
+        self.client.login(username="roster-preview-landlord", password="StrongPass123!")
+        response = self.client.post(reverse("current_resident_roster_upload"), {
+            "property": property_obj.id,
+            "file": roster_file,
+            "action": "preview",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Upload Preview")
+        self.assertContains(response, "Preview only - no records saved")
+        self.assertContains(response, "Duplicate warning")
+        self.assertFalse(CurrentResidentRosterEntry.objects.filter(property=property_obj).exists())
+        self.assertFalse(HousingApplication.objects.filter(property=property_obj).exists())
+
     def test_landlord_can_upload_current_resident_roster_excel(self):
         landlord = User.objects.create_user(
             username="roster-excel-landlord",

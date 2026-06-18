@@ -10,7 +10,10 @@
                 Upload this before residents use setup codes. The roster now creates or updates the resident file, unit rent setup, balances, and deposit record.
             </p>
         </div>
-        <a href="{% url 'landlord_attention' %}" class="message-btn">Needs Attention</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'current_resident_roster_template' %}" class="message-btn">Download Template</a>
+            <a href="{% url 'landlord_attention' %}" class="message-btn">Needs Attention</a>
+        </div>
     </div>
 
     {% if messages %}
@@ -42,10 +45,67 @@
                 <div class="form-text">{{ form.file.help_text }}</div>
             </div>
         </div>
-        <div class="d-flex justify-content-end mt-3">
-            <button type="submit" class="gold-btn">Upload Approved List</button>
+        <div class="d-flex justify-content-end gap-2 flex-wrap mt-3">
+            <button type="submit" name="action" value="preview" class="message-btn">Preview Upload</button>
+            <button type="submit" name="action" value="import" class="gold-btn">Import Approved List</button>
         </div>
     </form>
+
+    {% if roster_preview %}
+        <section class="soft-card p-3 p-md-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <div>
+                    <h2 class="h4 fw-bold mb-1">Upload Preview</h2>
+                    <p class="text-muted mb-0">
+                        {{ roster_preview.valid_count }} ready row(s),
+                        {{ roster_preview.skipped_count }} skipped row(s),
+                        {{ roster_preview.duplicate_count }} duplicate warning(s).
+                    </p>
+                </div>
+                <span class="badge text-bg-warning">Preview only - no records saved</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Resident</th>
+                            <th>Unit</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Rent</th>
+                            <th>Utilities</th>
+                            <th>Deposit Held</th>
+                            <th>Balance</th>
+                            <th>Text OK</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in roster_preview.rows %}
+                            <tr class="{% if row.duplicate or not row.valid %}table-warning{% endif %}">
+                                <td>
+                                    {% if row.duplicate %}
+                                        Duplicate warning
+                                    {% else %}
+                                        {{ row.status }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ row.full_name|default:"-" }}</td>
+                                <td>{{ row.room_unit_label|default:"-" }}</td>
+                                <td>{{ row.phone|phone_format|default:"-" }}</td>
+                                <td>{{ row.email|default:"-" }}</td>
+                                <td>${{ row.monthly_rent }}</td>
+                                <td>${{ row.monthly_utilities }}</td>
+                                <td>${{ row.deposit_held }}</td>
+                                <td>${{ row.outstanding_balance }}</td>
+                                <td>{% if row.sms_consent %}Yes{% else %}No{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    {% endif %}
 
     <h2 class="h4 fw-bold mb-3">Current Approved Residents</h2>
     <div class="table-responsive">

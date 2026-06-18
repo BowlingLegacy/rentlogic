@@ -6792,6 +6792,12 @@ ROSTER_HEADER_ALIASES = {
     "outstanding balance",
     "balance",
     "amount owed",
+    "sms consent",
+    "sms opt in",
+    "sms_opted_in",
+    "text permission",
+    "text consent",
+    "can text",
 }
 
 
@@ -6819,7 +6825,52 @@ def import_headerless_roster_rows(property_obj, rows, user):
     return import_current_resident_roster_rows(property_obj, row_iterable, user)
 
 
-def import_current_resident_roster(property_obj, file_obj, user):
+@login_required
+@user_passes_test(staff_required)
+def current_resident_roster_template(request):
+    headers = [
+        "name",
+        "email",
+        "phone",
+        "unit",
+        "monthly_rent",
+        "rent_due_day",
+        "monthly_utilities",
+        "rent_balance",
+        "utility_balance",
+        "deposit_required",
+        "deposit_held",
+        "last_month_rent_paid",
+        "last_month_rent",
+        "outstanding_balance",
+        "sms_consent",
+    ]
+    example = [
+        "Jane Resident",
+        "jane@example.com",
+        "5415550100",
+        "B",
+        "650.00",
+        "1",
+        "55.00",
+        "0.00",
+        "0.00",
+        "450.00",
+        "450.00",
+        "yes",
+        "650.00",
+        "0.00",
+        "yes",
+    ]
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="rental-ledger-resident-roster-template.csv"'
+    writer = csv.writer(response)
+    writer.writerow(headers)
+    writer.writerow(example)
+    return response
+
+
+def parsed_current_resident_roster_rows(file_obj):
     filename = (getattr(file_obj, "name", "") or "").lower()
     if filename.endswith((".xlsx", ".xls")):
         workbook = load_workbook(file_obj, read_only=True, data_only=True)
@@ -6827,41 +6878,129 @@ def import_current_resident_roster(property_obj, file_obj, user):
         rows = worksheet.iter_rows(values_only=True)
         header_row = next(rows, None)
         if not header_row:
-            return 0, 0
+            return []
 
         headers = [normalized_header(value) for value in header_row]
         if not has_roster_headers(headers):
-            return import_headerless_roster_rows(property_obj, [header_row, *rows], user)
+            return headerless_roster_row_dicts([header_row, *rows])
 
-        row_iterable = (
+        return [
             {
                 headers[index]: value
                 for index, value in enumerate(row)
                 if index < len(headers)
             }
             for row in rows
-        )
-        return import_current_resident_roster_rows(property_obj, row_iterable, user)
+        ]
 
     decoded_file = TextIOWrapper(file_obj, encoding="utf-8-sig", newline="")
     reader = csv.reader(decoded_file)
     rows = list(reader)
     if not rows:
-        return 0, 0
+        return []
 
     headers = [normalized_header(value) for value in rows[0]]
     if not has_roster_headers(headers):
-        return import_headerless_roster_rows(property_obj, rows, user)
+        return headerless_roster_row_dicts(rows)
 
-    row_iterable = (
+    return [
         {
             headers[index]: value
             for index, value in enumerate(row)
             if index < len(headers)
         }
         for row in rows[1:]
-    )
-    return import_current_resident_roster_rows(property_obj, row_iterable, user)
+    ]
+
+
+def headerless_roster_row_dicts(rows):
+    row_iterable = []
+    for row in rows:
+        values = [str(value or "").strip() for value in row if str(value or "").strip()]
+        if not values:
+            continue
+
+        if len(values) == 1:
+            row_iterable.append({"name": values[0]})
+        else:
+            first_value = values[0]
+            second_value = values[1]
+            if len(first_value) <= 10 and len(second_value.split()) >= 2:
+                row_iterable.append({"room": first_value, "name": second_value})
+            else:
+                row_iterable.append({"name": first_value, "room": second_value})
+
+    return row_iterable
+
+
+def preview_current_resident_roster_rows(property_obj, row_iterable):
+    rows = []
+    seen = {}
+    skipped = 0
+    duplicates = 0
+
+    for normalized_row in row_iterable:
+        preview = parsed_roster_row_preview(property_obj, normalized_row)
+        if not preview["valid"]:
+            skipped += 1
+            rows.append(preview)
+            continue
+
+        duplicate_key = (
+            normalized_room_label(preview["room_unit_label"]),
+            normalize_phone_digits(preview["phone"]),
+            (preview["email"] or "").lower(),
+            preview["full_name"].lower(),
+        )
+        if duplicate_key in seen:
+            preview["duplicate"] = True
+            duplicates += 1
+        seen[duplicate_key] = True
+        rows.append(preview)
+
+    return {
+        "rows": rows,
+        "valid_count": sum(1 for row in rows if row["valid"]),
+        "skipped_count": skipped,
+        "duplicate_count": duplicates,
+    }
+
+
+def parsed_roster_row_preview(property_obj, normalized_row):
+    first_name = roster_value(normalized_row, "first name", "firstname", "first")
+    last_name = roster_value(normalized_row, "last name", "lastname", "last")
+    full_name = roster_value(normalized_row, "name", "resident", "resident name", "tenant")
+
+    if (not first_name or not last_name) and full_name:
+        parts = full_name.split()
+        first_name = first_name or (parts[0] if parts else "")
+        last_name = last_name or (" ".join(parts[1:]) if len(parts) > 1 else "")
+
+    full_name = f"{first_name} {last_name}".strip()
+    email = roster_value(normalized_row, "email", "email address")
+    phone = roster_value(normalized_row, "phone", "phone number", "mobile", "cell")
+    room_unit_label = roster_value(normalized_row, "room unit label", "room", "unit", "room/unit", "room number", "unit number")
+    preview = {
+        "property": property_obj.name,
+        "full_name": full_name,
+        "email": email,
+        "phone": phone,
+        "room_unit_label": canonical_room_label(room_unit_label),
+        "monthly_rent": roster_money_value(normalized_row, "monthly rent", "rent", "scheduled rent", "rent amount"),
+        "rent_due_day": roster_int_value(normalized_row, "rent due day", "due day", default=1),
+        "monthly_utilities": roster_money_value(normalized_row, "monthly utilities", "utilities", "utility fee", "shared utilities"),
+        "deposit_held": roster_money_value(normalized_row, "deposit held", "deposit paid"),
+        "outstanding_balance": roster_money_value(normalized_row, "outstanding balance", "balance", "amount owed"),
+        "sms_consent": roster_bool_value(normalized_row, "sms consent", "sms opt in", "sms_opted_in", "text permission", "text consent", "can text"),
+        "valid": bool(first_name and last_name),
+        "duplicate": False,
+    }
+    preview["status"] = "Ready" if preview["valid"] else "Missing first/last name"
+    return preview
+
+
+def import_current_resident_roster(property_obj, file_obj, user):
+    return import_current_resident_roster_rows(property_obj, parsed_current_resident_roster_rows(file_obj), user)
 
 
 def import_current_resident_roster_rows(property_obj, row_iterable, user):
@@ -7118,16 +7257,27 @@ def landlord_existing_resident_intake_detail(request, intake_id):
 def current_resident_roster_upload(request):
     properties = staff_managed_properties(request.user).order_by("name")
     form = CurrentResidentRosterUploadForm(request.POST or None, request.FILES or None, properties=properties)
+    roster_preview = None
 
     if request.method == "POST" and form.is_valid():
         property_obj = form.cleaned_data["property"]
         file_obj = form.cleaned_data["file"]
-        created, skipped, synced = import_current_resident_roster(property_obj, file_obj, request.user)
-        messages.success(
-            request,
-            f"Current resident list imported for {property_obj.name}. {created} rows saved, {synced} resident file(s) synced, {skipped} rows skipped.",
-        )
-        return redirect("current_resident_roster_upload")
+        action = request.POST.get("action", "import")
+        if action == "preview":
+            parsed_rows = parsed_current_resident_roster_rows(file_obj)
+            roster_preview = preview_current_resident_roster_rows(property_obj, parsed_rows)
+            messages.info(
+                request,
+                f"Previewed {roster_preview['valid_count']} ready row(s), {roster_preview['skipped_count']} skipped row(s), and {roster_preview['duplicate_count']} duplicate warning(s). Upload again and choose Import Approved List when ready.",
+            )
+        else:
+            file_obj.seek(0)
+            created, skipped, synced = import_current_resident_roster(property_obj, file_obj, request.user)
+            messages.success(
+                request,
+                f"Current resident list imported for {property_obj.name}. {created} rows saved, {synced} resident file(s) synced, {skipped} rows skipped.",
+            )
+            return redirect("current_resident_roster_upload")
 
     roster_entries = (
         CurrentResidentRosterEntry.objects
@@ -7141,6 +7291,7 @@ def current_resident_roster_upload(request):
     return render(request, "current_resident_roster_upload.html", {
         "form": form,
         "roster_entries": roster_entries,
+        "roster_preview": roster_preview,
     })
 
 
