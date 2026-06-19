@@ -96,6 +96,7 @@ from .models import (
     ReportTemplate,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
+from .permissions import can_access_landlord_dashboard
 from .receipt_ocr import extract_embedded_text, extract_provider_text, guess_receipt_date, normalize_ocr_text, process_receipt_ocr
 from .templatetags.formatting import phone_format
 
@@ -2410,19 +2411,19 @@ def filtered_resident_files_for_page(residents, filter_key):
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(can_access_landlord_dashboard)
 def landlord_dashboard(request):
     return render(request, "landlord_dashboard.html", get_landlord_workspace_context(request.user))
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(can_access_landlord_dashboard)
 def landlord_attention(request):
     return render(request, "landlord_attention.html", get_landlord_workspace_context(request.user))
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(can_access_landlord_dashboard)
 def landlord_resident_files(request):
     context = get_landlord_workspace_context(request.user)
     all_applications = context["applications"]
@@ -3143,7 +3144,7 @@ def apply_room_rent_setting_to_residents(room_setting, residents, effective_date
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(can_access_landlord_dashboard)
 def landlord_rent_setup(request, property_id=None):
     accessible_properties = staff_managed_properties(request.user).order_by("name")
     selected_property = None
@@ -6806,7 +6807,7 @@ def import_headerless_roster_rows(property_obj, rows, user):
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(reporting_required)
 def current_resident_roster_template(request):
     headers = [
         "name",
@@ -7233,7 +7234,7 @@ def landlord_existing_resident_intake_detail(request, intake_id):
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(reporting_required)
 def current_resident_roster_upload(request):
     properties = staff_managed_properties(request.user).order_by("name")
     form = CurrentResidentRosterUploadForm(request.POST or None, request.FILES or None, properties=properties)

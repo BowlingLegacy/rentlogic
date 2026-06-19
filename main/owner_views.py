@@ -13,7 +13,7 @@ from .forms import (
     OwnerPropertyOnboardingDocumentsForm,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
-from .models import FinancialUpload, Property, PropertyImage, HousingApplication, Payment, ResidentMessage
+from .models import CurrentResidentRosterEntry, FinancialUpload, Property, PropertyImage, HousingApplication, Payment, ResidentMessage
 from .permissions import can_access_owner_dashboard, is_super_admin, is_assistant_admin
 
 
@@ -94,9 +94,12 @@ def owner_onboarding_wizard(request):
     )
 
     property_steps = []
+    portfolio_completed_steps = 0
+    portfolio_total_steps = 0
     for property_obj in properties:
         resident_count = HousingApplication.objects.filter(property=property_obj, user__isnull=False).count()
         applicant_count = HousingApplication.objects.filter(property=property_obj, user__isnull=True).count()
+        roster_count = CurrentResidentRosterEntry.objects.filter(property=property_obj, is_active=True).count()
         onboarding_docs = property_obj.onboarding_documents.all()
         room_count = property_obj.room_rents.filter(is_active=True).count()
         financial_upload_count = property_obj.financial_uploads.count()
@@ -109,14 +112,24 @@ def owner_onboarding_wizard(request):
                 "detail": "Name, address, rent, deposit, utilities, fees, screening, and insurance settings.",
                 "url": "owner_property_create",
                 "button": "Add Another Property",
+                "phase": "Property",
             },
             {
-                "label": "Onboarding documents",
+                "label": "Resident roster import",
+                "complete": roster_count > 0,
+                "detail": f"{roster_count} approved current resident row(s) imported.",
+                "url": "current_resident_roster_upload",
+                "button": "Upload Roster",
+                "phase": "Data",
+            },
+            {
+                "label": "Lease and onboarding documents",
                 "complete": onboarding_docs.filter(document_type="application").exists() and onboarding_docs.filter(document_type="lease").exists(),
                 "detail": f"{onboarding_docs.count()} document(s) uploaded. Application and lease are the required starting point.",
                 "url": "owner_property_onboarding_documents",
                 "url_args": [property_obj.id],
                 "button": "Upload Documents",
+                "phase": "Documents",
             },
             {
                 "label": "Units and rent setup",
@@ -125,6 +138,7 @@ def owner_onboarding_wizard(request):
                 "url": "landlord_rent_setup_property",
                 "url_args": [property_obj.id],
                 "button": "Set Up Units",
+                "phase": "Money",
             },
             {
                 "label": "Landlord or manager",
@@ -132,6 +146,7 @@ def owner_onboarding_wizard(request):
                 "detail": property_obj.landlord_email or "No landlord or property manager assigned yet.",
                 "url": "owner_landlord_invite",
                 "button": "Invite Landlord",
+                "phase": "Team",
             },
             {
                 "label": "Residents and applicants",
@@ -140,6 +155,7 @@ def owner_onboarding_wizard(request):
                 "url": "property_detail",
                 "url_args": [property_obj.id],
                 "button": "Open Property Page",
+                "phase": "Residents",
             },
             {
                 "label": "Financial source files",
@@ -147,6 +163,7 @@ def owner_onboarding_wizard(request):
                 "detail": f"{financial_upload_count} financial upload(s) on file.",
                 "url": "owner_financial_upload",
                 "button": "Upload Financials",
+                "phase": "Reports",
             },
             {
                 "label": "Vacancy listing",
@@ -154,10 +171,13 @@ def owner_onboarding_wizard(request):
                 "detail": f"{listing_count} listing record(s) created.",
                 "url": "rental_listing_create",
                 "button": "Create Listing",
+                "phase": "Leasing",
             },
         ]
 
         completed_count = sum(1 for step in steps if step["complete"])
+        portfolio_completed_steps += completed_count
+        portfolio_total_steps += len(steps)
         property_steps.append({
             "property": property_obj,
             "steps": steps,
@@ -169,6 +189,9 @@ def owner_onboarding_wizard(request):
     return render(request, "owner_onboarding_wizard.html", {
         "properties": properties,
         "property_steps": property_steps,
+        "portfolio_completed_steps": portfolio_completed_steps,
+        "portfolio_total_steps": portfolio_total_steps,
+        "portfolio_percent_complete": int(portfolio_completed_steps / portfolio_total_steps * 100) if portfolio_total_steps else 0,
     })
 
 

@@ -7,11 +7,13 @@
         <div>
             <h1 class="section-title mb-1">Approved Current Resident List</h1>
             <p class="text-muted mb-0">
-                Upload this before residents use setup codes. The roster now creates or updates the resident file, unit rent setup, balances, and deposit record.
+                Upload this before residents use setup codes. The roster creates or updates resident files, unit rent setup, balances, deposits, and app setup readiness.
             </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a href="{% url 'current_resident_roster_template' %}" class="message-btn">Download Template</a>
+            <a href="{% url 'owner_onboarding_wizard' %}" class="message-btn">Onboarding Wizard</a>
+            <a href="{% url 'custom_reports' %}" class="message-btn">Reports</a>
             <a href="{% url 'landlord_attention' %}" class="message-btn">Needs Attention</a>
         </div>
     </div>

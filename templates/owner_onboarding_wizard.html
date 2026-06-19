@@ -26,12 +26,83 @@
     padding: 1.2rem 1.4rem;
 }
 .wizard-head p { color: #c6d4dc; }
+.wizard-kicker {
+    color: #a9d95b;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+.wizard-title {
+    color: #f8fbf7;
+    font-size: clamp(2rem, 4vw, 3.35rem);
+    font-weight: 950;
+    line-height: 1;
+}
+.portfolio-readiness {
+    background: rgba(248,251,247,.1);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 16px;
+    min-width: min(100%, 260px);
+    padding: 1rem;
+}
+.readiness-value {
+    color: #ffb342;
+    font-size: 2.25rem;
+    font-weight: 950;
+    line-height: 1;
+}
 .wizard-panel {
     background: rgba(248,251,247,.96);
     border: 1px solid rgba(255,255,255,.16);
     color: #10151f;
     margin-bottom: 1rem;
     padding: 1rem;
+}
+.quick-start {
+    background: linear-gradient(135deg, rgba(248,251,247,.98), rgba(232,246,242,.96));
+    border: 1px solid rgba(16,199,194,.28);
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.24);
+    color: #10151f;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+.quick-grid {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.quick-card {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    border-radius: 14px;
+    color: #10151f;
+    min-height: 128px;
+    padding: .95rem;
+    text-decoration: none;
+}
+.quick-card:hover {
+    background: #eef8f6;
+    color: #10151f;
+}
+.quick-label,
+.step-phase {
+    color: #087a78;
+    font-size: .7rem;
+    font-weight: 950;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+.quick-name {
+    font-size: 1.08rem;
+    font-weight: 950;
+    margin-top: .25rem;
+}
+.quick-note {
+    color: #596772;
+    font-size: .86rem;
+    margin-top: .35rem;
 }
 .property-title {
     align-items: center;
@@ -86,7 +157,7 @@
 .step-card h3 {
     font-size: 1rem;
     font-weight: 950;
-    margin: 0 0 .25rem;
+    margin: .1rem 0 .25rem;
 }
 .step-card p {
     color: #596772;
@@ -121,19 +192,65 @@
     color: #10151f;
     padding: 1.25rem;
 }
+@media (max-width: 992px) {
+    .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 576px) {
+    .quick-grid { grid-template-columns: 1fr; }
+}
 </style>
 
 <div class="wizard-shell">
     <div class="wizard-head d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
-            <h1 class="fw-bold mb-1">Owner Onboarding Wizard</h1>
-            <p class="mb-0">Use this checklist to turn a new owner account into a working property dashboard.</p>
+            <div class="wizard-kicker">Rental Ledger Pro Launch Path</div>
+            <h1 class="wizard-title mb-2">Owner Onboarding</h1>
+            <p class="mb-0">Turn a new owner account into a working property dashboard, resident app, rent ledger, and report center.</p>
         </div>
+        {% if portfolio_total_steps %}
+            <div class="portfolio-readiness">
+                <div class="text-uppercase small fw-bold" style="color:#d7e1e8;">Portfolio Readiness</div>
+                <div class="readiness-value">{{ portfolio_percent_complete }}%</div>
+                <div class="small" style="color:#d7e1e8;">{{ portfolio_completed_steps }} of {{ portfolio_total_steps }} setup items complete</div>
+            </div>
+        {% endif %}
         <div class="d-flex gap-2 flex-wrap">
             <a href="{% url 'property_owner_dashboard' %}" class="btn-dark-soft">Owner Dashboard</a>
             <a href="{% url 'owner_property_create' %}" class="btn-owner">Add Property</a>
         </div>
     </div>
+
+    <section class="quick-start">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+            <div>
+                <div class="quick-label">Fast Start</div>
+                <h2 class="h4 fw-bold mb-1">The minimum path to a working account</h2>
+                <p class="text-muted mb-0">Property profile, resident roster, unit/rent setup, documents, and reports are the core launch pieces.</p>
+            </div>
+        </div>
+        <div class="quick-grid">
+            <a href="{% url 'owner_property_create' %}" class="quick-card">
+                <div class="quick-label">1. Property</div>
+                <div class="quick-name">Add property profile</div>
+                <div class="quick-note">Address, rent rules, utilities, screening, fees, insurance, and photos.</div>
+            </a>
+            <a href="{% url 'current_resident_roster_upload' %}" class="quick-card">
+                <div class="quick-label">2. Residents</div>
+                <div class="quick-name">Upload resident roster</div>
+                <div class="quick-note">Names, units, rent, balances, deposits, phones, and SMS consent.</div>
+            </a>
+            <a href="{% url 'custom_reports' %}" class="quick-card">
+                <div class="quick-label">3. Reports</div>
+                <div class="quick-name">Open report center</div>
+                <div class="quick-note">Rent roll, payment log, T-12, custom reports, vendor and receipt detail.</div>
+            </a>
+            <a href="{% url 'owner_landlord_invite' %}" class="quick-card">
+                <div class="quick-label">4. Team</div>
+                <div class="quick-name">Invite manager</div>
+                <div class="quick-note">Give a landlord or assistant the operational workspace they need.</div>
+            </a>
+        </div>
+    </section>
 
     {% if property_steps %}
         {% for item in property_steps %}
@@ -160,6 +277,7 @@
                                     {% if step.complete %}OK{% else %}!{% endif %}
                                 </span>
                                 <div>
+                                    <div class="step-phase">{{ step.phase }}</div>
                                     <h3>{{ step.label }}</h3>
                                     <p>{{ step.detail }}</p>
                                 </div>
