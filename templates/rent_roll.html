@@ -175,10 +175,11 @@
     <div class="container">
         <a class="navbar-brand fw-bold" href="/"><span class="brand-mark">RL</span>Rental Ledger Pro</a>
 
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap justify-content-end">
+            <a href="{% url 'custom_reports' %}" class="btn btn-outline-light btn-sm rlp-btn">Reports</a>
             <a href="{% url 'payment_log' %}" class="btn btn-outline-light btn-sm rlp-btn">Payment Log</a>
             <a href="{% url 't12_report' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="btn btn-outline-light btn-sm rlp-btn">T-12</a>
-            <a href="{% url 'financial_upload' %}" class="btn btn-outline-light btn-sm rlp-btn">Financial Upload</a>
+            <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-light btn-sm rlp-btn">Landlord Dashboard</a>
         </div>
     </div>
 </nav>

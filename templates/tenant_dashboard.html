@@ -57,12 +57,12 @@ body {
     box-shadow: 0 16px 32px rgba(0,0,0,0.26);
 }
 
-.painted-lady-wrap {
+.property-identity-wrap {
     border-right: 1px solid rgba(255,255,255,0.18);
     padding-right: 2rem;
 }
 
-.the-script {
+.property-kicker {
     color: #a9d95b;
     font-size: .74rem;
     font-weight: 900;
@@ -72,7 +72,7 @@ body {
     text-transform: uppercase;
 }
 
-.painted-lady-title {
+.property-identity-title {
     font-size: 2.95rem;
     color: #f8fbf7;
     font-weight: 950;
@@ -430,17 +430,17 @@ body {
 }
 
 @media (max-width: 768px) {
-    .painted-lady-wrap {
+    .property-identity-wrap {
         border-right: none;
         padding-right: 0;
         text-align: center;
     }
 
-    .painted-lady-title {
+    .property-identity-title {
         font-size: 2rem;
     }
 
-    .the-script {
+    .property-kicker {
         font-size: 2.4rem;
     }
 
@@ -494,13 +494,13 @@ body {
             {% if application.property and application.property.photo %}
                 <img src="{{ application.property.photo.url }}" class="house-thumb" alt="{{ application.property.name }}">
             {% else %}
-                <img src="/static/images/photo03.JPG" class="house-thumb" alt="{{ application.property.name|default:'Resident property' }}">
+                <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=82" class="house-thumb" alt="{{ application.property.name|default:'Resident property' }}">
             {% endif %}
         </div>
 
-        <div class="col-lg-4 painted-lady-wrap">
-            <div class="the-script">{% if application.property %}Your{% else %}The{% endif %}</div>
-            <div class="painted-lady-title">{{ application.property.name|default:"Resident Portal" }}</div>
+        <div class="col-lg-4 property-identity-wrap">
+            <div class="property-kicker">{% if application.property %}Your{% else %}The{% endif %}</div>
+            <div class="property-identity-title">{{ application.property.name|default:"Resident Portal" }}</div>
             <div class="community-line">Powered by Rental Ledger Pro</div>
         </div>
 
@@ -509,7 +509,7 @@ body {
                 Welcome back, {{ application.full_name }}
             </h1>
             <p class="welcome-text mb-0">
-                We're glad to have you as part of {{ application.property.name|default:"your resident" }} community.
+                Your property dashboard keeps payments, documents, messages, and requests in one place.
             </p>
         </div>
 
@@ -1085,3 +1085,4 @@ if (profilePhotoInput && profilePhotoPreview) {
 </script>
 
 {% endblock %}
+
