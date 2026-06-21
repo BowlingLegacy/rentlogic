@@ -208,6 +208,9 @@
         <h1 class="fw-bold mb-2 display-5">Payment Log</h1>
         <p class="mb-0" style="color:#d7e1e8;">
             Payments sorted by property, month, and unit.
+            {% if selected_property %}
+                Showing {{ selected_property.name }}.
+            {% endif %}
             {% if month_filter_active %}
                 Showing {{ selected_month|date:"F Y" }}.
             {% else %}
@@ -221,7 +224,7 @@
                 Record Manual Payment
             </a>
 
-            <a href="{% url 'export_payment_log_csv' %}{% if month_filter_active %}?month={{ selected_month|date:'Y-m' }}{% endif %}" class="btn rlp-btn btn-light">
+            <a href="{% url 'export_payment_log_csv' %}?{% if month_filter_active %}month={{ selected_month|date:'Y-m' }}&{% endif %}{% if selected_property %}property_id={{ selected_property.id }}{% endif %}" class="btn rlp-btn btn-light">
                 Download CSV
             </a>
 
@@ -231,6 +234,9 @@
         </div>
 
         <form method="get" class="d-flex gap-2 flex-wrap align-items-end mt-3 report-actions">
+            {% if selected_property %}
+                <input type="hidden" name="property_id" value="{{ selected_property.id }}">
+            {% endif %}
             <div>
                 <label for="payment-log-month" class="form-label fw-bold small mb-1">Choose Month To View Or Print</label>
                 <input
@@ -245,17 +251,17 @@
                 View Month
             </button>
             {% if month_filter_active %}
-                <a href="{% url 'payment_log' %}?month={{ previous_month|date:'Y-m' }}" class="btn btn-outline-light rlp-btn rlp-outline">
+                <a href="{% url 'payment_log' %}?month={{ previous_month|date:'Y-m' }}{% if selected_property %}&property_id={{ selected_property.id }}{% endif %}" class="btn btn-outline-light rlp-btn rlp-outline">
                     Previous Month
                 </a>
-                <a href="{% url 'payment_log' %}" class="btn btn-light rlp-btn">
+                <a href="{% url 'payment_log' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="btn btn-light rlp-btn">
                     All Months
                 </a>
-                <a href="{% url 'payment_log' %}?month={{ next_month|date:'Y-m' }}" class="btn btn-outline-light rlp-btn rlp-outline">
+                <a href="{% url 'payment_log' %}?month={{ next_month|date:'Y-m' }}{% if selected_property %}&property_id={{ selected_property.id }}{% endif %}" class="btn btn-outline-light rlp-btn rlp-outline">
                     Next Month
                 </a>
             {% else %}
-                <a href="{% url 'payment_log' %}?month={% now 'Y-m' %}" class="btn btn-outline-light rlp-btn rlp-outline">
+                <a href="{% url 'payment_log' %}?month={% now 'Y-m' %}{% if selected_property %}&property_id={{ selected_property.id }}{% endif %}" class="btn btn-outline-light rlp-btn rlp-outline">
                     Current Month Only
                 </a>
             {% endif %}

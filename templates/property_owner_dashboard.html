@@ -348,9 +348,9 @@
 
     <div class="row g-3 mb-4">
         <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Properties</div><div class="summary-value">{{ total_properties }}</div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Residents</div><div class="summary-value">{{ total_residents }}</div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Active Residents</div><div class="summary-value">{{ total_residents }}</div></div></div>
         <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Scheduled Rent</div><div class="summary-value">${{ portfolio_monthly_rent }}</div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Collected</div><div class="summary-value">${{ portfolio_collected }}</div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="summary-card"><div class="summary-label">Collected {{ current_year }} YTD</div><div class="summary-value">${{ portfolio_collected }}</div></div></div>
     </div>
 
     <div class="mb-3">
@@ -379,9 +379,9 @@
                     <div class="col-lg-4">
                         <div class="fin-section">
                             <div class="fin-title">Property Snapshot</div>
-                            <a class="metric-btn" href="{% url 'rent_roll' %}"><span class="metric-label">Units / Residents</span><span class="metric-value">{{ card.resident_count }}</span></a>
-                            <a class="metric-btn" href="{% url 'rent_roll' %}"><span class="metric-label">Total Scheduled Rent</span><span class="metric-value">${{ card.monthly_rent }}</span></a>
-                            <a class="metric-btn" href="{% url 'payment_log' %}"><span class="metric-label">Total Collected Rent</span><span class="metric-value">${{ card.total_collected }}</span></a>
+                            <a class="metric-btn" href="{% url 'custom_reports' %}?property_id={{ card.property.id }}&report_type=resident_roster"><span class="metric-label">Active Residents</span><span class="metric-value">{{ card.resident_count }}</span></a>
+                            <a class="metric-btn" href="{% url 'rent_roll' %}?property_id={{ card.property.id }}"><span class="metric-label">Scheduled Monthly Rent</span><span class="metric-value">${{ card.monthly_rent }}</span></a>
+                            <a class="metric-btn" href="{% url 'payment_log' %}?property_id={{ card.property.id }}"><span class="metric-label">Collected {{ current_year }} YTD</span><span class="metric-value">${{ card.total_collected }}</span></a>
                         </div>
                     </div>
 

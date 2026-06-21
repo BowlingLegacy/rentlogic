@@ -4658,16 +4658,24 @@ Replying to this email will go to the resident's email address. To keep the conv
 @user_passes_test(staff_required)
 def payment_log(request):
     raw_month = (request.GET.get("month") or "").strip()
+    raw_property_id = (request.GET.get("property_id") or "").strip()
     month_filter_active = bool(raw_month)
     selected_month = selected_report_month(request) if month_filter_active else None
     previous_month = add_months(selected_month, -1) if selected_month else None
     next_month = add_months(selected_month, 1) if selected_month else None
+    accessible_properties = staff_managed_properties(request.user)
+    selected_property = None
+    if raw_property_id:
+        selected_property = get_object_or_404(accessible_properties, id=raw_property_id)
+
     completed_payments = (
         Payment.objects
         .filter(application__in=staff_managed_applications(request.user), status="completed")
         .select_related("application", "application__property")
         .order_by("application__property__name", "-created_at", "application__space_label", "application__full_name")
     )
+    if selected_property:
+        completed_payments = completed_payments.filter(application__property=selected_property)
 
     grouped = OrderedDict()
 
@@ -4716,6 +4724,7 @@ def payment_log(request):
         "selected_month": selected_month,
         "previous_month": previous_month,
         "next_month": next_month,
+        "selected_property": selected_property,
     })
 
 
@@ -5607,10 +5616,15 @@ def run_custom_report_template(request, template_id):
 @user_passes_test(staff_required)
 def export_payment_log_csv(request):
     raw_month = (request.GET.get("month") or "").strip()
+    raw_property_id = (request.GET.get("property_id") or "").strip()
     selected_month = selected_report_month(request) if raw_month else None
+    selected_property = None
+    if raw_property_id:
+        selected_property = get_object_or_404(staff_managed_properties(request.user), id=raw_property_id)
     response = HttpResponse(content_type="text/csv")
     month_suffix = f"_{selected_month.strftime('%Y_%m')}" if selected_month else ""
-    response["Content-Disposition"] = f'attachment; filename="payment_log{month_suffix}.csv"'
+    property_suffix = f'_{selected_property.name.replace(" ", "_")}' if selected_property else ""
+    response["Content-Disposition"] = f'attachment; filename="payment_log{property_suffix}{month_suffix}.csv"'
 
     writer = csv.writer(response)
     writer.writerow(["Resident", "Property", "Payment Type", "Amount", "Status", "Date Received", "Applies To", "Months Covered"])
@@ -5621,6 +5635,8 @@ def export_payment_log_csv(request):
         .select_related("application", "application__property")
         .order_by("application__property__name", "application__space_label", "application__full_name", "-created_at")
     )
+    if selected_property:
+        payments = payments.filter(application__property=selected_property)
 
     sorted_payments = sorted(
         payments,
