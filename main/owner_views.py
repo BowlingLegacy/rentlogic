@@ -36,7 +36,7 @@ def property_owner_dashboard(request):
     for property_obj in properties:
         residents = (
             HousingApplication.objects
-            .filter(property=property_obj, resident_file_status="active")
+            .filter(property=property_obj, resident_file_status="active", user__isnull=False)
             .exclude(Q(space_label="") & Q(monthly_rent=Decimal("0.00")))
             .order_by("space_label", "full_name")
         )
@@ -45,6 +45,7 @@ def property_owner_dashboard(request):
         completed_payments = Payment.objects.filter(
             application__property=property_obj,
             application__resident_file_status="active",
+            application__user__isnull=False,
             status="completed",
         )
         year_to_date_payments = completed_payments.filter(
