@@ -253,6 +253,46 @@
             font-weight: 950;
         }
 
+        .next-steps {
+            display: grid;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .next-step {
+            display: grid;
+            grid-template-columns: 36px 1fr;
+            gap: 12px;
+            align-items: start;
+            border: 1px solid rgba(32,42,56,.12);
+            border-radius: 8px;
+            background: #fff;
+            padding: 12px;
+        }
+
+        .step-number {
+            background: var(--night);
+            color: #fff;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            font-weight: 950;
+            height: 36px;
+            width: 36px;
+        }
+
+        .next-step strong {
+            color: var(--ink);
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .next-step span {
+            color: #43505e;
+            display: block;
+            line-height: 1.42;
+        }
+
         @media (max-width: 860px) {
             .nav {
                 flex-direction: column;
@@ -343,6 +383,25 @@
                     <li><span>Data</span> spreadsheets, receipts, current tenant lists</li>
                     <li><span>Launch</span> property app and resident onboarding</li>
                 </ul>
+            </section>
+
+            <section class="note-card">
+                <h2>What happens next</h2>
+                <p>The first goal is to decide whether the system fits your portfolio and what should be set up first.</p>
+                <div class="next-steps">
+                    <div class="next-step">
+                        <div class="step-number">1</div>
+                        <div><strong>Fit check</strong><span>We review property count, unit count, current software, and the biggest operating pain points.</span></div>
+                    </div>
+                    <div class="next-step">
+                        <div class="step-number">2</div>
+                        <div><strong>Data map</strong><span>We identify the first import: resident list, rent roll, payment ledger, receipts, invoices, or scanned tenant files.</span></div>
+                    </div>
+                    <div class="next-step">
+                        <div class="step-number">3</div>
+                        <div><strong>Demo path</strong><span>We walk through the owner dashboard, landlord dashboard, resident app flow, reports, and onboarding steps.</span></div>
+                    </div>
+                </div>
             </section>
         </aside>
     </main>
