@@ -307,6 +307,29 @@
             line-height: 1.4;
         }
 
+        .closing-cta {
+            background:
+                linear-gradient(135deg, rgba(16,199,194,.16), rgba(255,179,66,.14)),
+                rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 14px;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .closing-cta h2 {
+            margin: 0 0 8px;
+            font-size: clamp(1.7rem, 3vw, 3rem);
+            line-height: 1;
+        }
+
+        .closing-cta p {
+            max-width: 760px;
+        }
+
         .ops-layout {
             display: grid;
             grid-template-columns: 1.1fr .9fr;
@@ -438,7 +461,7 @@
         @media (max-width: 860px) {
             .nav { padding: 16px; align-items: flex-start; flex-direction: column; }
             .hero { padding: 54px 18px 38px; }
-            .feature-grid, .report-grid, .dashboard-showcase, .dashboard-metrics, .ops-layout, .ops-columns, .app-showcase, .phone-grid { grid-template-columns: 1fr; }
+            .feature-grid, .report-grid, .dashboard-showcase, .dashboard-metrics, .ops-layout, .ops-columns, .app-showcase, .phone-grid, .closing-cta { grid-template-columns: 1fr; }
             .phone { min-height: auto; }
         }
     </style>
@@ -638,6 +661,18 @@
                         <small>{{ report.rows|length }} sample rows</small>
                     </a>
                 {% endfor %}
+            </div>
+        </section>
+
+        <section class="section closing-cta">
+            <div>
+                <div class="eyebrow">Make this work with real property data</div>
+                <h2>Map your first property into Rental Ledger Pro.</h2>
+                <p>Start with the records you already have: resident list, rent roll, payment ledger, accounting export, scanned tenant files, receipts, invoices, listings, or owner reports.</p>
+            </div>
+            <div class="actions" style="margin-top:0;">
+                <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                <a class="button secondary" href="{% url 'rental_ledger_contact' %}">Talk Through Setup</a>
             </div>
         </section>
     </main>
