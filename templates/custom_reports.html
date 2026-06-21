@@ -344,56 +344,56 @@ body {
         </div>
 
         <div class="launcher-grid">
-            <a href="{% url 't12_report' %}" class="launcher-card primary">
+            <a href="{% url 't12_report' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="launcher-card primary">
                 <div class="launcher-label">Financial</div>
                 <div class="launcher-name">T-12 Report</div>
                 <div class="launcher-copy">Income, expenses, NOI, debt, and cash flow.</div>
                 <div class="launcher-go">Open T-12</div>
             </a>
 
-            <a href="{% url 'rent_roll' %}" class="launcher-card">
+            <a href="{% url 'rent_roll' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="launcher-card">
                 <div class="launcher-label">Rent</div>
                 <div class="launcher-name">Rent Roll</div>
                 <div class="launcher-copy">Units, residents, deposits, balances, and rent.</div>
                 <div class="launcher-go">Open rent roll</div>
             </a>
 
-            <a href="?report_type=payment_summary" class="launcher-card">
+            <a href="?report_type=payment_summary{{ property_query_suffix }}" class="launcher-card">
                 <div class="launcher-label">Ledger</div>
                 <div class="launcher-name">Payment Summary</div>
                 <div class="launcher-copy">Cash, check, card, deposits, rent, and utilities.</div>
                 <div class="launcher-go">Build report</div>
             </a>
 
-            <a href="?report_type=resident_directory" class="launcher-card">
+            <a href="?report_type=resident_directory{{ property_query_suffix }}" class="launcher-card">
                 <div class="launcher-label">Residents</div>
                 <div class="launcher-name">Resident Directory</div>
                 <div class="launcher-copy">Roster export with units, contacts, and move-in data.</div>
                 <div class="launcher-go">Build report</div>
             </a>
 
-            <a href="?report_type=vendor_expense" class="launcher-card">
+            <a href="?report_type=vendor_expense{{ property_query_suffix }}" class="launcher-card">
                 <div class="launcher-label">Expense</div>
                 <div class="launcher-name">Vendor Expense</div>
                 <div class="launcher-copy">Vendor spend grouped by property and category.</div>
                 <div class="launcher-go">Build report</div>
             </a>
 
-            <a href="?report_type=receipt_expense_detail" class="launcher-card">
+            <a href="?report_type=receipt_expense_detail{{ property_query_suffix }}" class="launcher-card">
                 <div class="launcher-label">Receipts</div>
                 <div class="launcher-name">Receipt Detail</div>
                 <div class="launcher-copy">Receipt-backed costs with vendor and category detail.</div>
                 <div class="launcher-go">Build report</div>
             </a>
 
-            <a href="?report_type=valuation_estimate" class="launcher-card">
+            <a href="?report_type=valuation_estimate{{ property_query_suffix }}" class="launcher-card">
                 <div class="launcher-label">Value</div>
                 <div class="launcher-name">Valuation Estimate</div>
                 <div class="launcher-copy">NOI-supported estimate using a cap-rate method.</div>
                 <div class="launcher-go">Build report</div>
             </a>
 
-            <a href="?report_type=occupancy_vacancy" class="launcher-card">
+            <a href="?report_type=occupancy_vacancy{{ property_query_suffix }}" class="launcher-card">
                 <div class="launcher-label">Property</div>
                 <div class="launcher-name">Occupancy / Vacancy</div>
                 <div class="launcher-copy">Occupied units, vacant units, and occupancy rate.</div>

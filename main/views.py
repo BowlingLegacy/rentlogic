@@ -4905,6 +4905,7 @@ def custom_reports(request):
     )
 
     selected_property = None
+    property_query_suffix = ""
     report_title = ""
     report_columns = []
     report_rows = []
@@ -4924,6 +4925,7 @@ def custom_reports(request):
         if selected_property_id:
             selected_property = get_object_or_404(properties, id=selected_property_id)
             filtered_properties = properties.filter(id=selected_property.id)
+            property_query_suffix = f"&property_id={selected_property.id}"
 
         residents = (
             HousingApplication.objects
@@ -5587,6 +5589,7 @@ def custom_reports(request):
         "active_template": active_template,
         "generated": generated,
         "selected_property": selected_property,
+        "property_query_suffix": property_query_suffix,
         "report_title": report_title,
         "report_columns": report_columns,
         "report_rows": report_rows,
