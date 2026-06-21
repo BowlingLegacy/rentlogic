@@ -284,10 +284,46 @@
             min-width: 640px;
         }
 
+        .walkthrough {
+            background:
+                linear-gradient(135deg, rgba(16,199,194,.14), rgba(118,100,255,.12)),
+                rgba(255,255,255,.065);
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .walkthrough-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .walk-step {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: 10px;
+            padding: 14px;
+            min-height: 170px;
+        }
+
+        .walk-step strong {
+            color: #fff;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .walk-step span {
+            color: #c4d1da;
+            display: block;
+            line-height: 1.45;
+        }
+
         @media (max-width: 860px) {
             .nav { padding: 16px; flex-direction: column; align-items: flex-start; }
             .hero { padding: 54px 18px 38px; }
-            .grid, .demo-dashboard, .demo-dashboard:nth-child(even), .metric-strip { grid-template-columns: 1fr; }
+            .grid, .demo-dashboard, .demo-dashboard:nth-child(even), .metric-strip, .walkthrough-grid { grid-template-columns: 1fr; }
             .demo-dashboard:nth-child(even) .dashboard-copy { order: 0; }
             table { font-size: .78rem; }
             th, td { padding: 9px 7px; }
@@ -347,6 +383,38 @@
                 <p>Residents see their property name, notices, setup steps, payments, documents, and inbox while the system remains powered by Rental Ledger Pro.</p>
                 <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'property-app' %}">Open Property App</a></div>
             </article>
+        </section>
+
+        <section class="section walkthrough">
+            <span class="metric">Demo Walk-through</span>
+            <h2 style="font-size:clamp(1.8rem,3vw,3rem);line-height:1;margin:12px 0;">What to inspect first.</h2>
+            <p>This path shows the product as an owner would evaluate it: portfolio-level reports first, then daily landlord work, then resident-facing experience.</p>
+            <div class="walkthrough-grid">
+                <div class="walk-step">
+                    <strong>1. Owner view</strong>
+                    <span>Check portfolio income, NOI, cash flow, rent roll, valuation support, and property-separated performance.</span>
+                </div>
+                <div class="walk-step">
+                    <strong>2. Landlord view</strong>
+                    <span>Review needs-attention work, resident files, payment logging, receipts, messages, and maintenance workflow.</span>
+                </div>
+                <div class="walk-step">
+                    <strong>3. Resident view</strong>
+                    <span>Open the branded resident app flow: balance, documents, inbox, maintenance, setup tasks, and payment history.</span>
+                </div>
+                <div class="walk-step">
+                    <strong>4. Report proof</strong>
+                    <span>Open sample T-12, rent roll, payment log, utility trend, vendor expense, and capital log reports.</span>
+                </div>
+            </div>
+            <div class="actions">
+                {% if demo_public_url %}
+                    <a class="button primary" href="{{ demo_public_url }}">Open Interactive Demo</a>
+                {% elif interactive_demo_enabled %}
+                    <a class="button primary" href="{% url 'demo_entry' %}">Open Interactive Demo</a>
+                {% endif %}
+                <a class="button secondary" href="{% url 'property_owner_intake' %}">Request Guided Setup</a>
+            </div>
         </section>
 
         <section class="section preview" id="preview">
