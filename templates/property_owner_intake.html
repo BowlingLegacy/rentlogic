@@ -103,6 +103,28 @@
             padding: .7rem .8rem;
         }
         .feature-check label { font-weight: 700; margin-left: .4rem; }
+        .ready-list {
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        }
+        .ready-item {
+            background: #fff;
+            border: 1px solid #e1e9e3;
+            border-radius: 10px;
+            padding: .85rem;
+        }
+        .ready-item strong {
+            color: var(--night);
+            display: block;
+            margin-bottom: .25rem;
+        }
+        .ready-item span {
+            color: var(--muted);
+            display: block;
+            font-size: .92rem;
+            line-height: 1.38;
+        }
         input, select, textarea {
             border-color: #d1ddd8 !important;
             border-radius: 10px !important;
@@ -309,9 +331,45 @@
                         </div>
                     </section>
                 </div>
+
+                <div class="col-12">
+                    <section class="section-panel">
+                        <h2 class="section-title h4 mb-2">What to Have Ready</h2>
+                        <p class="text-muted mb-3">
+                            You do not need everything before submitting. These are the records that make migration faster and cleaner.
+                        </p>
+                        <div class="ready-list">
+                            <div class="ready-item">
+                                <strong>Resident list</strong>
+                                <span>Names, phone numbers, emails, unit labels, rent, due day, deposits held, last month rent, and open balances.</span>
+                            </div>
+                            <div class="ready-item">
+                                <strong>Rent roll or payment ledger</strong>
+                                <span>Current month ledger plus any prior months you want reflected in reports or resident payment history.</span>
+                            </div>
+                            <div class="ready-item">
+                                <strong>Accounting records</strong>
+                                <span>Bank exports, accounting software exports, invoices, receipts, debt service, utilities, and expense categories.</span>
+                            </div>
+                            <div class="ready-item">
+                                <strong>Tenant files</strong>
+                                <span>Signed leases, move-in forms, emergency contacts, inspection notes, scanned packets, and insurance records.</span>
+                            </div>
+                            <div class="ready-item">
+                                <strong>Property settings</strong>
+                                <span>Shared utilities, tenant-paid utility vendors, late fee rules, application fees, screening needs, listings, and owner/landlord users.</span>
+                            </div>
+                            <div class="ready-item">
+                                <strong>Report priorities</strong>
+                                <span>Which reports matter first: rent roll, T-12, NOI, cash flow, valuation support, vendor expense, deposits, or custom reports.</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+                <a href="{% url 'rental_ledger_contact' %}" class="nav-link-soft">Talk Through Setup First</a>
                 <button type="submit" class="gold-btn">Submit Questionnaire</button>
             </div>
         </form>
