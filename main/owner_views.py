@@ -1,8 +1,9 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -13,7 +14,7 @@ from .forms import (
     OwnerPropertyOnboardingDocumentsForm,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
-from .models import CurrentResidentRosterEntry, FinancialUpload, Property, PropertyImage, HousingApplication, Payment, ResidentMessage
+from .models import ApplicantDocument, CurrentResidentRosterEntry, FinancialUpload, Property, PropertyImage, HousingApplication, Payment, ResidentMessage
 from .permissions import can_access_owner_dashboard, is_super_admin, is_assistant_admin
 
 
@@ -21,6 +22,7 @@ from .permissions import can_access_owner_dashboard, is_super_admin, is_assistan
 @user_passes_test(can_access_owner_dashboard)
 def property_owner_dashboard(request):
     properties = owner_properties_for(request.user)
+    today = timezone.localdate()
 
     property_cards = []
     portfolio_monthly_rent = Decimal("0.00")
@@ -32,16 +34,28 @@ def property_owner_dashboard(request):
     total_open_messages = 0
 
     for property_obj in properties:
-        residents = HousingApplication.objects.filter(property=property_obj).order_by("space_label", "full_name")
+        residents = (
+            HousingApplication.objects
+            .filter(property=property_obj, resident_file_status="active")
+            .exclude(Q(space_label="") & Q(monthly_rent=Decimal("0.00")))
+            .order_by("space_label", "full_name")
+        )
         resident_count = residents.count()
         open_messages = ResidentMessage.objects.filter(application__property=property_obj, status="submitted").count()
-        completed_payments = Payment.objects.filter(application__property=property_obj, status="completed")
+        completed_payments = Payment.objects.filter(
+            application__property=property_obj,
+            application__resident_file_status="active",
+            status="completed",
+        )
+        year_to_date_payments = completed_payments.filter(
+            Q(service_month__year=today.year) | Q(service_month__isnull=True, received_at__year=today.year)
+        )
 
         monthly_rent = residents.aggregate(total=Sum("monthly_rent"))["total"] or Decimal("0.00")
         balances_due = residents.aggregate(total=Sum("balance"))["total"] or Decimal("0.00")
         utilities_due = residents.aggregate(total=Sum("utility_balance"))["total"] or Decimal("0.00")
         deposits_held = residents.aggregate(total=Sum("deposit_paid"))["total"] or Decimal("0.00")
-        total_collected = completed_payments.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        total_collected = year_to_date_payments.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
 
         portfolio_monthly_rent += monthly_rent
         portfolio_balances_due += balances_due
@@ -78,6 +92,7 @@ def property_owner_dashboard(request):
         "portfolio_utilities_due": portfolio_utilities_due,
         "portfolio_deposits_held": portfolio_deposits_held,
         "portfolio_collected": portfolio_collected,
+        "current_year": today.year,
         "total_open_messages": total_open_messages,
         "recent_messages": recent_messages,
     })
@@ -104,6 +119,10 @@ def owner_onboarding_wizard(request):
         room_count = property_obj.room_rents.filter(is_active=True).count()
         financial_upload_count = property_obj.financial_uploads.count()
         listing_count = property_obj.rental_listings.count()
+        tenant_packet_count = ApplicantDocument.objects.filter(
+            application__property=property_obj,
+            packet_upload=True,
+        ).count()
 
         steps = [
             {
@@ -173,6 +192,22 @@ def owner_onboarding_wizard(request):
                 "button": "Create Listing",
                 "phase": "Leasing",
             },
+            {
+                "label": "Scanned tenant file packets",
+                "complete": tenant_packet_count > 0,
+                "detail": f"{tenant_packet_count} uploaded tenant packet(s) ready for OCR/review.",
+                "url": "tenant_file_packet_upload",
+                "button": "Upload Tenant Files",
+                "phase": "Documents",
+            },
+            {
+                "label": "Custom report templates",
+                "complete": True,
+                "detail": "Owners can build saved reports from resident, payment, receipt, vendor, and vacancy data.",
+                "url": "custom_reports",
+                "button": "Open Reports",
+                "phase": "Reports",
+            },
         ]
 
         completed_count = sum(1 for step in steps if step["complete"])
@@ -186,12 +221,49 @@ def owner_onboarding_wizard(request):
             "percent_complete": int(completed_count / len(steps) * 100),
         })
 
+    launch_steps = [
+        {
+            "label": "Stripe payments",
+            "complete": bool(settings.STRIPE_PUBLIC_KEY and settings.STRIPE_SECRET_KEY),
+            "detail": "Required before online rent, deposit, and application fee payments can be collected.",
+            "url": "custom_reports",
+            "button": "Review Payment Reports",
+        },
+        {
+            "label": "SMS notifications",
+            "complete": bool(
+                getattr(settings, "TELNYX_API_KEY", "")
+                and getattr(settings, "TELNYX_FROM_NUMBER", "")
+            ),
+            "detail": "Required before setup-code texts, resident notices, and staff copies can be sent.",
+            "url": "group_resident_message",
+            "button": "Open Messaging",
+        },
+        {
+            "label": "Resident app links",
+            "complete": bool(settings.APP_STORE_URL or settings.GOOGLE_PLAY_URL),
+            "detail": "Add App Store and Google Play URLs when the mobile apps are published.",
+            "url": "property_owner_dashboard",
+            "button": "Owner Dashboard",
+        },
+        {
+            "label": "Demo link",
+            "complete": bool(settings.DEMO_PUBLIC_URL),
+            "detail": "Public demo URL lets prospects try the system without touching production data.",
+            "url": "rental_ledger_demo",
+            "button": "Open Demo",
+        },
+    ]
+
     return render(request, "owner_onboarding_wizard.html", {
         "properties": properties,
         "property_steps": property_steps,
         "portfolio_completed_steps": portfolio_completed_steps,
         "portfolio_total_steps": portfolio_total_steps,
         "portfolio_percent_complete": int(portfolio_completed_steps / portfolio_total_steps * 100) if portfolio_total_steps else 0,
+        "launch_steps": launch_steps,
+        "launch_completed_steps": sum(1 for step in launch_steps if step["complete"]),
+        "launch_total_steps": len(launch_steps),
     })
 
 
