@@ -351,7 +351,7 @@
                 <div class="icon">@</div>
                 <div>
                     <small>Email</small>
-                    <a href="mailto:michael@bowlinglegacy.com">michael@bowlinglegacy.com</a>
+                    <a href="mailto:{{ lead_email }}">{{ lead_email }}</a>
                 </div>
             </div>
             <div class="contact-row">
@@ -370,7 +370,7 @@
                 <div class="actions">
                     <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Intake</a>
                     <a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Open Demo</a>
-                    <a class="button secondary" href="mailto:michael@bowlinglegacy.com?subject=Rental%20Ledger%20Pro%20Demo">Email Michael</a>
+                    <a class="button secondary" href="mailto:{{ lead_email }}?subject=Rental%20Ledger%20Pro%20Demo">Email Michael</a>
                 </div>
             </section>
 

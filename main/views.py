@@ -1574,12 +1574,16 @@ def rental_ledger_pro_home(request):
 
 
 def rental_ledger_contact(request):
-    return render(request, "rental_ledger_contact.html")
+    return render(request, "rental_ledger_contact.html", {
+        "demo_public_url": getattr(settings, "DEMO_PUBLIC_URL", ""),
+        "lead_email": getattr(settings, "RENTAL_LEDGER_LEAD_EMAIL", "michael@bowlinglegacy.com"),
+    })
 
 
 def rental_ledger_demo(request):
     return render(request, "rental_ledger_demo.html", {
         "interactive_demo_enabled": getattr(settings, "DEMO_MODE", False),
+        "demo_public_url": getattr(settings, "DEMO_PUBLIC_URL", ""),
         "product_pages": RENTAL_LEDGER_PRODUCT_PAGES,
         "reports": RENTAL_LEDGER_DEMO_REPORTS,
     })
