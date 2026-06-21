@@ -675,6 +675,36 @@
             margin: 0;
         }
 
+        .faq-wrap {
+            background: #10151f;
+            color: #fff;
+            padding: 58px 0 70px;
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .faq-card {
+            background: rgba(255,255,255,.075);
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .faq-card h3 {
+            margin: 0 0 8px;
+            font-size: 1.12rem;
+        }
+
+        .faq-card p {
+            color: #c4d1da;
+            line-height: 1.5;
+            margin: 0;
+        }
+
         @media (max-width: 980px) {
             .nav { position: static; flex-direction: column; align-items: flex-start; padding: 16px; }
             .hero { padding: 34px 16px 48px; min-height: auto; }
@@ -684,7 +714,7 @@
             .signal-panel { left: 0; top: 0; width: 100%; }
             .phone-panel { right: auto; left: 50%; transform: translateX(-50%); bottom: 0; }
             .section-head { display: grid; align-items: start; }
-            .power-grid, .palette, .report-showcase, .dashboard-stage, .dashboard-stage:nth-child(even), .metric-strip, .launch-grid { grid-template-columns: 1fr; }
+            .power-grid, .palette, .report-showcase, .dashboard-stage, .dashboard-stage:nth-child(even), .metric-strip, .launch-grid, .faq-grid { grid-template-columns: 1fr; }
             .dashboard-stage:nth-child(even) .dashboard-copy { order: 0; }
             .dash-grid { grid-template-columns: 1fr; }
             .wide { grid-column: span 1; }
@@ -703,6 +733,7 @@
             <a href="#records">Records</a>
             <a href="#workflow">Workflow</a>
             <a href="#launch">Launch Path</a>
+            <a href="#faq">FAQ</a>
             <a href="{% url 'rental_ledger_contact' %}">Contact</a>
             <a href="{% url 'property_owner_intake' %}">Request Demo</a>
             <a class="demo" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Launch Demo</a>
@@ -1052,6 +1083,56 @@
                         <div class="map-label">Report</div>
                         <div class="map-block">Generate rent roll, payment history, T-12, NOI, cash flow, valuation, vendor expense, utility trend, and compliance reports.</div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-wrap" id="faq">
+            <div class="section" style="margin-block:0;">
+                <div class="section-head">
+                    <div>
+                        <div class="eyebrow">Practical FAQ</div>
+                        <h2>Questions owners usually ask before moving property records.</h2>
+                    </div>
+                    <p style="max-width:520px">Rental Ledger Pro is being built around real operating problems: messy records, scattered payments, duplicate resident files, unclear reports, and resident setup friction.</p>
+                </div>
+                <div class="faq-grid">
+                    <article class="faq-card">
+                        <h3>Can we start with spreadsheets?</h3>
+                        <p>Yes. Resident lists, rent rolls, monthly summaries, bank exports, and accounting spreadsheets are expected starting points. The goal is to map the existing data before asking anyone to rebuild it manually.</p>
+                    </article>
+                    <article class="faq-card">
+                        <h3>Can scanned tenant files be uploaded?</h3>
+                        <p>Yes. The system supports uploaded tenant packets and receipt/invoice files. OCR and review workflows help convert scanned records into usable property data where practical.</p>
+                    </article>
+                    <article class="faq-card">
+                        <h3>Will residents need to create everything themselves?</h3>
+                        <p>No. Owners can upload core resident data first, then send private setup codes so residents confirm access, complete missing details, sign documents, and use their dashboard.</p>
+                    </article>
+                    <article class="faq-card">
+                        <h3>How are payments handled?</h3>
+                        <p>The system is built to track online payments, cash, checks, deposits, utilities, late fees, and manual adjustments by resident, property, and service month.</p>
+                    </article>
+                    <article class="faq-card">
+                        <h3>Does texting require setup?</h3>
+                        <p>Yes. SMS requires compliant opt-in and carrier setup before broad tenant texting. The product keeps SMS tied to portal messages and property notices instead of informal side conversations.</p>
+                    </article>
+                    <article class="faq-card">
+                        <h3>What reports are the priority?</h3>
+                        <p>Rent roll, payment ledger, T-12, NOI, cash flow after debt, deposit liability, vendor expense, utility trend, capital improvement log, and valuation support are the core report set.</p>
+                    </article>
+                    <article class="faq-card">
+                        <h3>Can one owner manage multiple properties?</h3>
+                        <p>Yes. Property separation is central: dashboards, residents, payments, reports, messages, rent setup, and documents are tied to the correct property behind the scenes.</p>
+                    </article>
+                    <article class="faq-card">
+                        <h3>Is pricing fixed?</h3>
+                        <p>Pricing should depend on unit count, setup complexity, migration work, payment/texting needs, and support level. The owner questionnaire captures enough detail to scope the right starting plan.</p>
+                    </article>
+                </div>
+                <div class="actions" style="margin-top:24px;">
+                    <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                    <a class="button secondary" href="{% url 'rental_ledger_contact' %}">Ask A Setup Question</a>
                 </div>
             </div>
         </section>
