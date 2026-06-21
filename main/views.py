@@ -6445,25 +6445,50 @@ def parse_financial_upload(request, upload_id):
 @login_required
 @user_passes_test(staff_required)
 def property_financials(request, property_name):
-    property_obj = get_object_or_404(Property, name=property_name)
-    residents = HousingApplication.objects.filter(property=property_obj)
+    property_obj = get_object_or_404(staff_managed_properties(request.user), name=property_name)
+    current_year = timezone.localdate().year
+    current_month_number = timezone.localdate().month
+    residents = (
+        HousingApplication.objects
+        .filter(property=property_obj, resident_file_status="active", user__isnull=False)
+        .order_by("space_label", "full_name")
+    )
 
     monthly_rent = sum([r.monthly_rent for r in residents], Decimal("0.00"))
     balances_due = sum([r.balance for r in residents], Decimal("0.00"))
     utilities_due = sum([r.utility_balance for r in residents], Decimal("0.00"))
     deposits_held = sum([r.deposit_paid for r in residents], Decimal("0.00"))
 
-    completed_payments = Payment.objects.filter(application__property=property_obj, status="completed")
-    total_collected = completed_payments.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    _months, t12_totals = t12_report_rows(request.user, current_year, Property.objects.filter(id=property_obj.id))
+    total_collected = t12_totals["total_income"]
+    operating_expenses = t12_totals["operating_expenses"]
+    debt_service = t12_totals["debt_service"]
+    capital_expenses = t12_totals["capital_expenses"]
+    noi = t12_totals["net_operating_income"]
+    cash_flow = t12_totals["cash_flow_after_debt"]
+    scheduled_ytd = monthly_rent * Decimal(current_month_number)
+    rent_collection_percent = Decimal("0.00")
+    if scheduled_ytd > Decimal("0.00"):
+        rent_collection_percent = (total_collected / scheduled_ytd * Decimal("100")).quantize(Decimal("0.01"))
 
     return render(request, "property_financials.html", {
         "property": property_obj,
+        "property_name": property_obj.name,
         "residents": sorted_resident_list(residents),
+        "total_units": residents.count(),
+        "total_rent": monthly_rent,
         "monthly_rent": monthly_rent,
         "balances_due": balances_due,
         "utilities_due": utilities_due,
         "deposits_held": deposits_held,
         "total_collected": total_collected,
+        "operating_expenses": operating_expenses,
+        "debt_service": debt_service,
+        "capital_expenses": capital_expenses,
+        "noi": noi,
+        "cash_flow": cash_flow,
+        "rent_collection_percent": rent_collection_percent,
+        "current_year": current_year,
     })
 
 

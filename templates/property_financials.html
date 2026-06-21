@@ -161,11 +161,11 @@ body {
             </div>
 
             <div class="d-flex gap-2 flex-wrap">
-                <a href="{% url 'payment_log' %}" class="message-btn">Payment Log</a>
-                <a href="{% url 'rent_roll' %}" class="message-btn">Rent Roll</a>
-                <a href="{% url 'custom_reports' %}" class="message-btn">Custom Reports</a>
+                <a href="{% url 'payment_log' %}?property_id={{ property.id }}" class="message-btn">Payment Log</a>
+                <a href="{% url 'rent_roll' %}?property_id={{ property.id }}" class="message-btn">Rent Roll</a>
+                <a href="{% url 'custom_reports' %}?property_id={{ property.id }}" class="message-btn">Custom Reports</a>
                 <a href="{% url 'accounting_receipts' %}" class="message-btn">Receipts</a>
-                <a href="{% url 't12_report' %}" class="gold-btn">T-12 Report</a>
+                <a href="{% url 't12_report' %}?property_id={{ property.id }}" class="gold-btn">T-12 Report</a>
             </div>
         </div>
     </section>
@@ -199,18 +199,18 @@ body {
             <div class="soft-card section-card h-100">
                 <h3 class="section-title">Property Snapshot</h3>
 
-                <a href="{% url 'rent_roll' %}" class="report-btn">
-                    <span>Units / Residents</span>
+                <a href="{% url 'custom_reports' %}?property_id={{ property.id }}&report_type=resident_roster" class="report-btn">
+                    <span>Active Residents</span>
                     <span class="report-value">{{ total_units }}</span>
                 </a>
 
-                <a href="{% url 'rent_roll' %}" class="report-btn">
-                    <span>Total Scheduled Rent</span>
+                <a href="{% url 'rent_roll' %}?property_id={{ property.id }}" class="report-btn">
+                    <span>Scheduled Monthly Rent</span>
                     <span class="report-value">${{ total_rent }}</span>
                 </a>
 
-                <a href="{% url 'payment_log' %}" class="report-btn">
-                    <span>Total Collected Rent</span>
+                <a href="{% url 'payment_log' %}?property_id={{ property.id }}" class="report-btn">
+                    <span>Collected Income {{ current_year }} YTD</span>
                     <span class="report-value">${{ total_collected }}</span>
                 </a>
             </div>
@@ -220,17 +220,17 @@ body {
             <div class="soft-card section-card h-100">
                 <h3 class="section-title">Expenses & Debt Position</h3>
 
-                <a href="{% url 'financial_upload' %}" class="report-btn">
+                <a href="{% url 'custom_reports' %}?property_id={{ property.id }}&report_type=financial_entries&financial_entry_types=operating_expense" class="report-btn">
                     <span>Operating Expenses</span>
                     <span class="report-value">${{ operating_expenses }}</span>
                 </a>
 
-                <a href="{% url 'financial_upload' %}" class="report-btn">
+                <a href="{% url 'custom_reports' %}?property_id={{ property.id }}&report_type=financial_entries&financial_entry_types=debt_service" class="report-btn">
                     <span>Debt Service</span>
                     <span class="report-value">${{ debt_service }}</span>
                 </a>
 
-                <a href="{% url 'financial_upload' %}" class="report-btn">
+                <a href="{% url 'custom_reports' %}?property_id={{ property.id }}&report_type=financial_entries&financial_entry_types=capital_expense" class="report-btn">
                     <span>Capital Expenses</span>
                     <span class="report-value">${{ capital_expenses }}</span>
                 </a>
@@ -241,18 +241,18 @@ body {
             <div class="soft-card section-card h-100">
                 <h3 class="section-title">Performance</h3>
 
-                <a href="{% url 't12_report' %}" class="report-btn">
+                <a href="{% url 't12_report' %}?property_id={{ property.id }}" class="report-btn">
                     <span>NOI</span>
                     <span class="report-value">${{ noi }}</span>
                 </a>
 
-                <a href="{% url 't12_report' %}" class="report-btn">
+                <a href="{% url 't12_report' %}?property_id={{ property.id }}" class="report-btn">
                     <span>Cash Flow After Debt</span>
                     <span class="report-value">${{ cash_flow }}</span>
                 </a>
 
-                <a href="{% url 'payment_log' %}" class="report-btn">
-                    <span>Rent Collection %</span>
+                <a href="{% url 'custom_reports' %}?property_id={{ property.id }}&report_type=property_performance" class="report-btn">
+                    <span>Income Collection %</span>
                     <span class="report-value">{{ rent_collection_percent }}%</span>
                 </a>
             </div>
