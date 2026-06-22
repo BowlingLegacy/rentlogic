@@ -484,8 +484,8 @@
             <h1>{{ page.title }}</h1>
             <p>{{ page.lead }}</p>
             <div class="actions">
-                <a class="button primary" href="{% url 'rental_ledger_demo' %}">Open Demo</a>
-                <a class="button secondary" href="{% url 'property_owner_intake' %}">Request Demo</a>
+                <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
+                <a class="button secondary" href="{% url 'rental_ledger_demo' %}">Open Demo</a>
             </div>
         </div>
     </header>
@@ -671,7 +671,7 @@
                 <p>Start with the records you already have: resident list, rent roll, payment ledger, accounting export, scanned tenant files, receipts, invoices, listings, or owner reports.</p>
             </div>
             <div class="actions" style="margin-top:0;">
-                <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
                 <a class="button secondary" href="{% url 'rental_ledger_contact' %}">Talk Through Setup</a>
             </div>
         </section>

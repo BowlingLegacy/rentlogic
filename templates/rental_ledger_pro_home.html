@@ -882,8 +882,8 @@
             <a href="#launch">Launch Path</a>
             <a href="#faq">FAQ</a>
             <a href="{% url 'rental_ledger_contact' %}">Contact</a>
-            <a href="{% url 'property_owner_intake' %}">Request Demo</a>
-            <a class="demo" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Launch Demo</a>
+            <a href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
+            <a class="demo" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
         </div>
     </nav>
 
@@ -894,9 +894,9 @@
                 <h1>Command the property. Own the numbers.</h1>
                 <p class="hero-copy">Rental Ledger Pro brings rent collection, resident files, messages, documents, maintenance, accounting records, and owner-ready reports into one property-aware platform.</p>
                 <div class="actions">
-                    <a class="button primary" href="#platform">See the System</a>
-                    <a class="button secondary" href="{% url 'property_owner_intake' %}">Request Demo</a>
-                    <a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Launch Demo</a>
+                    <a class="button primary" href="{% url 'property_owner_intake' %}">Start Free Trial Setup</a>
+                    <a class="button secondary" href="#platform">See the System</a>
+                    <a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
                 </div>
             </div>
 
@@ -955,6 +955,33 @@
     </header>
 
     <main>
+        <section class="section" id="start">
+            <div class="section-head">
+                <div>
+                    <div class="eyebrow">How To Start</div>
+                    <h2>Start setup first. Preview the demo anytime.</h2>
+                </div>
+                <p style="max-width:520px">The demo shows what the system can do. The setup form is how an owner actually starts: we collect the portfolio basics, prepare a trial/onboarding path, then connect records and workflows.</p>
+            </div>
+            <div class="power-grid">
+                <article class="feature">
+                    <h3>1. Start owner setup</h3>
+                    <p>Enter owner contact details, property count, unit count, current software, and the reports/workflows you need first.</p>
+                    <div class="actions"><a class="button primary" href="{% url 'property_owner_intake' %}">Start Free Trial Setup</a></div>
+                </article>
+                <article class="feature">
+                    <h3>2. Prepare your records</h3>
+                    <p>Bring rent rolls, resident lists, payment ledgers, accounting exports, scanned tenant files, receipts, and invoices.</p>
+                    <div class="actions"><a class="button secondary" href="#launch">See Launch Path</a></div>
+                </article>
+                <article class="feature">
+                    <h3>3. Activate the workspace</h3>
+                    <p>We turn the owner setup into dashboards, property folders, reports, Stripe routing, resident setup codes, and operating workflows.</p>
+                    <div class="actions"><a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a></div>
+                </article>
+            </div>
+        </section>
+
         <section class="section" id="platform">
             <div class="section-head">
                 <div>
@@ -1187,7 +1214,7 @@
                             {% endfor %}
                         </ul>
                         <div class="actions">
-                            <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                            <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
                             <a class="button secondary" style="color:var(--night);border-color:#cad7d0;background:#fff;" href="{% url 'rental_ledger_contact' %}">Ask About Pricing</a>
                         </div>
                     </article>
@@ -1198,11 +1225,11 @@
         <section class="section">
             <div class="layout-map">
                 <div class="map-copy">
-                    <div class="eyebrow">Start The Fit Check</div>
-                    <h2 style="font-size:clamp(2rem,3.8vw,3.5rem); margin-top:14px">Tell us what your portfolio needs before we build the setup.</h2>
-                    <p>The intake asks about property count, units, current software, reporting needs, application fees, background checks, utilities, renters insurance, listings, accounting, and dashboard goals.</p>
+                    <div class="eyebrow">Start Setup</div>
+                    <h2 style="font-size:clamp(2rem,3.8vw,3.5rem); margin-top:14px">Create the owner setup path for your portfolio.</h2>
+                    <p>Start here to tell us your property count, units, current software, reporting needs, application fees, background checks, utilities, renters insurance, listings, accounting, and dashboard goals. We use this to open the right onboarding path.</p>
                     <div class="actions">
-                        <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                        <a class="button primary" href="{% url 'property_owner_intake' %}">Start Free Trial Setup</a>
                         <a class="button secondary" href="{% url 'rental_ledger_demo' %}">Preview Demo First</a>
                     </div>
                 </div>
@@ -1269,7 +1296,7 @@
                     </article>
                 </div>
                 <div class="actions" style="margin-top:24px;">
-                    <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                    <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
                     <a class="button secondary" style="color:var(--night);border-color:#cad7d0;background:#fff;" href="{% url 'rental_ledger_contact' %}">Talk Through Migration</a>
                 </div>
             </div>
@@ -1369,7 +1396,7 @@
                     </article>
                 </div>
                 <div class="actions" style="margin-top:24px;">
-                    <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                    <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
                     <a class="button secondary" href="{% url 'rental_ledger_contact' %}">Ask A Setup Question</a>
                 </div>
             </div>
