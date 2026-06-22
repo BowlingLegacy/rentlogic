@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
             name="RentalListingChannel",
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("channel", models.CharField(choices=[("rental_ledger", "Rental Ledger Pro Public Listing"), ("facebook_marketplace", "Facebook Marketplace"), ("craigslist", "Craigslist"), ("zillow", "Zillow Rental Network"), ("apartments_com", "Apartments.com"), ("yard_sign", "Yard Sign / QR Code"), ("other", "Other")], max_length=40)),
+                ("channel", models.CharField(choices=[("rental_ledger", "RentalReadyPro Public Listing"), ("facebook_marketplace", "Facebook Marketplace"), ("craigslist", "Craigslist"), ("zillow", "Zillow Rental Network"), ("apartments_com", "Apartments.com"), ("yard_sign", "Yard Sign / QR Code"), ("other", "Other")], max_length=40)),
                 ("status", models.CharField(choices=[("not_started", "Not Started"), ("ready", "Ready To Post"), ("posted", "Posted"), ("needs_update", "Needs Update"), ("removed", "Removed"), ("blocked", "Blocked / Not Available")], default="not_started", max_length=30)),
                 ("external_url", models.URLField(blank=True)),
                 ("notes", models.TextField(blank=True)),

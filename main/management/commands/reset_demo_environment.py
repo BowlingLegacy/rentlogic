@@ -300,7 +300,7 @@ class Command(BaseCommand):
                 property_benefits=spec["description"],
                 amenities="Online resident portal, document storage, maintenance requests, payment ledger, and owner reporting.",
                 screening_summary="Application fee, screening criteria, and owner review workflow are shown for demo purposes.",
-                listing_body="This seeded listing demonstrates how Rental Ledger Pro can publish availability and route applicants to the correct property.",
+                listing_body="This seeded listing demonstrates how RentalReadyPro can publish availability and route applicants to the correct property.",
                 status="published" if spec["availability_status"] == "available" else "draft",
                 created_by=spec["landlord"],
                 published_at=now if spec["availability_status"] == "available" else None,

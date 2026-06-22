@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
             y = 800
             lines = [
-                "Rental Ledger Pro Application",
+                "RentalReadyPro Application",
                 "",
                 f"Applicant: {app.full_name}",
                 f"Phone: {app.phone}",

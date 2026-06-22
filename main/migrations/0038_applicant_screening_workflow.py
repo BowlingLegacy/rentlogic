@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="property",
             name="screening_admin_fee",
-            field=models.DecimalField(blank=True, decimal_places=2, default=Decimal("0.00"), help_text="Optional client-facing admin fee. Do not charge renters on Rental Ledger Pro's behalf.", max_digits=10),
+            field=models.DecimalField(blank=True, decimal_places=2, default=Decimal("0.00"), help_text="Optional client-facing admin fee. Do not charge renters on RentalReadyPro's behalf.", max_digits=10),
         ),
         migrations.AddField(
             model_name="property",

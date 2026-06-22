@@ -31,6 +31,8 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "bowlinglegacy.com",
     "www.bowlinglegacy.com",
+    "rentalreadypro.com",
+    "www.rentalreadypro.com",
     "rentalledgerpro.com",
     "www.rentalledgerpro.com",
     "rentlogic-1.onrender.com",

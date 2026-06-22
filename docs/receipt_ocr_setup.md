@@ -1,12 +1,12 @@
 # Receipt OCR Setup
 
-Rental Ledger Pro can store receipt images and PDFs immediately. Text-based PDFs and text-like files are parsed locally. Scanned photos and image-only PDFs require an OCR provider.
+RentalReadyPro can store receipt images and PDFs immediately. Text-based PDFs and text-like files are parsed locally. Scanned photos and image-only PDFs require an OCR provider.
 
 ## Current Provider Hook
 
 The app supports a configurable `ocr_space` provider hook.
 
-Set these Render environment variables on the Rental Ledger Pro web service:
+Set these Render environment variables on the RentalReadyPro web service:
 
 ```text
 RECEIPT_OCR_PROVIDER=ocr_space

@@ -133,7 +133,7 @@ class AccountingReceiptForm(forms.ModelForm):
             "amount": "Amount",
         }
         help_texts = {
-            "receipt_file": "Upload the original receipt, invoice, or PDF. Rental Ledger Pro stores it as proof.",
+            "receipt_file": "Upload the original receipt, invoice, or PDF. RentalReadyPro stores it as proof.",
             "amount": "Enter the amount if you know it. OCR may prefill this after upload when the file contains readable text.",
         }
         widgets = {
@@ -911,7 +911,7 @@ class ExistingResidentIntakeForm(forms.ModelForm):
             "middle_name": "Middle name",
             "room_unit_label": "Current Room / Unit # / Label",
             "profile_photo": "Selfie or profile photo",
-            "sms_opted_in": "Yes, I agree to receive text messages from Rental Ledger Pro",
+            "sms_opted_in": "Yes, I agree to receive text messages from RentalReadyPro",
             "has_valid_odl": "I have a valid Oregon driver's license",
             "years_at_residence": "Years at this residence",
             "move_in_month": "Month you moved in",
@@ -1592,12 +1592,12 @@ class HousingApplicationForm(forms.ModelForm):
             "unconditional_regard_acknowledgment": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
         labels = {
-            "sms_opted_in": "Yes, I agree to receive text messages from Rental Ledger Pro",
+            "sms_opted_in": "Yes, I agree to receive text messages from RentalReadyPro",
             "screening_consent": "I consent to applicant screening and background-check processing for this property",
         }
         help_texts = {
-            "sms_opted_in": "Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not required to rent from Rental Ledger Pro.",
-            "screening_consent": "Consent allows the property owner or landlord to order and review applicant screening reports when required. Rental Ledger Pro stores the report workflow for the owner but does not make the final rental decision.",
+            "sms_opted_in": "Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not required to rent from RentalReadyPro.",
+            "screening_consent": "Consent allows the property owner or landlord to order and review applicant screening reports when required. RentalReadyPro stores the report workflow for the owner but does not make the final rental decision.",
         }
 
 

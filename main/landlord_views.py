@@ -19,21 +19,21 @@ def send_resident_invite_email(application):
         application.user.refresh_invite_code()
 
     send_mail(
-        "Your Rental Ledger Pro Resident Portal Access Code",
+        "Your RentalReadyPro Resident Portal Access Code",
         f"""Hello {application.full_name},
 
-Your Rental Ledger Pro resident portal access code is:
+Your RentalReadyPro resident portal access code is:
 
 {application.user.invite_code}
 
 Portal setup:
-https://rentalledgerpro.com/enter-invite-code/
+https://rentalreadypro.com/enter-invite-code/
 
 This code is single-use and expires 30 minutes after it is issued. If it expires, request a new code from the invite-code page.
 If this email is not in your inbox, check your junk or spam folder.
 
 Thank you,
-Rental Ledger Pro
+RentalReadyPro
 """,
         getattr(settings, "DEFAULT_FROM_EMAIL", None),
         [application.user.email],

@@ -32,7 +32,7 @@ DEFAULT_PLATFORM_FEES = [
         "default_amount": Decimal("0.00"),
         "percentage_rate": Decimal("0.500"),
         "public_label": "Online payment platform fee",
-        "description": "Optional Rental Ledger Pro margin on processed payments, tracked separately from owner rent income.",
+        "description": "Optional RentalReadyPro margin on processed payments, tracked separately from owner rent income.",
     },
     {
         "name": "Application processing admin fee",

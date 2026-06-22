@@ -199,7 +199,7 @@ class Property(models.Model):
         decimal_places=2,
         default=Decimal("0.00"),
         blank=True,
-        help_text="Optional client-facing admin fee. Do not charge renters on Rental Ledger Pro's behalf.",
+        help_text="Optional client-facing admin fee. Do not charge renters on RentalReadyPro's behalf.",
     )
     screening_criteria = models.TextField(
         blank=True,
@@ -508,7 +508,7 @@ class RentalListingPhoto(models.Model):
 
 class RentalListingChannel(models.Model):
     CHANNEL_CHOICES = [
-        ("rental_ledger", "Rental Ledger Pro Public Listing"),
+        ("rental_ledger", "RentalReadyPro Public Listing"),
         ("facebook_marketplace", "Facebook Marketplace"),
         ("craigslist", "Craigslist"),
         ("zillow", "Zillow Rental Network"),

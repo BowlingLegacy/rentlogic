@@ -1,6 +1,6 @@
 # Accounting Import Sample Pack
 
-These files are synthetic test fixtures for Rental Ledger Pro import development. They are not copied from a real owner, tenant, bank, or accounting account.
+These files are synthetic test fixtures for RentalReadyPro import development. They are not copied from a real owner, tenant, bank, or accounting account.
 
 Use them to test whether the financial upload flow can recognize common export shapes from accounting tools, banks, and property management systems.
 

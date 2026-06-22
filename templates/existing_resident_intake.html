@@ -43,10 +43,10 @@
 <nav class="topbar py-3">
     <div class="container">
         <a href="{% url 'property_detail' property.pk %}" class="brand-link d-flex align-items-center">
-            <img src="/static/images/rental-ledger-pro-logo.svg" class="brand-logo" alt="Rental Ledger Pro">
+            <img src="/static/images/rental-ledger-pro-logo.svg" class="brand-logo" alt="RentalReadyPro">
             <div>
-                <div class="brand-script">Rental Ledger Pro</div>
-                <div class="brand-subtitle">Rental Ledger Pro</div>
+                <div class="brand-script">RentalReadyPro</div>
+                <div class="brand-subtitle">RentalReadyPro</div>
             </div>
         </a>
     </div>
@@ -56,7 +56,7 @@
         <div class="profile-head">
             <div class="eyebrow">Existing Resident Profile</div>
             <h1 class="fw-bold mb-2">{{ property.name }}</h1>
-            <p class="mb-0">Use this form if you already live here and need your Rental Ledger Pro resident profile prepared.</p>
+            <p class="mb-0">Use this form if you already live here and need your RentalReadyPro resident profile prepared.</p>
         </div>
         <form method="post" enctype="multipart/form-data" class="p-3 p-md-5">
             {% csrf_token %}

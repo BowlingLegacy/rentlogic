@@ -1,11 +1,12 @@
-# Rental Ledger Pro
+# RentalReadyPro
 
-Rental Ledger Pro is a property operations and reporting platform for owners, landlords, and residents. It supports resident files, rent and payment ledgers, receipt-backed accounting records, owner reports, listings, applicant screening workflows, SMS/email notifications, and property-branded resident dashboards.
+RentalReadyPro is a property operations and reporting platform for owners, landlords, and residents. It supports resident files, rent and payment ledgers, receipt-backed accounting records, owner reports, listings, applicant screening workflows, SMS/email notifications, and property-branded resident dashboards.
 
 ## Primary Services
 
 - Production web service: `rentlogic-1`
-- Public domain: `rentalledgerpro.com`
+- Public domain: `rentalreadypro.com`
+- Alternate/redirect domain: `rentalledgerpro.com`
 - Render fallback URL: `https://rentlogic-1.onrender.com`
 - Demo URL: configured through `DEMO_PUBLIC_URL` when available
 
@@ -51,16 +52,17 @@ gunicorn core.wsgi:application
 
 ## Launch Checklist
 
-1. Confirm `rentalledgerpro.com` and `www.rentalledgerpro.com` are verified in Render.
-2. Confirm `ALLOWED_HOSTS` includes `rentalledgerpro.com`, `www.rentalledgerpro.com`, and the Render service host.
-3. Confirm the production database is connected with `DATABASE_URL`.
-4. Run migrations successfully.
-5. Create or confirm the first superadmin user.
-6. Confirm owner intake sends lead notification emails.
-7. Confirm the demo service URL is configured if available.
-8. Confirm Stripe keys are production or test keys as intended.
-9. Confirm SMS provider configuration before sending real texts.
-10. Confirm privacy policy, terms, and contact page are live.
+1. Confirm `rentalreadypro.com` and `www.rentalreadypro.com` are verified in Render.
+2. Confirm `rentalledgerpro.com` and `www.rentalledgerpro.com` redirect or remain attached as alternate domains during the transition.
+3. Confirm `ALLOWED_HOSTS` includes both RentalReadyPro and RentalLedgerPro domains plus the Render service host.
+4. Confirm the production database is connected with `DATABASE_URL`.
+5. Run migrations successfully.
+6. Create or confirm the first superadmin user.
+7. Confirm owner intake sends lead notification emails.
+8. Confirm the demo service URL is configured if available.
+9. Confirm Stripe keys are production or test keys as intended.
+10. Confirm SMS provider configuration before sending real texts.
+11. Confirm privacy policy, terms, and contact page are live.
 
 ## First Customer Setup Checklist
 

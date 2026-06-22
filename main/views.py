@@ -167,7 +167,7 @@ def notify_resident_of_portal_reply(request, resident_message):
         f"New secure portal reply: {resident_message.subject}",
         f"""Hello {application.full_name},
 
-You have a new secure reply in your Rental Ledger Pro resident portal.
+You have a new secure reply in your RentalReadyPro resident portal.
 
 Use this direct link to open My Requests. If you are not already signed in, the site will ask for your login first and then take you to the message area:
 {dashboard_url}
@@ -175,7 +175,7 @@ Use this direct link to open My Requests. If you are not already signed in, the 
 For privacy, the reply content is stored inside your portal rather than in this email.
 
 Thank you,
-Rental Ledger Pro
+RentalReadyPro
 """,
         getattr(settings, "DEFAULT_FROM_EMAIL", None),
         [application.email],
@@ -187,7 +187,7 @@ Rental Ledger Pro
 def notify_resident_of_portal_reply_sms(request, resident_message):
     portal_url = request.build_absolute_uri(reverse("resident_requests"))
     body = (
-        "Rental Ledger Pro: You have a new secure portal reply. "
+        "RentalReadyPro: You have a new secure portal reply. "
         f"Log in to view it: {portal_url} Reply STOP to opt out."
     )
     return send_sms_message(
@@ -213,7 +213,7 @@ Use this direct link. If you are not already signed in, the site will ask for yo
 {target_url}
 
 Thank you,
-Rental Ledger Pro
+RentalReadyPro
 """,
         getattr(settings, "DEFAULT_FROM_EMAIL", None),
         [application.email],
@@ -236,20 +236,20 @@ def send_resident_app_setup_email(request, application):
         app_lines.append(f"Setup page: {setup_url}")
     app_downloads = "\n".join(app_lines)
     send_mail(
-        "Your Rental Ledger Pro setup code",
+        "Your RentalReadyPro setup code",
         f"""Hello {application.full_name},
 
-Your Rental Ledger Pro app setup code is:
+Your RentalReadyPro app setup code is:
 
 {application.user.portal_setup_code}
 
-Download or open Rental Ledger Pro:
+Download or open RentalReadyPro:
 {app_downloads}
 
 Copy and paste the code into the app or setup page, then press enter. Your 30-minute setup window starts when the code is accepted.
 
 Thank you,
-Rental Ledger Pro
+RentalReadyPro
 """,
         getattr(settings, "DEFAULT_FROM_EMAIL", None),
         [application.user.email],
@@ -1398,7 +1398,7 @@ RENTAL_LEDGER_PRODUCT_PAGES = {
     "financial-command": {
         "eyebrow": "Financial Command",
         "title": "Reports that make property performance clear.",
-        "lead": "Rental Ledger Pro is built around the reports owners, lenders, buyers, and operators ask for: T-12, rent roll, NOI, cash flow after debt, payment ledger, valuation estimate, and receipt-backed expenses.",
+        "lead": "RentalReadyPro is built around the reports owners, lenders, buyers, and operators ask for: T-12, rent roll, NOI, cash flow after debt, payment ledger, valuation estimate, and receipt-backed expenses.",
         "accent": "cyan",
         "dashboard_title": "Owner / Manager Portfolio View",
         "dashboard_summary": "For owners and property managers with more than one property, the first screen should compare the portfolio, then let them drill into one property without mixing records.",
@@ -1455,7 +1455,7 @@ RENTAL_LEDGER_PRODUCT_PAGES = {
     "property-app": {
         "eyebrow": "Branded Property App",
         "title": "One platform that can feel local to every property.",
-        "lead": "Residents should not feel like they are using generic software. Rental Ledger Pro can present the right property name, visuals, notices, documents, payments, utility setup steps, and communication tools for each property.",
+        "lead": "Residents should not feel like they are using generic software. RentalReadyPro can present the right property name, visuals, notices, documents, payments, utility setup steps, and communication tools for each property.",
         "accent": "violet",
         "dashboard_title": "Tenant Dashboard",
         "dashboard_summary": "The resident view should be simple: what they owe, what documents need attention, how to message the property, and what property-specific setup steps remain.",
@@ -1478,7 +1478,7 @@ RENTAL_LEDGER_PRODUCT_PAGES = {
             ("Property identity", "Each property can carry its own name, photos, colors, notices, and resident instructions."),
             ("Resident payments", "Rent, utilities, deposits, balance details, payment history, and receipts stay easy to find."),
             ("Onboarding checklist", "Lease, emergency contact, property rules, utility vendor setup, and insurance links can guide new residents."),
-            ("Powered by Rental Ledger Pro", "The product brand can stay present without taking over the property experience."),
+            ("Powered by RentalReadyPro", "The product brand can stay present without taking over the property experience."),
         ],
     },
 }
@@ -1600,7 +1600,7 @@ RENTAL_LEDGER_DEMO_REPORTS = {
             ["Riverstone Court", "Water/Sewer", "City Utility", "$7,430", "12", "Jun 01", "Filed"],
             ["Riverstone Court", "Pest Control", "SafeNest Pest", "$1,200", "6", "May 17", "Filed"],
             ["Riverstone Court", "Turnover Materials", "Home Depot", "$4,775", "18", "Jun 03", "Needs receipt approval"],
-            ["Portfolio", "Software", "Rental Ledger Pro", "$3,600", "6", "Jun 01", "Filed"],
+            ["Portfolio", "Software", "RentalReadyPro", "$3,600", "6", "Jun 01", "Filed"],
         ],
     },
     "utility-trend": {
@@ -1726,7 +1726,7 @@ RENTAL_LEDGER_PRICING_MENU = {
         {
             "name": "Application processing",
             "price": "$15/applicant target",
-            "note": "Property owner/client can charge the applicant where legally allowed; Rental Ledger Pro charges for processing workflow support.",
+            "note": "Property owner/client can charge the applicant where legally allowed; RentalReadyPro charges for processing workflow support.",
             "action": "Ask about applications",
         },
         {
@@ -1764,7 +1764,7 @@ RENTAL_LEDGER_PRICING_MENU = {
     ],
     "savings_examples": [
         ["10 units", "$79/mo target plan", "$948/year software base", "Savings comes from replacing separate reporting, messaging, listing, and record cleanup tools."],
-        ["20 applications/year", "$15 processing target", "$300/year gross processing revenue", "Owner gets a cleaner workflow without Rental Ledger Pro charging renters directly."],
+        ["20 applications/year", "$15 processing target", "$300/year gross processing revenue", "Owner gets a cleaner workflow without RentalReadyPro charging renters directly."],
         ["1 migration project", "$499 setup target", "$499 one-time revenue", "One-time work creates a cleaner long-term account and stronger reports."],
         ["50 online payments/mo", "$2/payment target", "$100/mo platform revenue", "Small per-payment fee becomes meaningful at portfolio scale."],
     ],
@@ -1800,7 +1800,7 @@ def rental_ledger_demo(request):
 def rental_ledger_product_page(request, page_slug):
     page = RENTAL_LEDGER_PRODUCT_PAGES.get(page_slug)
     if not page:
-        raise Http404("Rental Ledger Pro page not found.")
+        raise Http404("RentalReadyPro page not found.")
 
     page_reports = {
         slug: RENTAL_LEDGER_DEMO_REPORTS[slug]
@@ -1818,7 +1818,7 @@ def rental_ledger_product_page(request, page_slug):
 def rental_ledger_demo_report(request, report_slug):
     report = RENTAL_LEDGER_DEMO_REPORTS.get(report_slug)
     if not report:
-        raise Http404("Rental Ledger Pro report not found.")
+        raise Http404("RentalReadyPro report not found.")
 
     return render(request, "rental_ledger_demo_report.html", {
         "report": report,
@@ -1908,19 +1908,19 @@ def property_owner_intake(request):
         ]
         if lead_email:
             send_mail(
-                "New Rental Ledger Pro owner questionnaire",
+                "New RentalReadyPro owner questionnaire",
                 "\n".join(summary_lines),
                 from_email,
                 [lead_email],
                 fail_silently=True,
             )
         send_mail(
-            "Rental Ledger Pro questionnaire received",
+            "RentalReadyPro questionnaire received",
             (
                 f"Hi {intake.full_name},\n\n"
-                "We received your Rental Ledger Pro property owner questionnaire. "
+                "We received your RentalReadyPro property owner questionnaire. "
                 "We will review your property, reporting, migration, and dashboard needs and follow up with the next step.\n\n"
-                "Rental Ledger Pro"
+                "RentalReadyPro"
             ),
             from_email,
             [intake.email],
@@ -2702,7 +2702,7 @@ def prepare_and_send_resident_app_setup_code(request, application):
         if not app_links:
             app_links.append(f"Setup: {setup_url}")
         sms_body = (
-            "Rental Ledger Pro: Your setup code is "
+            "RentalReadyPro: Your setup code is "
             f"{application.user.portal_setup_code}. "
             f"{' '.join(app_links)} "
             "Copy/paste the code into the app and press enter. Reply STOP to opt out."
@@ -4350,7 +4350,7 @@ def group_resident_message(request):
                 request,
                 application,
                 f"New secure portal message: {form.cleaned_data['subject']}",
-                "You have a new secure message in your Rental Ledger Pro resident portal.",
+                "You have a new secure message in your RentalReadyPro resident portal.",
                 "resident_requests",
             )
 
@@ -6585,7 +6585,7 @@ def parse_financial_upload(request, upload_id):
     try:
         sheet_name, headers, rows = read_financial_upload_rows(upload, selected_sheet_name=selected_sheet_name)
     except Exception as exc:
-        messages.error(request, f"Rental Ledger Pro could not read that file yet: {exc}")
+        messages.error(request, f"RentalReadyPro could not read that file yet: {exc}")
         return redirect("financial_upload")
 
     guesses = guess_financial_columns(headers)

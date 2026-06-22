@@ -1693,7 +1693,7 @@ class LiveFlowTests(TestCase):
         self.assertContains(resident_files, "Archived Resident Files")
         self.assertContains(resident_files, "Open Archive")
 
-    @override_settings(APP_STORE_URL="https://apps.apple.com/app/rental-ledger-pro", GOOGLE_PLAY_URL="https://play.google.com/store/apps/details?id=com.rentalledgerpro")
+    @override_settings(APP_STORE_URL="https://apps.apple.com/app/rental-ledger-pro", GOOGLE_PLAY_URL="https://play.google.com/store/apps/details?id=com.rentalreadypro")
     def test_landlord_can_send_app_setup_code_from_resident_file(self):
         landlord = User.objects.create_user(
             username="setup-code-landlord",
@@ -1736,11 +1736,11 @@ class LiveFlowTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(tenant_user.portal_setup_code, mail.outbox[0].body)
         self.assertIn("Apple App Store: https://apps.apple.com/app/rental-ledger-pro", mail.outbox[0].body)
-        self.assertIn("Google Play: https://play.google.com/store/apps/details?id=com.rentalledgerpro", mail.outbox[0].body)
+        self.assertIn("Google Play: https://play.google.com/store/apps/details?id=com.rentalreadypro", mail.outbox[0].body)
         sms_log = SmsMessageLog.objects.get(application=resident)
         self.assertEqual(sms_log.status, "skipped_no_consent")
         self.assertIn("iPhone: https://apps.apple.com/app/rental-ledger-pro", sms_log.body)
-        self.assertIn("Android: https://play.google.com/store/apps/details?id=com.rentalledgerpro", sms_log.body)
+        self.assertIn("Android: https://play.google.com/store/apps/details?id=com.rentalreadypro", sms_log.body)
 
     def test_landlord_does_not_send_app_setup_code_to_completed_login(self):
         landlord = User.objects.create_user(
@@ -3142,7 +3142,7 @@ class LiveFlowTests(TestCase):
 
         response = self.client.get(reverse("property_owner_dashboard"))
 
-        self.assertContains(response, "Rental Ledger Pro Billing")
+        self.assertContains(response, "RentalReadyPro Billing")
         self.assertContains(response, "Starter")
         self.assertContains(response, "Active")
         self.assertContains(response, "$19.00")
@@ -3304,10 +3304,10 @@ class LiveFlowTests(TestCase):
         self.assertEqual(intake.tenant_utility_setup_notes, "Power: Pacific Power. Water/sewer: city utility account.")
         self.assertEqual(intake.lead_stage, "new")
         self.assertEqual(len(mail.outbox), 2)
-        self.assertEqual(mail.outbox[0].subject, "New Rental Ledger Pro owner questionnaire")
+        self.assertEqual(mail.outbox[0].subject, "New RentalReadyPro owner questionnaire")
         self.assertIn("North Street Holdings", mail.outbox[0].body)
         self.assertIn("Desired reports: valuation_estimate, vendor_expense, utility_cost_trend", mail.outbox[0].body)
-        self.assertEqual(mail.outbox[1].subject, "Rental Ledger Pro questionnaire received")
+        self.assertEqual(mail.outbox[1].subject, "RentalReadyPro questionnaire received")
         self.assertEqual(mail.outbox[1].to, ["portfolio@example.com"])
 
     def test_property_owner_intake_accepts_blank_property_counts(self):
@@ -3334,7 +3334,7 @@ class LiveFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Watch your email")
         self.assertContains(response, "Open Demo")
-        self.assertContains(response, "Contact Rental Ledger Pro")
+        self.assertContains(response, "Contact RentalReadyPro")
 
     def test_existing_resident_intake_button_opens_for_new_property_and_saves_profile(self):
         property_obj = Property.objects.create(name="Painted Lady Inn")
@@ -7291,7 +7291,7 @@ class LiveFlowTests(TestCase):
         response = self.client.get(reverse("rental_ledger_contact"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Contact Rental Ledger Pro")
+        self.assertContains(response, "Contact RentalReadyPro")
         self.assertContains(response, "michael@bowlinglegacy.com")
         self.assertContains(response, "(541) 326-8047")
 
@@ -7321,7 +7321,7 @@ class LiveFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("Rental Ledger Pro password reset", mail.outbox[0].subject)
+        self.assertIn("RentalReadyPro password reset", mail.outbox[0].subject)
         self.assertIn("Use this link within 30 minutes", mail.outbox[0].body)
         self.assertContains(done_response, "The link expires after 30 minutes.")
         self.assertContains(invalid_response, "Reset Link Is Invalid")

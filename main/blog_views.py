@@ -94,7 +94,7 @@ Use this direct link. If you are not already signed in, the site will ask for yo
 {property_url}
 
 Thank you,
-Rental Ledger Pro
+RentalReadyPro
 """,
                 getattr(settings, "DEFAULT_FROM_EMAIL", None),
                 [resident.email],
@@ -105,7 +105,7 @@ Rental Ledger Pro
         sms_log = send_sms_message(
             resident,
             (
-                f"Rental Ledger Pro: New {post.property.name} community update posted. "
+                f"RentalReadyPro: New {post.property.name} community update posted. "
                 f"Log in to view it: {property_url} Reply STOP to opt out."
             )[:1500],
             request.user,
