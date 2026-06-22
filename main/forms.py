@@ -21,6 +21,8 @@ from .models import (
     RentalListing,
     RentalListingChannel,
     ReportTemplate,
+    PlatformFeeSetting,
+    PlatformRevenueEntry,
 )
 
 
@@ -561,6 +563,86 @@ class StripePaymentConfigurationForm(forms.ModelForm):
         if account_mode == "manual":
             cleaned_data["stripe_account_id"] = ""
 
+        return cleaned_data
+
+
+class PlatformFeeSettingForm(forms.ModelForm):
+    class Meta:
+        model = PlatformFeeSetting
+        fields = [
+            "name",
+            "category",
+            "billing_type",
+            "default_amount",
+            "percentage_rate",
+            "public_label",
+            "description",
+            "is_active",
+        ]
+        labels = {
+            "default_amount": "Flat amount",
+            "percentage_rate": "Percent rate",
+            "public_label": "Public label",
+            "is_active": "Active",
+        }
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "category": forms.Select(attrs={"class": "form-select"}),
+            "billing_type": forms.Select(attrs={"class": "form-select"}),
+            "default_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "percentage_rate": forms.NumberInput(attrs={"class": "form-control", "step": "0.001", "min": "0"}),
+            "public_label": forms.TextInput(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+
+class PlatformRevenueEntryForm(forms.ModelForm):
+    class Meta:
+        model = PlatformRevenueEntry
+        fields = [
+            "fee_setting",
+            "category",
+            "source_property",
+            "source_owner_email",
+            "description",
+            "amount",
+            "revenue_date",
+            "status",
+            "reference_number",
+            "notes",
+        ]
+        labels = {
+            "source_property": "Related property",
+            "source_owner_email": "Owner / client email",
+            "revenue_date": "Date",
+            "reference_number": "Reference",
+        }
+        widgets = {
+            "fee_setting": forms.Select(attrs={"class": "form-select"}),
+            "category": forms.Select(attrs={"class": "form-select"}),
+            "source_property": forms.Select(attrs={"class": "form-select"}),
+            "source_owner_email": forms.EmailInput(attrs={"class": "form-control"}),
+            "description": forms.TextInput(attrs={"class": "form-control"}),
+            "amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "revenue_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "status": forms.Select(attrs={"class": "form-select"}),
+            "reference_number": forms.TextInput(attrs={"class": "form-control"}),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
+
+    def __init__(self, *args, properties=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["fee_setting"].queryset = PlatformFeeSetting.objects.filter(is_active=True).order_by("category", "name")
+        self.fields["fee_setting"].required = False
+        self.fields["source_property"].queryset = properties if properties is not None else Property.objects.none()
+        self.fields["source_property"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fee_setting = cleaned_data.get("fee_setting")
+        if fee_setting and not cleaned_data.get("category"):
+            cleaned_data["category"] = fee_setting.category
         return cleaned_data
 
 

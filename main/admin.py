@@ -34,6 +34,8 @@ from .models import (
     RentalListingChannel,
     ReportTemplate,
     StripePaymentConfiguration,
+    PlatformFeeSetting,
+    PlatformRevenueEntry,
 )
 from django.utils import timezone
 
@@ -963,6 +965,21 @@ class ExpenseCategoryAdmin(admin.ModelAdmin):
     list_display = ("name", "entry_type", "is_active", "created_at")
     list_filter = ("entry_type", "is_active")
     search_fields = ("name",)
+
+
+@admin.register(PlatformFeeSetting)
+class PlatformFeeSettingAdmin(admin.ModelAdmin):
+    list_display = ("name", "category", "billing_type", "default_amount", "percentage_rate", "is_active")
+    list_filter = ("category", "billing_type", "is_active")
+    search_fields = ("name", "public_label", "description")
+
+
+@admin.register(PlatformRevenueEntry)
+class PlatformRevenueEntryAdmin(admin.ModelAdmin):
+    list_display = ("revenue_date", "category", "description", "amount", "status", "source_property", "source_owner_email")
+    list_filter = ("status", "category", "source_property", "revenue_date")
+    search_fields = ("description", "reference_number", "source_owner_email", "source_property__name", "notes")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(AccountingReceipt)

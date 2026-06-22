@@ -93,6 +93,7 @@ urlpatterns = [
     path("superadmin-dashboard/owner-intakes/<int:intake_id>/", views.superadmin_owner_intake_detail, name="superadmin_owner_intake_detail"),
     path("superadmin-dashboard/owner-intakes/<int:intake_id>/send-invite/", views.superadmin_send_owner_invite, name="superadmin_send_owner_invite"),
     path("superadmin-dashboard/residents/", views.superadmin_residents, name="superadmin_residents"),
+    path("superadmin-dashboard/platform-revenue/", views.platform_revenue_settings, name="platform_revenue_settings"),
     path("superadmin-dashboard/company-mailbox/", views.company_mailbox, name="company_mailbox"),
     path("superadmin-dashboard/company-mailbox/connect/", views.company_mailbox_connect, name="company_mailbox_connect"),
     path("superadmin-dashboard/company-mailbox/callback/", views.company_mailbox_callback, name="company_mailbox_callback"),

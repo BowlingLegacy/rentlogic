@@ -62,6 +62,8 @@ from .forms import (
     AdverseActionNoticeForm,
     RentalListingForm,
     RentalListingChannelForm,
+    PlatformFeeSettingForm,
+    PlatformRevenueEntryForm,
 )
 
 from .models import (
@@ -95,6 +97,8 @@ from .models import (
     RentalListingChannel,
     ReportTemplate,
     StripePaymentConfiguration,
+    PlatformFeeSetting,
+    PlatformRevenueEntry,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
 from .permissions import can_access_landlord_dashboard
@@ -3790,6 +3794,72 @@ def superadmin_dashboard(request):
         "superadmin_dashboard.html",
         get_superadmin_workspace_context()
     )
+
+
+@login_required
+@user_passes_test(staff_required)
+def platform_revenue_settings(request):
+    if not request.user.is_superuser and request.user.role != "admin":
+        return redirect("tenant_dashboard")
+
+    properties = Property.objects.order_by("name")
+    fee_form = PlatformFeeSettingForm(prefix="fee")
+    revenue_form = PlatformRevenueEntryForm(
+        prefix="revenue",
+        properties=properties,
+        initial={"revenue_date": timezone.localdate()},
+    )
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "save_fee_setting":
+            fee_form = PlatformFeeSettingForm(request.POST, prefix="fee")
+            if fee_form.is_valid():
+                fee_form.save()
+                messages.success(request, "Platform fee setting saved.")
+                return redirect("platform_revenue_settings")
+            messages.error(request, "Review the platform fee setting before saving.")
+
+        elif action == "record_revenue":
+            revenue_form = PlatformRevenueEntryForm(request.POST, prefix="revenue", properties=properties)
+            if revenue_form.is_valid():
+                entry = revenue_form.save(commit=False)
+                if entry.fee_setting and not entry.category:
+                    entry.category = entry.fee_setting.category
+                entry.created_by = request.user
+                entry.save()
+                messages.success(request, "Platform revenue entry recorded.")
+                return redirect("platform_revenue_settings")
+            messages.error(request, "Review the revenue entry before saving.")
+
+    fee_settings = PlatformFeeSetting.objects.order_by("category", "name")
+    revenue_entries = (
+        PlatformRevenueEntry.objects
+        .select_related("fee_setting", "source_property", "created_by")
+        .order_by("-revenue_date", "-created_at")[:150]
+    )
+    revenue_totals = {
+        status: PlatformRevenueEntry.objects.filter(status=status).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        for status, _label in PlatformRevenueEntry.STATUS_CHOICES
+    }
+    category_totals = (
+        PlatformRevenueEntry.objects
+        .exclude(status__in=["waived", "cancelled"])
+        .values("category")
+        .annotate(total=Sum("amount"), count=Count("id"))
+        .order_by("category")
+    )
+
+    return render(request, "platform_revenue_settings.html", {
+        "fee_form": fee_form,
+        "revenue_form": revenue_form,
+        "fee_settings": fee_settings,
+        "revenue_entries": revenue_entries,
+        "revenue_totals": revenue_totals,
+        "category_totals": category_totals,
+        "active_fee_count": fee_settings.filter(is_active=True).count(),
+    })
 
 
 @login_required

@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.platform-shell {
+    background: #071013;
+    border-radius: 24px;
+    color: #f6fbfb;
+    padding: 1.25rem;
+    box-shadow: 0 22px 50px rgba(0,0,0,.22);
+}
+.platform-hero {
+    border: 1px solid rgba(45, 212, 191, .35);
+    border-radius: 18px;
+    padding: 1.4rem;
+    background:
+        linear-gradient(135deg, rgba(45,212,191,.16), rgba(245,158,11,.12)),
+        #0b171a;
+}
+.platform-kicker {
+    color: #5eead4;
+    font-size: .76rem;
+    font-weight: 900;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+.platform-card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .8rem;
+    margin: 1rem 0;
+}
+.platform-card,
+.platform-panel {
+    background: rgba(255,255,255,.94);
+    border: 1px solid rgba(45,212,191,.18);
+    border-radius: 14px;
+    color: #0f172a;
+    padding: 1rem;
+}
+.platform-card-label {
+    color: #0f766e;
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+.platform-card-value {
+    font-family: Georgia, serif;
+    font-size: 1.85rem;
+    font-weight: 800;
+}
+.platform-panel h2 {
+    font-family: Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+.platform-table {
+    font-size: .9rem;
+}
+.platform-pill {
+    border-radius: 999px;
+    background: #ccfbf1;
+    color: #115e59;
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 900;
+    padding: .25rem .55rem;
+    text-transform: uppercase;
+}
+.platform-warning {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 12px;
+    color: #7c2d12;
+    padding: .85rem;
+}
+@media (max-width: 992px) {
+    .platform-card-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 576px) {
+    .platform-card-grid { grid-template-columns: 1fr; }
+}
+@media print {
+    .btn, form, .platform-warning { display: none !important; }
+    .platform-shell, .platform-hero, .platform-panel, .platform-card {
+        background: #fff !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+
+<div class="platform-shell">
+    <div class="platform-hero">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="platform-kicker">Rental Ledger Pro Revenue</div>
+                <h1 class="mb-2">Platform Revenue Settings</h1>
+                <p class="mb-0 text-light">
+                    Track money earned by Rental Ledger Pro separately from property rent, deposits, owner ledgers, and tenant balances.
+                </p>
+            </div>
+            <a class="btn btn-outline-light" href="{% url 'superadmin_dashboard' %}">Back to Admin</a>
+        </div>
+    </div>
+
+    <div class="platform-card-grid">
+        <div class="platform-card">
+            <div class="platform-card-label">Received</div>
+            <div class="platform-card-value">${{ revenue_totals.received|floatformat:2 }}</div>
+            <div class="text-muted">Collected platform revenue</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-card-label">Invoiced</div>
+            <div class="platform-card-value">${{ revenue_totals.invoiced|floatformat:2 }}</div>
+            <div class="text-muted">Billed but not marked received</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-card-label">Expected</div>
+            <div class="platform-card-value">${{ revenue_totals.expected|floatformat:2 }}</div>
+            <div class="text-muted">Forecasted or pending revenue</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-card-label">Active Fees</div>
+            <div class="platform-card-value">{{ active_fee_count }}</div>
+            <div class="text-muted">Enabled charge types</div>
+        </div>
+    </div>
+
+    <div class="platform-warning mb-3">
+        Platform revenue only. Record rent, utilities, security deposits, and owner property expenses in the property ledger, not here.
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-lg-5">
+            <section class="platform-panel h-100">
+                <h2>Add Fee Setting</h2>
+                <form method="post" class="row g-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="save_fee_setting">
+                    <div class="col-12">{{ fee_form.name.label_tag }}{{ fee_form.name }}</div>
+                    <div class="col-md-6">{{ fee_form.category.label_tag }}{{ fee_form.category }}</div>
+                    <div class="col-md-6">{{ fee_form.billing_type.label_tag }}{{ fee_form.billing_type }}</div>
+                    <div class="col-md-6">{{ fee_form.default_amount.label_tag }}{{ fee_form.default_amount }}</div>
+                    <div class="col-md-6">{{ fee_form.percentage_rate.label_tag }}{{ fee_form.percentage_rate }}</div>
+                    <div class="col-12">{{ fee_form.public_label.label_tag }}{{ fee_form.public_label }}</div>
+                    <div class="col-12">{{ fee_form.description.label_tag }}{{ fee_form.description }}</div>
+                    <div class="col-12 form-check ms-2">{{ fee_form.is_active }} {{ fee_form.is_active.label_tag }}</div>
+                    <div class="col-12"><button class="btn btn-dark w-100" type="submit">Save Fee Setting</button></div>
+                </form>
+            </section>
+        </div>
+        <div class="col-lg-7">
+            <section class="platform-panel h-100">
+                <h2>Record Platform Revenue</h2>
+                <form method="post" class="row g-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="record_revenue">
+                    <div class="col-md-6">{{ revenue_form.fee_setting.label_tag }}{{ revenue_form.fee_setting }}</div>
+                    <div class="col-md-6">{{ revenue_form.category.label_tag }}{{ revenue_form.category }}</div>
+                    <div class="col-md-6">{{ revenue_form.source_property.label_tag }}{{ revenue_form.source_property }}</div>
+                    <div class="col-md-6">{{ revenue_form.source_owner_email.label_tag }}{{ revenue_form.source_owner_email }}</div>
+                    <div class="col-12">{{ revenue_form.description.label_tag }}{{ revenue_form.description }}</div>
+                    <div class="col-md-4">{{ revenue_form.amount.label_tag }}{{ revenue_form.amount }}</div>
+                    <div class="col-md-4">{{ revenue_form.revenue_date.label_tag }}{{ revenue_form.revenue_date }}</div>
+                    <div class="col-md-4">{{ revenue_form.status.label_tag }}{{ revenue_form.status }}</div>
+                    <div class="col-12">{{ revenue_form.reference_number.label_tag }}{{ revenue_form.reference_number }}</div>
+                    <div class="col-12">{{ revenue_form.notes.label_tag }}{{ revenue_form.notes }}</div>
+                    <div class="col-12"><button class="btn btn-warning w-100" type="submit">Record Revenue</button></div>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <section class="platform-panel mb-3">
+        <h2>Fee Menu</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle platform-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Billing</th>
+                        <th>Flat</th>
+                        <th>Percent</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fee in fee_settings %}
+                    <tr>
+                        <td><strong>{{ fee.public_label|default:fee.name }}</strong><br><span class="text-muted">{{ fee.description|truncatechars:95 }}</span></td>
+                        <td>{{ fee.get_category_display }}</td>
+                        <td>{{ fee.get_billing_type_display }}</td>
+                        <td>${{ fee.default_amount|floatformat:2 }}</td>
+                        <td>{{ fee.percentage_rate|floatformat:3 }}%</td>
+                        <td>{% if fee.is_active %}<span class="platform-pill">Active</span>{% else %}<span class="text-muted">Inactive</span>{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-muted">No fee settings yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="platform-panel mb-3">
+        <h2>Revenue by Category</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle platform-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Entries</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in category_totals %}
+                    <tr>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.count }}</td>
+                        <td>${{ row.total|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-muted">No platform revenue recorded yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="platform-panel">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h2 class="mb-0">Platform Revenue Ledger</h2>
+            <button class="btn btn-outline-dark btn-sm" onclick="window.print()">Print</button>
+        </div>
+        <div class="table-responsive mt-3">
+            <table class="table table-sm align-middle platform-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Property / Client</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in revenue_entries %}
+                    <tr>
+                        <td>{{ entry.revenue_date }}</td>
+                        <td>{{ entry.get_status_display }}</td>
+                        <td>{{ entry.get_category_display }}</td>
+                        <td><strong>{{ entry.description }}</strong><br><span class="text-muted">{{ entry.reference_number|default:"No reference" }}</span></td>
+                        <td>{{ entry.source_property.name|default:"-" }}<br><span class="text-muted">{{ entry.source_owner_email|default:"" }}</span></td>
+                        <td>${{ entry.amount|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-muted">No platform revenue entries yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

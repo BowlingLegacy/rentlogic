@@ -284,6 +284,118 @@ class StripePaymentConfiguration(models.Model):
         return self.account_mode in ["owner_connect", "property_connect"] and self.status == "active" and bool(self.stripe_account_id)
 
 
+class PlatformFeeSetting(models.Model):
+    CATEGORY_CHOICES = [
+        ("subscription", "Monthly subscription"),
+        ("stripe_platform_fee", "Stripe platform fee"),
+        ("application_processing", "Application processing"),
+        ("background_screening_admin", "Background screening admin"),
+        ("migration_setup", "Migration / setup"),
+        ("premium_report", "Premium report"),
+        ("vacancy_listing", "Vacancy listing"),
+        ("insurance_referral", "Insurance referral"),
+        ("vendor_referral", "Vendor referral"),
+        ("advertising", "Advertising"),
+        ("other", "Other"),
+    ]
+    BILLING_TYPE_CHOICES = [
+        ("monthly", "Monthly"),
+        ("per_payment", "Per payment"),
+        ("per_application", "Per application"),
+        ("per_screening", "Per screening"),
+        ("one_time", "One time"),
+        ("per_report", "Per report"),
+        ("per_listing", "Per listing"),
+        ("referral", "Referral"),
+        ("advertising", "Advertising"),
+        ("other", "Other"),
+    ]
+
+    name = models.CharField(max_length=160)
+    category = models.CharField(max_length=40, choices=CATEGORY_CHOICES)
+    billing_type = models.CharField(max_length=30, choices=BILLING_TYPE_CHOICES)
+    default_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    percentage_rate = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        default=Decimal("0.000"),
+        help_text="Optional percentage, such as 1.000 for 1%.",
+    )
+    public_label = models.CharField(max_length=180, blank=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["category", "name"]
+
+    def __str__(self):
+        return self.public_label or self.name
+
+    def expected_amount_for(self, base_amount=None, quantity=1):
+        total = self.default_amount * Decimal(quantity or 1)
+        if base_amount is not None and self.percentage_rate:
+            total += Decimal(base_amount) * (self.percentage_rate / Decimal("100.000"))
+        return total.quantize(Decimal("0.01"))
+
+
+class PlatformRevenueEntry(models.Model):
+    STATUS_CHOICES = [
+        ("expected", "Expected"),
+        ("invoiced", "Invoiced"),
+        ("received", "Received"),
+        ("waived", "Waived"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    fee_setting = models.ForeignKey(
+        PlatformFeeSetting,
+        on_delete=models.SET_NULL,
+        related_name="revenue_entries",
+        null=True,
+        blank=True,
+    )
+    category = models.CharField(max_length=40, choices=PlatformFeeSetting.CATEGORY_CHOICES)
+    source_property = models.ForeignKey(
+        Property,
+        on_delete=models.SET_NULL,
+        related_name="platform_revenue_entries",
+        null=True,
+        blank=True,
+    )
+    source_owner_email = models.EmailField(blank=True)
+    source_payment = models.ForeignKey(
+        "Payment",
+        on_delete=models.SET_NULL,
+        related_name="platform_revenue_entries",
+        null=True,
+        blank=True,
+    )
+    description = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    revenue_date = models.DateField(default=timezone.localdate)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="expected")
+    reference_number = models.CharField(max_length=120, blank=True)
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="created_platform_revenue_entries",
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-revenue_date", "-created_at"]
+        verbose_name_plural = "Platform revenue entries"
+
+    def __str__(self):
+        return f"{self.get_category_display()} - ${self.amount} - {self.revenue_date}"
+
+
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="property_gallery/")
