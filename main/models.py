@@ -271,7 +271,7 @@ class StripePaymentConfiguration(models.Model):
         target = self.property.name if self.property else self.owner_email or "Platform default"
         return f"{target} - {self.get_account_mode_display()}"
 
-    @property
+    @builtins.property
     def can_collect_online_payments(self):
         if self.account_mode == "manual" or self.status == "disabled":
             return False
@@ -279,7 +279,7 @@ class StripePaymentConfiguration(models.Model):
             return self.status in ["active", "pending", "not_started"]
         return self.status == "active" and bool(self.stripe_account_id)
 
-    @property
+    @builtins.property
     def routes_to_connected_account(self):
         return self.account_mode in ["owner_connect", "property_connect"] and self.status == "active" and bool(self.stripe_account_id)
 
