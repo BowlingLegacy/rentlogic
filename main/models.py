@@ -226,6 +226,64 @@ class Property(models.Model):
         return self.name
 
 
+class StripePaymentConfiguration(models.Model):
+    ACCOUNT_MODE_CHOICES = [
+        ("platform", "Use Rental Ledger platform Stripe account"),
+        ("owner_connect", "Use one owner Stripe account for multiple properties"),
+        ("property_connect", "Use this property's own Stripe account"),
+        ("manual", "Manual/offline payments only"),
+    ]
+    STATUS_CHOICES = [
+        ("not_started", "Not Started"),
+        ("pending", "Pending Setup"),
+        ("active", "Active"),
+        ("disabled", "Disabled"),
+    ]
+
+    property = models.OneToOneField(
+        Property,
+        on_delete=models.CASCADE,
+        related_name="stripe_payment_configuration",
+        blank=True,
+        null=True,
+        help_text="Leave blank for an owner-level default used by multiple properties.",
+    )
+    owner_email = models.EmailField(
+        blank=True,
+        help_text="Owner login email this Stripe setup belongs to.",
+    )
+    account_mode = models.CharField(max_length=30, choices=ACCOUNT_MODE_CHOICES, default="platform")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="not_started")
+    stripe_account_id = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Stripe Connect account ID, such as acct_123. Do not store secret keys here.",
+    )
+    display_name = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["owner_email", "property__name", "id"]
+
+    def __str__(self):
+        target = self.property.name if self.property else self.owner_email or "Platform default"
+        return f"{target} - {self.get_account_mode_display()}"
+
+    @property
+    def can_collect_online_payments(self):
+        if self.account_mode == "manual" or self.status == "disabled":
+            return False
+        if self.account_mode == "platform":
+            return self.status in ["active", "pending", "not_started"]
+        return self.status == "active" and bool(self.stripe_account_id)
+
+    @property
+    def routes_to_connected_account(self):
+        return self.account_mode in ["owner_connect", "property_connect"] and self.status == "active" and bool(self.stripe_account_id)
+
+
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="property_gallery/")
@@ -903,6 +961,14 @@ class Payment(models.Model):
 
     stripe_session_id = models.CharField(max_length=255, blank=True)
     stripe_payment_intent = models.CharField(max_length=255, blank=True)
+    stripe_payment_configuration = models.ForeignKey(
+        StripePaymentConfiguration,
+        on_delete=models.SET_NULL,
+        related_name="payments",
+        blank=True,
+        null=True,
+    )
+    stripe_destination_account = models.CharField(max_length=255, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -33,6 +33,7 @@ from .models import (
     RentalListingPhoto,
     RentalListingChannel,
     ReportTemplate,
+    StripePaymentConfiguration,
 )
 from django.utils import timezone
 
@@ -197,11 +198,27 @@ class PropertyUtilityVendorInline(admin.TabularInline):
     extra = 0
 
 
+class StripePaymentConfigurationInline(admin.StackedInline):
+    model = StripePaymentConfiguration
+    extra = 0
+    fields = ("owner_email", "account_mode", "status", "stripe_account_id", "display_name", "notes")
+
+
 @admin.register(Property)
 class PropertyAdmin(admin.ModelAdmin):
-    inlines = [PropertyImageInline, RentalListingInline, PropertyRoomRentInline, PropertyUtilityVendorInline, PropertyOnboardingDocumentInline]
+    inlines = [StripePaymentConfigurationInline, PropertyImageInline, RentalListingInline, PropertyRoomRentInline, PropertyUtilityVendorInline, PropertyOnboardingDocumentInline]
     list_display = ("name", "availability_status", "available_date", "owner_email", "landlord_email", "charges_application_fee", "requires_background_check")
     list_filter = ("availability_status", "charges_application_fee", "requires_background_check")
+
+
+@admin.register(StripePaymentConfiguration)
+class StripePaymentConfigurationAdmin(admin.ModelAdmin):
+    list_display = ("display_target", "account_mode", "status", "stripe_account_id", "updated_at")
+    list_filter = ("account_mode", "status")
+    search_fields = ("owner_email", "property__name", "stripe_account_id", "display_name")
+
+    def display_target(self, obj):
+        return obj.property.name if obj.property else obj.owner_email or "Platform default"
 
 
 @admin.register(PropertyRoomRent)
@@ -800,6 +817,7 @@ class PaymentAdmin(admin.ModelAdmin):
         "payment_method",
         "amount",
         "status",
+        "stripe_destination_account",
         "reference_number",
         "recorded_by",
         "created_at",
@@ -809,6 +827,8 @@ class PaymentAdmin(admin.ModelAdmin):
         "payment_type",
         "payment_method",
         "status",
+        "stripe_payment_configuration",
+        "stripe_destination_account",
         "created_at",
     )
 
@@ -825,6 +845,8 @@ class PaymentAdmin(admin.ModelAdmin):
         "received_at",
         "stripe_session_id",
         "stripe_payment_intent",
+        "stripe_payment_configuration",
+        "stripe_destination_account",
         "created_at",
     )
 

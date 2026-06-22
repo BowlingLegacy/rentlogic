@@ -312,6 +312,14 @@
                 <div class="owner-command-go">Upload files</div>
             </a>
 
+            <a href="{% url 'owner_payment_settings' %}" class="owner-command-card">
+                <div class="owner-command-icon">S</div>
+                <div class="owner-command-label">Stripe</div>
+                <div class="owner-command-value">Route</div>
+                <div class="owner-command-note">Use one owner account or property-specific Stripe accounts</div>
+                <div class="owner-command-go">Payment settings</div>
+            </a>
+
             <a href="{% url 'listing_center' %}" class="owner-command-card">
                 <div class="owner-command-icon">L</div>
                 <div class="owner-command-label">Vacancy</div>
@@ -340,6 +348,7 @@
                 <a href="{% url 'owner_onboarding_wizard' %}" class="btn-owner">Onboarding Wizard</a>
                 <a href="{% url 'owner_property_create' %}" class="btn-owner">Add Property</a>
                 <a href="{% url 'listing_center' %}" class="btn-owner">Vacancy Listings</a>
+                <a href="{% url 'owner_payment_settings' %}" class="btn-dark-soft">Stripe Payment Settings</a>
                 <a href="{% url 'owner_landlord_invite' %}" class="btn-dark-soft">Invite Landlord</a>
                 <a href="{% url 'owner_financial_upload' %}" class="btn-dark-soft">Upload Financial Documents</a>
             </div>
@@ -382,6 +391,7 @@
                             <a class="metric-btn" href="{% url 'custom_reports' %}?property_id={{ card.property.id }}&report_type=resident_roster"><span class="metric-label">Active Residents</span><span class="metric-value">{{ card.resident_count }}</span></a>
                             <a class="metric-btn" href="{% url 'rent_roll' %}?property_id={{ card.property.id }}"><span class="metric-label">Scheduled Monthly Rent</span><span class="metric-value">${{ card.monthly_rent }}</span></a>
                             <a class="metric-btn" href="{% url 'payment_log' %}?property_id={{ card.property.id }}"><span class="metric-label">Collected {{ current_year }} YTD</span><span class="metric-value">${{ card.total_collected }}</span></a>
+                            <a class="metric-btn" href="{% url 'owner_payment_settings' %}"><span class="metric-label">Stripe Routing</span><span class="metric-value">{% if card.payment_setup.ready %}Ready{% else %}Setup{% endif %}</span></a>
                         </div>
                     </div>
 

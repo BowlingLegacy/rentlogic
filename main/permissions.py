@@ -26,7 +26,7 @@ def is_owner(user):
 
 
 def is_assistant_admin(user):
-    return user_role(user) == "assistant_admin"
+    return user_role(user) in ["assistant", "assistant_admin"]
 
 
 

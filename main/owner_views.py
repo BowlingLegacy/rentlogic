@@ -12,10 +12,51 @@ from .forms import (
     OwnerLandlordInviteForm,
     OwnerPropertyForm,
     OwnerPropertyOnboardingDocumentsForm,
+    StripePaymentConfigurationForm,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
-from .models import ApplicantDocument, CurrentResidentRosterEntry, FinancialUpload, Property, PropertyImage, HousingApplication, Payment, ResidentMessage
+from .models import ApplicantDocument, CurrentResidentRosterEntry, FinancialUpload, Property, PropertyImage, HousingApplication, Payment, ResidentMessage, StripePaymentConfiguration
 from .permissions import can_access_owner_dashboard, is_super_admin, is_assistant_admin
+
+
+def effective_stripe_configuration_for_property(property_obj):
+    property_config = getattr(property_obj, "stripe_payment_configuration", None)
+    if property_config:
+        return property_config
+
+    owner_email = (property_obj.owner_email or "").strip()
+    if owner_email:
+        owner_config = (
+            StripePaymentConfiguration.objects
+            .filter(property__isnull=True, owner_email__iexact=owner_email)
+            .order_by("-updated_at")
+            .first()
+        )
+        if owner_config:
+            return owner_config
+
+    return None
+
+
+def payment_setup_summary(property_obj):
+    config = effective_stripe_configuration_for_property(property_obj)
+    if config:
+        return {
+            "config": config,
+            "label": config.get_account_mode_display(),
+            "status": config.get_status_display(),
+            "ready": config.can_collect_online_payments,
+            "connected_account": config.stripe_account_id,
+        }
+
+    platform_ready = bool(settings.STRIPE_PUBLIC_KEY and settings.STRIPE_SECRET_KEY)
+    return {
+        "config": None,
+        "label": "Use Rental Ledger platform Stripe account",
+        "status": "Active" if platform_ready else "Missing platform keys",
+        "ready": platform_ready,
+        "connected_account": "",
+    }
 
 
 @login_required
@@ -75,6 +116,7 @@ def property_owner_dashboard(request):
             "deposits_held": deposits_held,
             "total_collected": total_collected,
             "open_messages": open_messages,
+            "payment_setup": payment_setup_summary(property_obj),
         })
 
     recent_messages = ResidentMessage.objects.filter(
@@ -124,6 +166,7 @@ def owner_onboarding_wizard(request):
             application__property=property_obj,
             packet_upload=True,
         ).count()
+        payment_setup = payment_setup_summary(property_obj)
 
         steps = [
             {
@@ -158,6 +201,14 @@ def owner_onboarding_wizard(request):
                 "url": "landlord_rent_setup_property",
                 "url_args": [property_obj.id],
                 "button": "Set Up Units",
+                "phase": "Money",
+            },
+            {
+                "label": "Stripe payment routing",
+                "complete": payment_setup["ready"],
+                "detail": f"{payment_setup['label']} - {payment_setup['status']}.",
+                "url": "owner_payment_settings",
+                "button": "Payment Settings",
                 "phase": "Money",
             },
             {
@@ -226,9 +277,9 @@ def owner_onboarding_wizard(request):
         {
             "label": "Stripe payments",
             "complete": bool(settings.STRIPE_PUBLIC_KEY and settings.STRIPE_SECRET_KEY),
-            "detail": "Required before online rent, deposit, and application fee payments can be collected.",
-            "url": "custom_reports",
-            "button": "Review Payment Reports",
+            "detail": "Platform Stripe keys plus owner/property routing are required for online rent, deposit, and application fee payments.",
+            "url": "owner_payment_settings",
+            "button": "Payment Settings",
         },
         {
             "label": "SMS notifications",
@@ -273,6 +324,81 @@ def owner_properties_for(user):
         return Property.objects.all().order_by("name")
 
     return Property.objects.filter(owner_email__iexact=user.email).order_by("name")
+
+
+@login_required
+@user_passes_test(can_access_owner_dashboard)
+def owner_payment_settings(request):
+    properties = owner_properties_for(request.user)
+    owner_email = request.user.email
+    if request.method == "POST":
+        config_id = request.POST.get("config_id")
+        instance = None
+        if config_id:
+            instance = get_object_or_404(StripePaymentConfiguration, id=config_id)
+            if not is_super_admin(request.user) and not is_assistant_admin(request.user):
+                allowed_property_ids = set(properties.values_list("id", flat=True))
+                if instance.property_id and instance.property_id not in allowed_property_ids:
+                    messages.error(request, "You cannot edit payment settings for that property.")
+                    return redirect("owner_payment_settings")
+                if not instance.property_id and instance.owner_email.lower() != owner_email.lower():
+                    messages.error(request, "You cannot edit payment settings for that owner.")
+                    return redirect("owner_payment_settings")
+
+        form = StripePaymentConfigurationForm(request.POST, instance=instance, properties=properties, owner_email=owner_email)
+        if form.is_valid():
+            config = form.save(commit=False)
+            if not is_super_admin(request.user) and not is_assistant_admin(request.user):
+                config.owner_email = owner_email
+            if config.property and not config.owner_email:
+                config.owner_email = config.property.owner_email
+            if not config.pk:
+                existing_config = None
+                if config.property:
+                    existing_config = getattr(config.property, "stripe_payment_configuration", None)
+                elif config.owner_email:
+                    existing_config = (
+                        StripePaymentConfiguration.objects
+                        .filter(property__isnull=True, owner_email__iexact=config.owner_email)
+                        .order_by("-updated_at")
+                        .first()
+                    )
+                if existing_config:
+                    existing_config.owner_email = config.owner_email
+                    existing_config.account_mode = config.account_mode
+                    existing_config.status = config.status
+                    existing_config.stripe_account_id = config.stripe_account_id
+                    existing_config.display_name = config.display_name
+                    existing_config.notes = config.notes
+                    existing_config.save()
+                    messages.success(request, "Stripe payment settings updated.")
+                    return redirect("owner_payment_settings")
+            config.save()
+            messages.success(request, "Stripe payment settings saved.")
+            return redirect("owner_payment_settings")
+    else:
+        form = StripePaymentConfigurationForm(properties=properties, owner_email=owner_email)
+
+    configs = (
+        StripePaymentConfiguration.objects
+        .filter(Q(property__in=properties) | Q(property__isnull=True, owner_email__iexact=owner_email))
+        .select_related("property")
+        .order_by("property__name", "-updated_at")
+    )
+    property_rows = [
+        {
+            "property": property_obj,
+            "payment_setup": payment_setup_summary(property_obj),
+        }
+        for property_obj in properties
+    ]
+
+    return render(request, "owner_payment_settings.html", {
+        "form": form,
+        "configs": configs,
+        "property_rows": property_rows,
+        "platform_stripe_ready": bool(settings.STRIPE_PUBLIC_KEY and settings.STRIPE_SECRET_KEY),
+    })
 
 
 @login_required

@@ -14,6 +14,7 @@ from .models import (
     AccountingReceipt,
     ExpenseCategory,
     PropertyOwnerIntake,
+    StripePaymentConfiguration,
     ExistingResidentIntake,
     LandlordIntake,
     AdverseActionNotice,
@@ -512,6 +513,55 @@ class OwnerLandlordInviteForm(forms.ModelForm):
     def __init__(self, *args, properties=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["property"].queryset = properties if properties is not None else Property.objects.none()
+
+
+class StripePaymentConfigurationForm(forms.ModelForm):
+    class Meta:
+        model = StripePaymentConfiguration
+        fields = ["property", "owner_email", "account_mode", "status", "stripe_account_id", "display_name", "notes"]
+        labels = {
+            "property": "Property override",
+            "owner_email": "Owner email",
+            "account_mode": "Stripe routing",
+            "status": "Setup status",
+            "stripe_account_id": "Stripe Connect account ID",
+            "display_name": "Display name",
+            "notes": "Internal notes",
+        }
+        help_texts = {
+            "property": "Leave blank to make this the owner-level default for all properties under this owner.",
+            "stripe_account_id": "Use a Stripe Connect account ID such as acct_123. Never paste Stripe secret keys here.",
+        }
+        widgets = {
+            "property": forms.Select(attrs={"class": "form-select"}),
+            "owner_email": forms.EmailInput(attrs={"class": "form-control"}),
+            "account_mode": forms.Select(attrs={"class": "form-select"}),
+            "status": forms.Select(attrs={"class": "form-select"}),
+            "stripe_account_id": forms.TextInput(attrs={"class": "form-control", "placeholder": "acct_..."}),
+            "display_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Owner account, main portfolio, or property account"}),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+        }
+
+    def __init__(self, *args, properties=None, owner_email="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["property"].required = False
+        self.fields["property"].queryset = properties if properties is not None else Property.objects.none()
+        if owner_email and not self.initial.get("owner_email") and not getattr(self.instance, "owner_email", ""):
+            self.initial["owner_email"] = owner_email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        account_mode = cleaned_data.get("account_mode")
+        status = cleaned_data.get("status")
+        stripe_account_id = (cleaned_data.get("stripe_account_id") or "").strip()
+
+        if account_mode in ["owner_connect", "property_connect"] and status == "active" and not stripe_account_id:
+            self.add_error("stripe_account_id", "An active connected Stripe account needs a Stripe Connect account ID.")
+
+        if account_mode == "manual":
+            cleaned_data["stripe_account_id"] = ""
+
+        return cleaned_data
 
 
 class PropertyOwnerIntakeForm(forms.ModelForm):

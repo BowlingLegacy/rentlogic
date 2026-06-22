@@ -94,6 +94,7 @@ from .models import (
     RentalListingPhoto,
     RentalListingChannel,
     ReportTemplate,
+    StripePaymentConfiguration,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
 from .permissions import can_access_landlord_dashboard
@@ -104,6 +105,49 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 LATE_FEE_AMOUNT = Decimal("25.00")
 T12_INCOME_PAYMENT_TYPES = ["rent", "utility", "late_fee", "application_fee", "background_check_fee", "other"]
+
+
+def get_effective_stripe_configuration(property_obj):
+    if not property_obj:
+        return None
+
+    property_config = getattr(property_obj, "stripe_payment_configuration", None)
+    if property_config:
+        return property_config
+
+    owner_email = (property_obj.owner_email or "").strip()
+    if owner_email:
+        return (
+            StripePaymentConfiguration.objects
+            .filter(property__isnull=True, owner_email__iexact=owner_email)
+            .order_by("-updated_at")
+            .first()
+        )
+
+    return None
+
+
+def stripe_checkout_kwargs_for_payment(payment):
+    config = get_effective_stripe_configuration(payment.application.property)
+    if not settings.STRIPE_PUBLIC_KEY or not settings.STRIPE_SECRET_KEY:
+        raise ValueError("Platform Stripe keys are not configured yet.")
+
+    if not config:
+        return {}, None, ""
+
+    if not config.can_collect_online_payments:
+        raise ValueError("Online payments are not active for this property.")
+
+    if config.routes_to_connected_account:
+        return {
+            "payment_intent_data": {
+                "transfer_data": {
+                    "destination": config.stripe_account_id,
+                }
+            }
+        }, config, config.stripe_account_id
+
+    return {}, config, ""
 
 
 def notify_resident_of_portal_reply(request, resident_message):
@@ -7816,6 +7860,19 @@ def create_checkout_session(request, application_id, payment_type="rent"):
         messages.success(request, "Demo payment recorded. No real card or bank transaction was processed.")
         return redirect("payment_success")
 
+    try:
+        connected_account_kwargs, payment_config, destination_account = stripe_checkout_kwargs_for_payment(payment)
+    except ValueError as exc:
+        payment.status = "failed"
+        payment.notes = f"{payment.notes}\nStripe setup error: {exc}".strip()
+        payment.save(update_fields=["status", "notes"])
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    if payment_config:
+        payment.stripe_payment_configuration = payment_config
+        payment.stripe_destination_account = destination_account
+        payment.save(update_fields=["stripe_payment_configuration", "stripe_destination_account"])
+
     session = stripe.checkout.Session.create(
         payment_method_types=["card", "cashapp"],
         mode="payment",
@@ -7829,7 +7886,12 @@ def create_checkout_session(request, application_id, payment_type="rent"):
         }],
         success_url=request.build_absolute_uri("/payment-success/"),
         cancel_url=request.build_absolute_uri("/tenant-dashboard/"),
-        metadata={"payment_id": str(payment.id)},
+        metadata={
+            "payment_id": str(payment.id),
+            "property_id": str(application.property_id or ""),
+            "stripe_payment_configuration_id": str(payment_config.id if payment_config else ""),
+        },
+        **connected_account_kwargs,
     )
 
     payment.stripe_session_id = session.id

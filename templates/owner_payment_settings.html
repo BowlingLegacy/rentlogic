@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.payments-shell {
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        #10151f;
+    color: #f8fbf7;
+    margin: -1rem;
+    min-height: 100vh;
+    padding: 1.25rem;
+}
+.payments-head,
+.payments-panel,
+.payments-card {
+    border-radius: 16px;
+    box-shadow: 0 16px 42px rgba(0,0,0,.18);
+}
+.payments-head {
+    background: linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94));
+    border: 1px solid rgba(16,199,194,.32);
+    margin-bottom: 1rem;
+    padding: 1.2rem 1.4rem;
+}
+.payments-kicker {
+    color: #a9d95b;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+.payments-title {
+    color: #f8fbf7;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-weight: 950;
+    line-height: 1;
+}
+.payments-panel {
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(255,255,255,.16);
+    color: #10151f;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+.payments-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, .72fr);
+}
+.payments-card {
+    background: #fff;
+    border: 1px solid #e1e9e3;
+    color: #10151f;
+    padding: 1rem;
+}
+.routing-table {
+    width: 100%;
+}
+.routing-table th {
+    color: #596772;
+    font-size: .72rem;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+.routing-table th,
+.routing-table td {
+    border-bottom: 1px solid #e1e9e3;
+    padding: .7rem .55rem;
+    vertical-align: top;
+}
+.status-pill {
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: .72rem;
+    font-weight: 950;
+    padding: .32rem .62rem;
+    text-transform: uppercase;
+}
+.status-pill.ready {
+    background: rgba(16,199,194,.16);
+    color: #087a78;
+}
+.status-pill.open {
+    background: rgba(255,179,66,.18);
+    color: #8a5600;
+}
+.btn-owner {
+    background: #ffb342;
+    border: 1px solid #ffb342;
+    border-radius: 10px;
+    color: #111;
+    display: inline-flex;
+    font-weight: 900;
+    padding: .6rem .9rem;
+    text-decoration: none;
+}
+.btn-owner:hover { background: #f2a52c; color: #111; }
+.btn-dark-soft {
+    background: #172233;
+    border: 1px solid rgba(16,199,194,.38);
+    border-radius: 10px;
+    color: #eaf2f5;
+    font-weight: 800;
+    padding: .55rem .85rem;
+    text-decoration: none;
+}
+.btn-dark-soft:hover { background: #223149; color: #10c7c2; }
+.form-help {
+    background: #eef8f6;
+    border: 1px solid rgba(16,199,194,.22);
+    border-radius: 12px;
+    color: #334250;
+    padding: .85rem;
+}
+@media (max-width: 992px) {
+    .payments-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="payments-shell">
+    <div class="payments-head d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <div class="payments-kicker">Stripe Routing</div>
+            <h1 class="payments-title mb-2">Payment Settings</h1>
+            <p class="mb-0" style="color:#c6d4dc;">Use one owner Stripe account across several properties, or override a specific property with its own Stripe account.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'property_owner_dashboard' %}" class="btn-dark-soft">Owner Dashboard</a>
+            <a href="{% url 'owner_onboarding_wizard' %}" class="btn-owner">Setup Wizard</a>
+        </div>
+    </div>
+
+    <section class="payments-panel">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+            <div>
+                <h2 class="h4 fw-bold mb-1">Effective Routing By Property</h2>
+                <p class="text-muted mb-0">Property settings win first. If no property override exists, the owner default is used. If neither exists, platform Stripe is used.</p>
+            </div>
+            <span class="status-pill {% if platform_stripe_ready %}ready{% else %}open{% endif %}">
+                Platform Stripe {% if platform_stripe_ready %}Ready{% else %}Missing{% endif %}
+            </span>
+        </div>
+        <div class="table-responsive">
+            <table class="routing-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Route</th>
+                        <th>Status</th>
+                        <th>Connected Account</th>
+                        <th>Online Collection</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in property_rows %}
+                        <tr>
+                            <td><strong>{{ row.property.name }}</strong><br><span class="text-muted small">{{ row.property.owner_email|default:"No owner email" }}</span></td>
+                            <td>{{ row.payment_setup.label }}</td>
+                            <td>{{ row.payment_setup.status }}</td>
+                            <td>{{ row.payment_setup.connected_account|default:"-" }}</td>
+                            <td>
+                                <span class="status-pill {% if row.payment_setup.ready %}ready{% else %}open{% endif %}">
+                                    {% if row.payment_setup.ready %}Ready{% else %}Needs Setup{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5">No properties connected to this owner yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="payments-grid">
+        <section class="payments-card">
+            <h2 class="h4 fw-bold mb-3">Saved Stripe Configurations</h2>
+            <div class="table-responsive">
+                <table class="routing-table">
+                    <thead>
+                        <tr>
+                            <th>Target</th>
+                            <th>Mode</th>
+                            <th>Status</th>
+                            <th>Account</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for config in configs %}
+                            <tr>
+                                <td>
+                                    <strong>{% if config.property %}{{ config.property.name }}{% else %}{{ config.owner_email|default:"Owner default" }}{% endif %}</strong>
+                                    <div class="small text-muted">{{ config.display_name|default:"-" }}</div>
+                                </td>
+                                <td>{{ config.get_account_mode_display }}</td>
+                                <td>{{ config.get_status_display }}</td>
+                                <td>{{ config.stripe_account_id|default:"-" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4">No saved Stripe routing yet. Add an owner default or a property override.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="payments-card">
+            <h2 class="h4 fw-bold mb-2">Add Or Update Routing</h2>
+            <div class="form-help mb-3">
+                Choose <strong>owner account</strong> when one Stripe account receives payments for several properties. Choose <strong>property account</strong> when that property has its own Stripe account. Keep secret keys out of this form.
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{{ field.label }}</label>
+                        {{ field }}
+                        {{ field.errors }}
+                        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn-owner">Save Payment Settings</button>
+            </form>
+        </section>
+    </div>
+</div>
+
+{% endblock %}
