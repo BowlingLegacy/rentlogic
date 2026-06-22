@@ -807,6 +807,71 @@ def apply_completed_payment_to_balance(payment):
     application.save()
 
 
+def platform_revenue_date_for_payment(payment):
+    if payment.received_at:
+        return timezone.localtime(payment.received_at).date()
+    return timezone.localdate()
+
+
+def record_platform_revenue_for_completed_payment(payment):
+    if payment.status != "completed":
+        return []
+
+    if not payment.stripe_session_id and not payment.payment_method.startswith("stripe_"):
+        return []
+
+    category_candidates = ["stripe_platform_fee"]
+    payment_fee_categories = {
+        "application_fee": "application_processing",
+        "background_check_fee": "background_screening_admin",
+    }
+    extra_category = payment_fee_categories.get(payment.payment_type)
+    if extra_category:
+        category_candidates.append(extra_category)
+
+    created_entries = []
+    application = payment.application
+    property_obj = application.property
+    owner_email = ""
+    if property_obj and property_obj.owner_email:
+        owner_email = property_obj.owner_email
+
+    for category in category_candidates:
+        if PlatformRevenueEntry.objects.filter(source_payment=payment, category=category).exists():
+            continue
+
+        fee_setting = (
+            PlatformFeeSetting.objects
+            .filter(category=category, is_active=True)
+            .order_by("id")
+            .first()
+        )
+        if not fee_setting:
+            continue
+
+        amount = fee_setting.expected_amount_for(base_amount=payment.amount)
+        if amount <= 0:
+            continue
+
+        label = fee_setting.public_label or fee_setting.name
+        entry = PlatformRevenueEntry.objects.create(
+            fee_setting=fee_setting,
+            category=category,
+            source_property=property_obj,
+            source_owner_email=owner_email,
+            source_payment=payment,
+            description=f"{label} from {payment.get_payment_type_display()} payment",
+            amount=amount,
+            revenue_date=platform_revenue_date_for_payment(payment),
+            status="received",
+            reference_number=payment.stripe_payment_intent or payment.stripe_session_id,
+            notes=f"Auto-created from payment {payment.id}. Resident payment amount: ${payment.amount}.",
+        )
+        created_entries.append(entry)
+
+    return created_entries
+
+
 def recalculated_rent_due(application):
     return application.move_in_rent_charge if application.move_in_rent_charge > 0 else application.monthly_rent
 
@@ -8092,15 +8157,18 @@ def stripe_webhook(request):
         return HttpResponse(status=200)
 
     payment.status = "completed"
-    payment.stripe_payment_intent = session["payment_intent"]
-    payment.save()
+    payment.stripe_payment_intent = session.get("payment_intent") or ""
+    if not payment.received_at:
+        payment.received_at = timezone.now()
+    payment.save(update_fields=["status", "stripe_payment_intent", "received_at"])
 
     payment_method_types = session.get("payment_method_types", [])
     if "cashapp" in payment_method_types:
         payment.payment_method = "stripe_cashapp"
-        payment.save()
+        payment.save(update_fields=["payment_method"])
 
     apply_completed_payment_to_balance(payment)
+    record_platform_revenue_for_completed_payment(payment)
 
     application = payment.application
     owner_email = settings.RENTAL_LEDGER_LEAD_EMAIL

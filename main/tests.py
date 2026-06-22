@@ -14,8 +14,8 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import AccountingReceipt, AccountingReceiptSplit, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
-from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, payment_amount_for_month, prorated_monthly_charge, rent_roll_rows_for_properties, t12_report_rows
+from .models import AccountingReceipt, AccountingReceiptSplit, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, PlatformFeeSetting, PlatformRevenueEntry, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
+from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, payment_amount_for_month, prorated_monthly_charge, record_platform_revenue_for_completed_payment, rent_roll_rows_for_properties, t12_report_rows
 
 
 @override_settings(
@@ -134,6 +134,58 @@ class LiveFlowTests(TestCase):
 
         application.refresh_from_db()
         self.assertEqual(application.application_fee_paid, Decimal("35.00"))
+
+    def test_completed_stripe_payment_records_platform_revenue_once(self):
+        property_obj = Property.objects.create(
+            name="Revenue Property",
+            owner_email="owner@example.com",
+        )
+        application = HousingApplication.objects.create(
+            full_name="Fee Applicant",
+            phone="555-0100",
+            email="fee@example.com",
+            age=42,
+            property=property_obj,
+            application_fee_amount=Decimal("35.00"),
+            income_source="Employment",
+            monthly_income=Decimal("2500.00"),
+            housing_need="Needs housing.",
+        )
+        PlatformFeeSetting.objects.create(
+            name="Test Stripe margin",
+            category="stripe_platform_fee",
+            billing_type="per_payment",
+            default_amount=Decimal("0.30"),
+            percentage_rate=Decimal("1.000"),
+            is_active=True,
+        )
+        PlatformFeeSetting.objects.create(
+            name="Test application processing",
+            category="application_processing",
+            billing_type="per_application",
+            default_amount=Decimal("5.00"),
+            percentage_rate=Decimal("0.000"),
+            is_active=True,
+        )
+        payment = Payment.objects.create(
+            application=application,
+            payment_type="application_fee",
+            payment_method="stripe_card",
+            amount=Decimal("35.00"),
+            status="completed",
+            stripe_session_id="cs_test_fee",
+            stripe_payment_intent="pi_test_fee",
+            received_at=timezone.now(),
+        )
+
+        record_platform_revenue_for_completed_payment(payment)
+        record_platform_revenue_for_completed_payment(payment)
+
+        entries = PlatformRevenueEntry.objects.filter(source_payment=payment).order_by("category")
+        self.assertEqual(entries.count(), 2)
+        self.assertEqual(entries.get(category="application_processing").amount, Decimal("5.00"))
+        self.assertEqual(entries.get(category="stripe_platform_fee").amount, Decimal("0.65"))
+        self.assertTrue(entries.filter(status="received", source_owner_email="owner@example.com").exists())
 
     @patch("main.views.stripe.checkout.Session.create")
     def test_recent_applicant_can_pay_application_fee_from_success_session(self, mock_session_create):
