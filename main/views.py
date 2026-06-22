@@ -1610,10 +1610,103 @@ RENTAL_LEDGER_DEMO_REPORTS = {
 }
 
 
+RENTAL_LEDGER_PRICING_MENU = {
+    "plans": [
+        {
+            "name": "Starter Property",
+            "best_for": "Single small property, private landlord, or first dashboard.",
+            "price": "$29/mo",
+            "unit_range": "1 property / up to 5 units",
+            "savings": "Designed to stay below common entry-level property software pricing while still including reports and resident files.",
+            "features": ["Resident files", "Rent roll", "Payment ledger", "Basic reports", "Resident messaging"],
+        },
+        {
+            "name": "Working Portfolio",
+            "best_for": "Small multi-family owners who need cleaner daily operations.",
+            "price": "$79/mo",
+            "unit_range": "6-20 units",
+            "savings": "Lower recurring cost target for owners who need reports, payment tracking, and resident workflows without paying enterprise pricing.",
+            "features": ["Multiple properties", "Owner dashboard", "Landlord dashboard", "Custom reports", "Vacancy listing tools"],
+        },
+        {
+            "name": "Portfolio Pro",
+            "best_for": "Growing operators who need reporting, migration, and owner-ready records.",
+            "price": "$149/mo",
+            "unit_range": "21-75 units",
+            "savings": "Higher capability without jumping straight into large-platform pricing.",
+            "features": ["Advanced reports", "Payment routing", "Receipt OCR workflow", "Tenant file packets", "Priority setup review"],
+        },
+        {
+            "name": "Custom Portfolio",
+            "best_for": "Larger portfolios, mixed-use property, or special reporting needs.",
+            "price": "Custom",
+            "unit_range": "76+ units",
+            "savings": "Quoted to beat bloated software stacks by replacing separate tools with one operating record.",
+            "features": ["Custom migration", "Custom reports", "Multi-role access", "Portfolio rollout plan", "Dedicated onboarding scope"],
+        },
+    ],
+    "fees": [
+        {
+            "name": "Online payment platform fee",
+            "price": "0.5% or $2/payment target",
+            "note": "Small enough to compete on recurring cost while creating revenue as payment volume grows.",
+            "action": "Ask about Stripe setup",
+        },
+        {
+            "name": "Application processing",
+            "price": "$15/applicant target",
+            "note": "Property owner/client can charge the applicant where legally allowed; Rental Ledger Pro charges for processing workflow support.",
+            "action": "Ask about applications",
+        },
+        {
+            "name": "Background screening workflow",
+            "price": "Provider cost + $10-$20 admin target",
+            "note": "Owner receives/reviews the report and makes the decision. The system organizes scoring support and adverse-action paperwork.",
+            "action": "Ask about screening",
+        },
+        {
+            "name": "Migration and setup",
+            "price": "$199-$999+ one-time",
+            "note": "Bigger savings show here: spreadsheet cleanup, resident import, rent history, scanned files, and report verification are priced by complexity.",
+            "action": "Ask about migration",
+        },
+        {
+            "name": "Premium report package",
+            "price": "$49-$99/report package",
+            "note": "Valuation estimate, lender packet, T-12, rent roll, NOI, cash flow, vendor expense, and utility trend support.",
+            "action": "Ask about reports",
+        },
+        {
+            "name": "Listing setup package",
+            "price": "$49-$99/vacancy target",
+            "note": "Unit photos, listing text, application path, and publication-ready copy for vacancy marketing.",
+            "action": "Ask about listings",
+        },
+    ],
+    "revenue_channels": [
+        "Renters insurance referral or sponsored placement",
+        "Landlord insurance referral",
+        "Pest control, cleaning, maintenance, appliance, flooring, and paint vendor referrals",
+        "Bookkeeping or tax prep partner referrals",
+        "Loan/refinance broker referrals for owners using valuation reports",
+        "Premium document packets and lease/addendum setup",
+    ],
+    "savings_examples": [
+        ["10 units", "$79/mo target plan", "$948/year software base", "Savings comes from replacing separate reporting, messaging, listing, and record cleanup tools."],
+        ["20 applications/year", "$15 processing target", "$300/year gross processing revenue", "Owner gets a cleaner workflow without Rental Ledger Pro charging renters directly."],
+        ["1 migration project", "$499 setup target", "$499 one-time revenue", "One-time work creates a cleaner long-term account and stronger reports."],
+        ["50 online payments/mo", "$2/payment target", "$100/mo platform revenue", "Small per-payment fee becomes meaningful at portfolio scale."],
+    ],
+}
+
+
 def rental_ledger_pro_home(request):
     return render(request, "rental_ledger_pro_home.html", {
         "product_pages": RENTAL_LEDGER_PRODUCT_PAGES,
         "demo_reports": RENTAL_LEDGER_DEMO_REPORTS,
+        "pricing_menu": RENTAL_LEDGER_PRICING_MENU,
+        "lead_email": getattr(settings, "RENTAL_LEDGER_LEAD_EMAIL", "michael@bowlinglegacy.com"),
+        "demo_public_url": getattr(settings, "DEMO_PUBLIC_URL", ""),
     })
 
 

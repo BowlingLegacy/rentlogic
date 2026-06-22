@@ -547,6 +547,152 @@
             background: #fff;
         }
 
+        .pricing-wrap {
+            background: linear-gradient(135deg, rgba(248,251,247,.98), rgba(231,244,241,.96));
+            color: var(--night);
+            padding: 62px 0;
+        }
+
+        .pricing-wrap .section { margin-block: 0; }
+        .pricing-wrap .section-head p { color: #56626d; }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .price-card,
+        .fee-card,
+        .savings-card {
+            background: #fff;
+            border: 1px solid #dfe7e2;
+            border-radius: 12px;
+            color: var(--night);
+            box-shadow: 0 16px 42px rgba(16,21,31,.08);
+        }
+
+        .price-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 420px;
+            padding: 20px;
+        }
+
+        .price-card h3,
+        .fee-card h3 {
+            font-size: 1.35rem;
+            margin: 0 0 8px;
+        }
+
+        .price-value {
+            color: var(--cyan);
+            font-size: 2.2rem;
+            font-weight: 950;
+            line-height: 1;
+            margin: 12px 0 6px;
+        }
+
+        .price-range,
+        .price-copy,
+        .fee-card p,
+        .savings-card p {
+            color: #596772;
+            line-height: 1.45;
+        }
+
+        .price-card ul {
+            display: grid;
+            gap: 8px;
+            list-style: none;
+            margin: 18px 0 0;
+            padding: 0;
+        }
+
+        .price-card li {
+            border-top: 1px solid #e8eee9;
+            font-weight: 850;
+            padding-top: 8px;
+        }
+
+        .price-card .button {
+            margin-top: auto;
+            width: 100%;
+        }
+
+        .fee-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .fee-card {
+            padding: 18px;
+        }
+
+        .fee-price {
+            color: var(--violet);
+            font-size: 1.35rem;
+            font-weight: 950;
+            margin: 8px 0;
+        }
+
+        .fee-action {
+            color: #087a78;
+            display: inline-flex;
+            font-weight: 950;
+            margin-top: 8px;
+            text-decoration: none;
+        }
+
+        .savings-ledger {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .savings-card {
+            padding: 18px;
+        }
+
+        .savings-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .savings-table th,
+        .savings-table td {
+            border-bottom: 1px solid #e1e9e3;
+            padding: 10px 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .savings-table th {
+            color: #596772;
+            font-size: .72rem;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .channel-list {
+            display: grid;
+            gap: 9px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .channel-list li {
+            background: #f5faf8;
+            border: 1px solid #dfe7e2;
+            border-radius: 8px;
+            font-weight: 850;
+            padding: 10px 12px;
+        }
+
         .palette-wrap {
             background: #f7f6ef;
             color: var(--night);
@@ -714,7 +860,7 @@
             .signal-panel { left: 0; top: 0; width: 100%; }
             .phone-panel { right: auto; left: 50%; transform: translateX(-50%); bottom: 0; }
             .section-head { display: grid; align-items: start; }
-            .power-grid, .palette, .report-showcase, .dashboard-stage, .dashboard-stage:nth-child(even), .metric-strip, .launch-grid, .faq-grid { grid-template-columns: 1fr; }
+            .power-grid, .palette, .report-showcase, .pricing-grid, .fee-grid, .savings-ledger, .dashboard-stage, .dashboard-stage:nth-child(even), .metric-strip, .launch-grid, .faq-grid { grid-template-columns: 1fr; }
             .dashboard-stage:nth-child(even) .dashboard-copy { order: 0; }
             .dash-grid { grid-template-columns: 1fr; }
             .wide { grid-column: span 1; }
@@ -730,6 +876,7 @@
             <a href="{% url 'rental_ledger_product_page' 'financial-command' %}">Financial</a>
             <a href="{% url 'rental_ledger_product_page' 'operations-hub' %}">Operations</a>
             <a href="{% url 'rental_ledger_product_page' 'property-app' %}">Property App</a>
+            <a href="#pricing">Pricing</a>
             <a href="#records">Records</a>
             <a href="#workflow">Workflow</a>
             <a href="#launch">Launch Path</a>
@@ -954,6 +1101,97 @@
                         </div>
                     </article>
                 {% endfor %}
+            </div>
+        </section>
+
+        <section class="pricing-wrap" id="pricing">
+            <div class="section">
+                <div class="section-head">
+                    <div>
+                        <div class="eyebrow">Pricing Menu</div>
+                        <h2>Lower recurring cost, serious operating tools.</h2>
+                    </div>
+                    <p style="max-width:540px">Rental Ledger Pro should sell on savings and clarity: cleaner reports, fewer duplicate workflows, easier resident setup, and pricing that avoids forcing small owners into oversized software.</p>
+                </div>
+
+                <div class="pricing-grid">
+                    {% for plan in pricing_menu.plans %}
+                        <article class="price-card">
+                            <div class="chip">{{ plan.unit_range }}</div>
+                            <h3>{{ plan.name }}</h3>
+                            <div class="price-value">{{ plan.price }}</div>
+                            <div class="price-range">{{ plan.best_for }}</div>
+                            <p class="price-copy">{{ plan.savings }}</p>
+                            <ul>
+                                {% for feature in plan.features %}
+                                    <li>{{ feature }}</li>
+                                {% endfor %}
+                            </ul>
+                            <a class="button primary" href="{% url 'property_owner_intake' %}">Request Fit Check</a>
+                        </article>
+                    {% endfor %}
+                </div>
+
+                <div class="section-head" style="margin-top:34px;">
+                    <div>
+                        <div class="eyebrow">Add-On Revenue</div>
+                        <h2>Fees tied to real work, not clutter.</h2>
+                    </div>
+                    <p style="max-width:520px">Recurring charges stay competitive. Larger savings and higher fees belong on migration, setup, premium reports, and services that save an owner from manual cleanup.</p>
+                </div>
+
+                <div class="fee-grid">
+                    {% for fee in pricing_menu.fees %}
+                        <article class="fee-card">
+                            <h3>{{ fee.name }}</h3>
+                            <div class="fee-price">{{ fee.price }}</div>
+                            <p>{{ fee.note }}</p>
+                            <a class="fee-action" href="mailto:{{ lead_email|default:'michael@bowlinglegacy.com' }}?subject=Rental%20Ledger%20Pro%20-%20{{ fee.action|urlencode }}">{{ fee.action }}</a>
+                        </article>
+                    {% endfor %}
+                </div>
+
+                <div class="savings-ledger">
+                    <article class="savings-card">
+                        <h3>Example savings story</h3>
+                        <p>These examples show how small recurring fees plus practical one-time setup can produce a noticeable value story without pricing small owners out.</p>
+                        <div class="table-scroll">
+                            <table class="savings-table">
+                                <thead>
+                                    <tr>
+                                        <th>Scenario</th>
+                                        <th>Menu Price</th>
+                                        <th>Impact</th>
+                                        <th>Why It Sells</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in pricing_menu.savings_examples %}
+                                        <tr>
+                                            {% for cell in row %}
+                                                <td>{{ cell }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="savings-card">
+                        <h3>Advertising and referral lanes</h3>
+                        <p>These should be separate income categories inside Rental Ledger Pro so software revenue, payment fees, referrals, and setup work do not get mixed together.</p>
+                        <ul class="channel-list">
+                            {% for channel in pricing_menu.revenue_channels %}
+                                <li>{{ channel }}</li>
+                            {% endfor %}
+                        </ul>
+                        <div class="actions">
+                            <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Questionnaire</a>
+                            <a class="button secondary" style="color:var(--night);border-color:#cad7d0;background:#fff;" href="{% url 'rental_ledger_contact' %}">Ask About Pricing</a>
+                        </div>
+                    </article>
+                </div>
             </div>
         </section>
 
