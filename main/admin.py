@@ -36,6 +36,7 @@ from .models import (
     StripePaymentConfiguration,
     PlatformFeeSetting,
     PlatformRevenueEntry,
+    OwnerBillingAccount,
 )
 from django.utils import timezone
 
@@ -979,6 +980,14 @@ class PlatformRevenueEntryAdmin(admin.ModelAdmin):
     list_display = ("revenue_date", "category", "description", "amount", "status", "source_property", "source_owner_email")
     list_filter = ("status", "category", "source_property", "revenue_date")
     search_fields = ("description", "reference_number", "source_owner_email", "source_property__name", "notes")
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(OwnerBillingAccount)
+class OwnerBillingAccountAdmin(admin.ModelAdmin):
+    list_display = ("owner_email", "owner_name", "plan", "status", "monthly_amount", "next_billing_date", "trial_end_date")
+    list_filter = ("plan", "status", "next_billing_date")
+    search_fields = ("owner_email", "owner_name", "stripe_customer_id", "stripe_subscription_id")
     readonly_fields = ("created_at", "updated_at")
 
 

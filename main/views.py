@@ -64,6 +64,7 @@ from .forms import (
     RentalListingChannelForm,
     PlatformFeeSettingForm,
     PlatformRevenueEntryForm,
+    OwnerBillingAccountForm,
 )
 
 from .models import (
@@ -99,6 +100,7 @@ from .models import (
     StripePaymentConfiguration,
     PlatformFeeSetting,
     PlatformRevenueEntry,
+    OwnerBillingAccount,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
 from .permissions import can_access_landlord_dashboard
@@ -3874,6 +3876,7 @@ def platform_revenue_settings(request):
         properties=properties,
         initial={"revenue_date": timezone.localdate()},
     )
+    billing_form = OwnerBillingAccountForm(prefix="billing")
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -3898,7 +3901,40 @@ def platform_revenue_settings(request):
                 return redirect("platform_revenue_settings")
             messages.error(request, "Review the revenue entry before saving.")
 
+        elif action == "save_billing_account":
+            billing_form = OwnerBillingAccountForm(request.POST, prefix="billing")
+            if billing_form.is_valid():
+                billing_account = billing_form.save(commit=False)
+                existing_account = (
+                    OwnerBillingAccount.objects
+                    .filter(owner_email__iexact=billing_account.owner_email)
+                    .first()
+                )
+                if existing_account:
+                    for field in [
+                        "owner_name",
+                        "plan",
+                        "status",
+                        "monthly_amount",
+                        "included_property_count",
+                        "included_unit_count",
+                        "trial_start_date",
+                        "trial_end_date",
+                        "next_billing_date",
+                        "stripe_customer_id",
+                        "stripe_subscription_id",
+                        "internal_notes",
+                    ]:
+                        setattr(existing_account, field, getattr(billing_account, field))
+                    existing_account.save()
+                else:
+                    billing_account.save()
+                messages.success(request, "Owner billing account saved.")
+                return redirect("platform_revenue_settings")
+            messages.error(request, "Review the owner billing account before saving.")
+
     fee_settings = PlatformFeeSetting.objects.order_by("category", "name")
+    billing_accounts = OwnerBillingAccount.objects.order_by("owner_email")
     revenue_entries = (
         PlatformRevenueEntry.objects
         .select_related("fee_setting", "source_property", "created_by")
@@ -3921,6 +3957,8 @@ def platform_revenue_settings(request):
         "revenue_form": revenue_form,
         "fee_settings": fee_settings,
         "revenue_entries": revenue_entries,
+        "billing_accounts": billing_accounts,
+        "billing_form": billing_form,
         "revenue_totals": revenue_totals,
         "category_totals": category_totals,
         "active_fee_count": fee_settings.filter(is_active=True).count(),

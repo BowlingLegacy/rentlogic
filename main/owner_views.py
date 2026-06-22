@@ -15,7 +15,7 @@ from .forms import (
     StripePaymentConfigurationForm,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
-from .models import ApplicantDocument, CurrentResidentRosterEntry, FinancialUpload, Property, PropertyImage, HousingApplication, Payment, ResidentMessage, StripePaymentConfiguration
+from .models import ApplicantDocument, CurrentResidentRosterEntry, FinancialUpload, OwnerBillingAccount, Property, PropertyImage, HousingApplication, Payment, ResidentMessage, StripePaymentConfiguration
 from .permissions import can_access_owner_dashboard, is_super_admin, is_assistant_admin
 
 
@@ -57,6 +57,12 @@ def payment_setup_summary(property_obj):
         "ready": platform_ready,
         "connected_account": "",
     }
+
+
+def owner_billing_summary(user):
+    if not user.email:
+        return None
+    return OwnerBillingAccount.objects.filter(owner_email__iexact=user.email).first()
 
 
 @login_required
@@ -138,6 +144,7 @@ def property_owner_dashboard(request):
         "current_year": today.year,
         "total_open_messages": total_open_messages,
         "recent_messages": recent_messages,
+        "billing_account": owner_billing_summary(request.user),
     })
 
 

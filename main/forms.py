@@ -23,6 +23,7 @@ from .models import (
     ReportTemplate,
     PlatformFeeSetting,
     PlatformRevenueEntry,
+    OwnerBillingAccount,
 )
 
 
@@ -644,6 +645,53 @@ class PlatformRevenueEntryForm(forms.ModelForm):
         if fee_setting and not cleaned_data.get("category"):
             cleaned_data["category"] = fee_setting.category
         return cleaned_data
+
+
+class OwnerBillingAccountForm(forms.ModelForm):
+    class Meta:
+        model = OwnerBillingAccount
+        fields = [
+            "owner_email",
+            "owner_name",
+            "plan",
+            "status",
+            "monthly_amount",
+            "included_property_count",
+            "included_unit_count",
+            "trial_start_date",
+            "trial_end_date",
+            "next_billing_date",
+            "stripe_customer_id",
+            "stripe_subscription_id",
+            "internal_notes",
+        ]
+        labels = {
+            "owner_email": "Owner email",
+            "owner_name": "Owner / company name",
+            "monthly_amount": "Monthly subscription",
+            "included_property_count": "Included properties",
+            "included_unit_count": "Included units",
+            "trial_start_date": "Trial start",
+            "trial_end_date": "Trial end",
+            "next_billing_date": "Next billing date",
+            "stripe_customer_id": "Stripe customer ID",
+            "stripe_subscription_id": "Stripe subscription ID",
+        }
+        widgets = {
+            "owner_email": forms.EmailInput(attrs={"class": "form-control"}),
+            "owner_name": forms.TextInput(attrs={"class": "form-control"}),
+            "plan": forms.Select(attrs={"class": "form-select"}),
+            "status": forms.Select(attrs={"class": "form-select"}),
+            "monthly_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "included_property_count": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+            "included_unit_count": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+            "trial_start_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "trial_end_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "next_billing_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "stripe_customer_id": forms.TextInput(attrs={"class": "form-control", "placeholder": "cus_..."}),
+            "stripe_subscription_id": forms.TextInput(attrs={"class": "form-control", "placeholder": "sub_..."}),
+            "internal_notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
 
 
 class PropertyOwnerIntakeForm(forms.ModelForm):

@@ -396,6 +396,54 @@ class PlatformRevenueEntry(models.Model):
         return f"{self.get_category_display()} - ${self.amount} - {self.revenue_date}"
 
 
+class OwnerBillingAccount(models.Model):
+    PLAN_CHOICES = [
+        ("free_trial", "Free Trial"),
+        ("starter", "Starter"),
+        ("portfolio", "Portfolio"),
+        ("enterprise", "Enterprise / Custom"),
+    ]
+    STATUS_CHOICES = [
+        ("trial", "Trial"),
+        ("active", "Active"),
+        ("past_due", "Past Due"),
+        ("cancelled", "Cancelled"),
+        ("comped", "Comped"),
+    ]
+
+    owner_email = models.EmailField(unique=True)
+    owner_name = models.CharField(max_length=160, blank=True)
+    plan = models.CharField(max_length=30, choices=PLAN_CHOICES, default="free_trial")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="trial")
+    monthly_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    included_property_count = models.PositiveIntegerField(default=1)
+    included_unit_count = models.PositiveIntegerField(default=0)
+    trial_start_date = models.DateField(blank=True, null=True)
+    trial_end_date = models.DateField(blank=True, null=True)
+    next_billing_date = models.DateField(blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True)
+    internal_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["owner_email"]
+
+    def __str__(self):
+        return f"{self.owner_email} - {self.get_plan_display()} / {self.get_status_display()}"
+
+    @builtins.property
+    def trial_days_remaining(self):
+        if not self.trial_end_date:
+            return None
+        return max(0, (self.trial_end_date - timezone.localdate()).days)
+
+    @builtins.property
+    def is_visible_warning(self):
+        return self.status in ["trial", "past_due", "cancelled"]
+
+
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="property_gallery/")

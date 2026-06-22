@@ -14,7 +14,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import AccountingReceipt, AccountingReceiptSplit, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, PlatformFeeSetting, PlatformRevenueEntry, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
+from .models import AccountingReceipt, AccountingReceiptSplit, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, OwnerBillingAccount, Payment, PlatformFeeSetting, PlatformRevenueEntry, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
 from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, payment_amount_for_month, prorated_monthly_charge, record_platform_revenue_for_completed_payment, rent_roll_rows_for_properties, t12_report_rows
 
 
@@ -3122,6 +3122,30 @@ class LiveFlowTests(TestCase):
         self.assertContains(dashboard_response, "Accounting")
         self.assertContains(dashboard_response, "Vacancy")
         self.assertContains(dashboard_response, "Operations")
+
+    def test_property_owner_dashboard_shows_billing_status(self):
+        owner = User.objects.create_user(
+            username="billing-owner",
+            email="billing-owner@example.com",
+            password="StrongPass123!",
+            role="property_owner",
+        )
+        OwnerBillingAccount.objects.create(
+            owner_email=owner.email,
+            owner_name="Billing Owner LLC",
+            plan="starter",
+            status="active",
+            monthly_amount=Decimal("19.00"),
+            next_billing_date=date(2026, 7, 1),
+        )
+        self.client.login(username="billing-owner", password="StrongPass123!")
+
+        response = self.client.get(reverse("property_owner_dashboard"))
+
+        self.assertContains(response, "Rental Ledger Pro Billing")
+        self.assertContains(response, "Starter")
+        self.assertContains(response, "Active")
+        self.assertContains(response, "$19.00")
 
     def test_property_owner_can_add_property_invite_landlord_and_upload_financial_file(self):
         owner = User.objects.create_user(

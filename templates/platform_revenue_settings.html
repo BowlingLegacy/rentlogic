@@ -132,6 +132,59 @@
         Platform revenue only. Record rent, utilities, security deposits, and owner property expenses in the property ledger, not here.
     </div>
 
+    <section class="platform-panel mb-3">
+        <h2>Owner Subscription Control</h2>
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_billing_account">
+            <div class="col-md-4">{{ billing_form.owner_email.label_tag }}{{ billing_form.owner_email }}</div>
+            <div class="col-md-4">{{ billing_form.owner_name.label_tag }}{{ billing_form.owner_name }}</div>
+            <div class="col-md-2">{{ billing_form.plan.label_tag }}{{ billing_form.plan }}</div>
+            <div class="col-md-2">{{ billing_form.status.label_tag }}{{ billing_form.status }}</div>
+            <div class="col-md-3">{{ billing_form.monthly_amount.label_tag }}{{ billing_form.monthly_amount }}</div>
+            <div class="col-md-3">{{ billing_form.included_property_count.label_tag }}{{ billing_form.included_property_count }}</div>
+            <div class="col-md-3">{{ billing_form.included_unit_count.label_tag }}{{ billing_form.included_unit_count }}</div>
+            <div class="col-md-3">{{ billing_form.next_billing_date.label_tag }}{{ billing_form.next_billing_date }}</div>
+            <div class="col-md-3">{{ billing_form.trial_start_date.label_tag }}{{ billing_form.trial_start_date }}</div>
+            <div class="col-md-3">{{ billing_form.trial_end_date.label_tag }}{{ billing_form.trial_end_date }}</div>
+            <div class="col-md-3">{{ billing_form.stripe_customer_id.label_tag }}{{ billing_form.stripe_customer_id }}</div>
+            <div class="col-md-3">{{ billing_form.stripe_subscription_id.label_tag }}{{ billing_form.stripe_subscription_id }}</div>
+            <div class="col-12">{{ billing_form.internal_notes.label_tag }}{{ billing_form.internal_notes }}</div>
+            <div class="col-12"><button class="btn btn-dark" type="submit">Save Owner Billing Account</button></div>
+        </form>
+
+        <div class="table-responsive mt-4">
+            <table class="table table-sm align-middle platform-table">
+                <thead>
+                    <tr>
+                        <th>Owner</th>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th>Monthly</th>
+                        <th>Trial Ends</th>
+                        <th>Next Billing</th>
+                        <th>Stripe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in billing_accounts %}
+                    <tr>
+                        <td><strong>{{ account.owner_email }}</strong><br><span class="text-muted">{{ account.owner_name|default:"No owner name" }}</span></td>
+                        <td>{{ account.get_plan_display }}</td>
+                        <td>{{ account.get_status_display }}</td>
+                        <td>${{ account.monthly_amount|floatformat:2 }}</td>
+                        <td>{{ account.trial_end_date|default:"-" }}</td>
+                        <td>{{ account.next_billing_date|default:"-" }}</td>
+                        <td><span class="text-muted">{{ account.stripe_subscription_id|default:account.stripe_customer_id|default:"Not connected" }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-muted">No owner billing accounts yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <div class="row g-3 mb-3">
         <div class="col-lg-5">
             <section class="platform-panel h-100">
