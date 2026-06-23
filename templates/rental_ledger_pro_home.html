@@ -662,6 +662,46 @@
             margin-top: 18px;
         }
 
+        .revenue-map {
+            background: #10151f;
+            border: 1px solid rgba(16,199,194,.24);
+            border-radius: 12px;
+            box-shadow: 0 16px 42px rgba(16,21,31,.14);
+            color: #f8fbf7;
+            margin-top: 18px;
+            overflow: hidden;
+        }
+
+        .revenue-map-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 18px;
+        }
+
+        .revenue-map-head h3 {
+            font-size: 1.45rem;
+            margin: 0 0 6px;
+        }
+
+        .revenue-map-head p {
+            color: #b8c7d2;
+            line-height: 1.45;
+            margin: 0;
+            max-width: 620px;
+        }
+
+        .revenue-map table {
+            background: #fff;
+            color: var(--night);
+        }
+
+        .revenue-map th,
+        .revenue-map td {
+            text-align: left;
+            vertical-align: top;
+        }
+
         .savings-card {
             padding: 18px;
         }
@@ -1186,6 +1226,38 @@
                             <a class="fee-action" href="mailto:{{ lead_email|default:'michael@bowlinglegacy.com' }}?subject=RentalReadyPro%20-%20{{ fee.action|urlencode }}">{{ fee.action }}</a>
                         </article>
                     {% endfor %}
+                </div>
+
+                <div class="revenue-map">
+                    <div class="revenue-map-head">
+                        <div>
+                            <div class="eyebrow">Money Separation</div>
+                            <h3>Every dollar needs a lane before it moves.</h3>
+                        </div>
+                        <p>Owners need to see that tenant money, owner subscriptions, application workflow fees, background-check administration, setup labor, and referral income do not get mixed together.</p>
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Charge</th>
+                                    <th>Usually Paid By</th>
+                                    <th>Recorded As</th>
+                                    <th>Why It Exists</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in pricing_menu.revenue_map %}
+                                    <tr>
+                                        <td>{{ row.charge }}</td>
+                                        <td>{{ row.payer }}</td>
+                                        <td>{{ row.ledger }}</td>
+                                        <td>{{ row.reason }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="savings-ledger">

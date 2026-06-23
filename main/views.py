@@ -1762,6 +1762,44 @@ RENTAL_LEDGER_PRICING_MENU = {
         "Loan/refinance broker referrals for owners using valuation reports",
         "Premium document packets and lease/addendum setup",
     ],
+    "revenue_map": [
+        {
+            "charge": "Monthly software plan",
+            "payer": "Property owner / manager",
+            "ledger": "RentalReadyPro platform revenue",
+            "reason": "Recurring access to dashboards, reports, resident files, messages, listings, and operating records.",
+        },
+        {
+            "charge": "Rent, deposits, utilities",
+            "payer": "Resident / tenant",
+            "ledger": "Owner property ledger",
+            "reason": "Tenant payments belong to the property owner and should route through owner/property Stripe settings.",
+        },
+        {
+            "charge": "Application processing",
+            "payer": "Owner or applicant, depending on local rules and owner policy",
+            "ledger": "Platform application-processing revenue",
+            "reason": "Covers intake workflow, file handling, payment tracking, and applicant status organization.",
+        },
+        {
+            "charge": "Background screening admin",
+            "payer": "Owner or applicant, depending on screening-provider cost and local rules",
+            "ledger": "Platform background-check admin revenue",
+            "reason": "RentalReadyPro organizes the workflow; the owner reviews the report and makes the rental decision.",
+        },
+        {
+            "charge": "Migration, OCR, premium reports",
+            "payer": "Property owner / manager",
+            "ledger": "Platform setup or premium-report revenue",
+            "reason": "One-time labor that converts messy records into useful ledgers, resident files, and lender-ready reports.",
+        },
+        {
+            "charge": "Insurance, vendor, advertising referrals",
+            "payer": "Partner or advertiser",
+            "ledger": "Platform referral / advertising revenue",
+            "reason": "Optional partner income kept separate from owner property income and tenant balances.",
+        },
+    ],
     "savings_examples": [
         ["10 units", "$79/mo target plan", "$948/year software base", "Savings comes from replacing separate reporting, messaging, listing, and record cleanup tools."],
         ["20 applications/year", "$15 processing target", "$300/year gross processing revenue", "Owner gets a cleaner workflow without RentalReadyPro charging renters directly."],
