@@ -75,11 +75,67 @@
     color: #7c2d12;
     padding: .85rem;
 }
+.pricing-grid {
+    display: grid;
+    gap: .8rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.pricing-card {
+    background: #fff;
+    border: 1px solid rgba(45,212,191,.18);
+    border-radius: 14px;
+    color: #0f172a;
+    padding: .95rem;
+}
+.pricing-card h3 {
+    font-size: 1rem;
+    font-weight: 900;
+    margin-bottom: .35rem;
+}
+.pricing-price {
+    color: #0f766e;
+    font-family: Georgia, serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+.pricing-card ul {
+    color: #475569;
+    font-size: .86rem;
+    margin: .65rem 0 0;
+    padding-left: 1rem;
+}
+.fee-grid,
+.revenue-channel-grid {
+    display: grid;
+    gap: .8rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.fee-card,
+.channel-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    color: #0f172a;
+    padding: .9rem;
+}
+.fee-card strong,
+.channel-card strong {
+    display: block;
+    margin-bottom: .35rem;
+}
+.fee-card span {
+    color: #b45309;
+    display: block;
+    font-weight: 900;
+    margin-bottom: .35rem;
+}
 @media (max-width: 992px) {
     .platform-card-grid { grid-template-columns: 1fr 1fr; }
+    .pricing-grid, .fee-grid, .revenue-channel-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 576px) {
     .platform-card-grid { grid-template-columns: 1fr; }
+    .pricing-grid, .fee-grid, .revenue-channel-grid { grid-template-columns: 1fr; }
 }
 @media print {
     .btn, form, .platform-warning { display: none !important; }
@@ -131,6 +187,81 @@
     <div class="platform-warning mb-3">
         Platform revenue only. Record rent, utilities, security deposits, and owner property expenses in the property ledger, not here.
     </div>
+
+    <section class="platform-panel mb-3">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+            <div>
+                <h2 class="mb-1">Pricing Menu and Revenue Strategy</h2>
+                <p class="text-muted mb-0">
+                    Use this as the working menu for owner conversations, Stripe products, invoices, and platform revenue entries.
+                </p>
+            </div>
+            <span class="platform-pill">Admin reference</span>
+        </div>
+
+        <div class="pricing-grid mb-3">
+            {% for plan in pricing_menu.plans %}
+                <article class="pricing-card">
+                    <h3>{{ plan.name }}</h3>
+                    <div class="pricing-price">{{ plan.price }}</div>
+                    <div class="text-muted small mb-2">{{ plan.unit_range }}</div>
+                    <p class="small mb-2">{{ plan.best_for }}</p>
+                    <ul>
+                        {% for feature in plan.features %}
+                            <li>{{ feature }}</li>
+                        {% endfor %}
+                    </ul>
+                </article>
+            {% endfor %}
+        </div>
+
+        <h3 class="h5 fw-bold">Add-on and fee targets</h3>
+        <div class="fee-grid mb-3">
+            {% for fee in pricing_menu.fees %}
+                <article class="fee-card">
+                    <strong>{{ fee.name }}</strong>
+                    <span>{{ fee.price }}</span>
+                    <p class="small text-muted mb-0">{{ fee.note }}</p>
+                </article>
+            {% endfor %}
+        </div>
+
+        <h3 class="h5 fw-bold">Other revenue channels</h3>
+        <div class="revenue-channel-grid">
+            {% for channel in pricing_menu.revenue_channels %}
+                <article class="channel-card">
+                    <strong>{{ channel }}</strong>
+                    <p class="small text-muted mb-0">Track this separately from owner rent, deposits, utilities, and property expenses.</p>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="platform-panel mb-3">
+        <h2>Money Separation Map</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle platform-table">
+                <thead>
+                    <tr>
+                        <th>Charge</th>
+                        <th>Payer</th>
+                        <th>Ledger</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in pricing_menu.revenue_map %}
+                    <tr>
+                        <td><strong>{{ row.charge }}</strong></td>
+                        <td>{{ row.payer }}</td>
+                        <td>{{ row.ledger }}</td>
+                        <td class="text-muted">{{ row.reason }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 
     <section class="platform-panel mb-3">
         <h2>Owner Subscription Control</h2>

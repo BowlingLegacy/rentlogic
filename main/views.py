@@ -4036,6 +4036,7 @@ def platform_revenue_settings(request):
         "revenue_totals": revenue_totals,
         "category_totals": category_totals,
         "active_fee_count": fee_settings.filter(is_active=True).count(),
+        "pricing_menu": RENTAL_LEDGER_PRICING_MENU,
     })
 
 
