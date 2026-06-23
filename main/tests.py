@@ -3303,12 +3303,17 @@ class LiveFlowTests(TestCase):
         self.assertTrue(intake.offers_renters_insurance)
         self.assertEqual(intake.tenant_utility_setup_notes, "Power: Pacific Power. Water/sewer: city utility account.")
         self.assertEqual(intake.lead_stage, "new")
-        self.assertEqual(len(mail.outbox), 2)
-        self.assertEqual(mail.outbox[0].subject, "New RentalReadyPro owner questionnaire")
-        self.assertIn("North Street Holdings", mail.outbox[0].body)
-        self.assertIn("Desired reports: valuation_estimate, vendor_expense, utility_cost_trend", mail.outbox[0].body)
-        self.assertEqual(mail.outbox[1].subject, "RentalReadyPro questionnaire received")
-        self.assertEqual(mail.outbox[1].to, ["portfolio@example.com"])
+        self.assertEqual(intake.status, "invited")
+        self.assertIsNotNone(intake.user)
+        self.assertFalse(intake.user.has_usable_password())
+        self.assertEqual(len(mail.outbox), 3)
+        self.assertIn("Portal Access Code", mail.outbox[0].subject)
+        self.assertIn(intake.user.invite_code, mail.outbox[0].body)
+        self.assertEqual(mail.outbox[1].subject, "New RentalReadyPro owner questionnaire")
+        self.assertIn("North Street Holdings", mail.outbox[1].body)
+        self.assertIn("Desired reports: valuation_estimate, vendor_expense, utility_cost_trend", mail.outbox[1].body)
+        self.assertEqual(mail.outbox[2].subject, "RentalReadyPro questionnaire received")
+        self.assertEqual(mail.outbox[2].to, ["portfolio@example.com"])
 
     def test_property_owner_intake_accepts_blank_property_counts(self):
         response = self.client.post(reverse("property_owner_intake"), {

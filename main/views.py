@@ -1922,6 +1922,26 @@ def property_owner_intake(request):
 
     if request.method == "POST" and form.is_valid():
         intake = form.save()
+        access_email_sent = False
+        access_email_error = ""
+        user = intake.user or User.objects.filter(email__iexact=intake.email, role="property_owner").first()
+        if user and user.has_usable_password():
+            intake.user = user
+            intake.status = "registered"
+            intake.save(update_fields=["user", "status"])
+        else:
+            if not user:
+                user = create_pending_portal_user(intake.full_name, intake.email, "property_owner", intake.id)
+            user.refresh_invite_code()
+            intake.user = user
+            intake.status = "invited"
+            intake.invite_sent_at = timezone.now()
+            intake.save(update_fields=["user", "status", "invite_sent_at"])
+            try:
+                access_email_sent = send_portal_access_invite_email(user, intake.full_name, "Property Owner")
+            except Exception as exc:
+                access_email_error = str(exc)
+
         lead_email = getattr(settings, "RENTAL_LEDGER_LEAD_EMAIL", "") or getattr(settings, "DEFAULT_FROM_EMAIL", None)
         from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
         summary_lines = [
@@ -1958,12 +1978,15 @@ def property_owner_intake(request):
                 f"Hi {intake.full_name},\n\n"
                 "We received your RentalReadyPro property owner questionnaire. "
                 "We will review your property, reporting, migration, and dashboard needs and follow up with the next step.\n\n"
+                "If this is your first setup, watch for a separate portal access code email so you can create your owner login.\n\n"
                 "RentalReadyPro"
             ),
             from_email,
             [intake.email],
             fail_silently=True,
         )
+        request.session["owner_setup_access_email_sent"] = bool(access_email_sent)
+        request.session["owner_setup_access_email_error"] = access_email_error
         messages.success(request, "Your property owner questionnaire has been submitted.")
         return redirect("property_owner_intake_success")
 
@@ -1971,7 +1994,10 @@ def property_owner_intake(request):
 
 
 def property_owner_intake_success(request):
-    return render(request, "property_owner_intake_success.html")
+    return render(request, "property_owner_intake_success.html", {
+        "access_email_sent": request.session.pop("owner_setup_access_email_sent", False),
+        "access_email_error": request.session.pop("owner_setup_access_email_error", ""),
+    })
 
 
 def calculate_screening_score(application):

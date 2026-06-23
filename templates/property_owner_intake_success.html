@@ -108,6 +108,23 @@
         .path-panel li {
             margin-bottom: .35rem;
         }
+        .access-status {
+            border-radius: 14px;
+            margin: 1rem 0;
+            padding: 1rem;
+        }
+        .access-status.sent {
+            background: rgba(16,199,194,.14);
+            border: 1px solid rgba(16,199,194,.32);
+        }
+        .access-status.pending {
+            background: rgba(255,179,66,.16);
+            border: 1px solid rgba(255,179,66,.35);
+        }
+        .access-status strong {
+            display: block;
+            margin-bottom: .25rem;
+        }
         .dark-btn {
             background: var(--night);
             border-radius: 8px;
@@ -135,6 +152,18 @@
                 Your owner setup request has been submitted. RentalReadyPro can review your portfolio,
                 operating needs, current records, and dashboard priorities before opening the right onboarding path.
             </p>
+            {% if access_email_sent %}
+                <div class="access-status sent">
+                    <strong>Portal access code sent</strong>
+                    Check your email for a separate RentalReadyPro property owner access code. Use that code to create your owner login.
+                </div>
+            {% else %}
+                <div class="access-status pending">
+                    <strong>Setup received</strong>
+                    Your questionnaire is saved. If an access code email does not arrive, use Request a New Code with the same email or contact RentalReadyPro.
+                    {% if access_email_error %}<div class="small mt-2">Email note: {{ access_email_error }}</div>{% endif %}
+                </div>
+            {% endif %}
             <div class="next-grid">
                 <div class="next-card">
                     <strong>Watch your email</strong>
@@ -161,6 +190,7 @@
             <div class="button-row">
                 <a href="{% url 'login' %}" class="gold-btn">Login</a>
                 <a href="{% url 'enter_invite_code' %}" class="dark-btn">Enter Access Code</a>
+                <a href="{% url 'request_invite_code' %}" class="dark-btn">Request New Code</a>
                 <a href="{% url 'rental_ledger_demo' %}" class="dark-btn">Preview Demo</a>
                 <a href="{% url 'rental_ledger_contact' %}" class="dark-btn">Contact RentalReadyPro</a>
                 <a href="{% url 'rental_ledger_pro_home' %}" class="dark-btn">Back Home</a>
