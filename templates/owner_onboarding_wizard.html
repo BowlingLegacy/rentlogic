@@ -110,7 +110,7 @@
 .quick-grid {
     display: grid;
     gap: .85rem;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 .quick-card {
     background: #fff;
@@ -274,17 +274,27 @@
                 <div class="quick-note">Address, rent rules, utilities, screening, fees, insurance, and photos.</div>
             </a>
             <a href="{% url 'current_resident_roster_upload' %}" class="quick-card">
-                <div class="quick-label">2. Residents</div>
+                <div class="quick-label">2. Roster</div>
                 <div class="quick-name">Upload resident roster</div>
                 <div class="quick-note">Names, units, rent, balances, deposits, phones, and SMS consent.</div>
             </a>
+            <a href="{% url 'landlord_resident_files' %}?filter=needs_login" class="quick-card">
+                <div class="quick-label">3. Codes</div>
+                <div class="quick-name">Send setup codes</div>
+                <div class="quick-note">Text or email private app setup codes to residents who need dashboard access.</div>
+            </a>
+            <a href="{% url 'tenant_file_packet_upload' %}" class="quick-card">
+                <div class="quick-label">4. Files</div>
+                <div class="quick-name">Upload tenant files</div>
+                <div class="quick-note">Scan old tenant files into the system for review and permanent resident records.</div>
+            </a>
             <a href="{% url 'custom_reports' %}" class="quick-card">
-                <div class="quick-label">3. Reports</div>
+                <div class="quick-label">5. Reports</div>
                 <div class="quick-name">Open report center</div>
                 <div class="quick-note">Rent roll, payment log, T-12, custom reports, vendor and receipt detail.</div>
             </a>
             <a href="{% url 'owner_landlord_invite' %}" class="quick-card">
-                <div class="quick-label">4. Team</div>
+                <div class="quick-label">6. Team</div>
                 <div class="quick-name">Invite manager</div>
                 <div class="quick-note">Give a landlord or assistant the operational workspace they need.</div>
             </a>

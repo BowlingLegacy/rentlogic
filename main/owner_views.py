@@ -193,6 +193,14 @@ def owner_onboarding_wizard(request):
                 "phase": "Data",
             },
             {
+                "label": "Resident setup codes",
+                "complete": resident_count > 0,
+                "detail": "After the roster is imported, open resident files and send app setup codes to residents who still need login access.",
+                "url": "landlord_resident_files",
+                "button": "Send Setup Codes",
+                "phase": "Residents",
+            },
+            {
                 "label": "Lease and onboarding documents",
                 "complete": onboarding_docs.filter(document_type="application").exists() and onboarding_docs.filter(document_type="lease").exists(),
                 "detail": f"{onboarding_docs.count()} document(s) uploaded. Application and lease are the required starting point.",

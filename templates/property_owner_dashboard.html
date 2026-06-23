@@ -336,6 +336,30 @@
                 <div class="owner-command-go">Add property</div>
             </a>
 
+            <a href="{% url 'current_resident_roster_upload' %}" class="owner-command-card">
+                <div class="owner-command-icon">U</div>
+                <div class="owner-command-label">Residents</div>
+                <div class="owner-command-value">Import</div>
+                <div class="owner-command-note">Upload names, units, rent, deposits, balances, phones, and consent</div>
+                <div class="owner-command-go">Upload roster</div>
+            </a>
+
+            <a href="{% url 'landlord_resident_files' %}?filter=needs_login" class="owner-command-card">
+                <div class="owner-command-icon">C</div>
+                <div class="owner-command-label">App Codes</div>
+                <div class="owner-command-value">Send</div>
+                <div class="owner-command-note">Generate resident setup codes after roster import</div>
+                <div class="owner-command-go">Open resident files</div>
+            </a>
+
+            <a href="{% url 'tenant_file_packet_upload' %}" class="owner-command-card">
+                <div class="owner-command-icon">F</div>
+                <div class="owner-command-label">Tenant Files</div>
+                <div class="owner-command-value">Scan</div>
+                <div class="owner-command-note">Upload existing tenant files and scanned packets</div>
+                <div class="owner-command-go">Upload files</div>
+            </a>
+
             <a href="{% url 'custom_reports' %}" class="owner-command-card">
                 <div class="owner-command-icon">R</div>
                 <div class="owner-command-label">Reports</div>
@@ -387,8 +411,11 @@
             <div class="d-flex gap-2 flex-wrap">
                 <a href="{% url 'owner_onboarding_wizard' %}" class="btn-owner">Onboarding Wizard</a>
                 <a href="{% url 'owner_property_create' %}" class="btn-owner">Add Property</a>
+                <a href="{% url 'current_resident_roster_upload' %}" class="btn-owner">Upload Resident Roster</a>
+                <a href="{% url 'landlord_resident_files' %}?filter=needs_login" class="btn-owner">Send Resident Codes</a>
                 <a href="{% url 'listing_center' %}" class="btn-owner">Vacancy Listings</a>
                 <a href="{% url 'owner_payment_settings' %}" class="btn-dark-soft">Stripe Payment Settings</a>
+                <a href="{% url 'tenant_file_packet_upload' %}" class="btn-dark-soft">Upload Tenant Files</a>
                 <a href="{% url 'owner_landlord_invite' %}" class="btn-dark-soft">Invite Landlord</a>
                 <a href="{% url 'owner_financial_upload' %}" class="btn-dark-soft">Upload Financial Documents</a>
             </div>

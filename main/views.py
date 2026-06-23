@@ -2720,7 +2720,7 @@ def prepare_and_send_resident_app_setup_code(request, application):
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(can_access_landlord_dashboard)
 def send_resident_app_setup_code(request, application_id):
     application = get_object_or_404(
         HousingApplication.objects.select_related("property", "user"),
@@ -2758,7 +2758,7 @@ def send_resident_app_setup_code(request, application_id):
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(can_access_landlord_dashboard)
 def bulk_send_resident_app_setup_codes(request):
     if request.method != "POST":
         return redirect("landlord_resident_files")
@@ -4442,7 +4442,7 @@ def open_applicant_document(request, document_id):
 
 
 @login_required
-@user_passes_test(staff_required)
+@user_passes_test(can_access_landlord_dashboard)
 def tenant_file_packet_upload(request):
     properties = staff_managed_properties(request.user).order_by("name")
     applications = (
