@@ -932,7 +932,7 @@
             <a href="#faq">FAQ</a>
             <a href="{% url 'rental_ledger_contact' %}">Contact</a>
             <a class="login" href="{% url 'login' %}">Login</a>
-            <a href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
+            <a href="{% url 'property_owner_intake' %}">Sign Up</a>
             <a class="demo" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
         </div>
     </nav>
@@ -944,10 +944,11 @@
                 <h1>Command the property. Own the numbers.</h1>
                 <p class="hero-copy">RentalReadyPro brings rent collection, resident files, messages, documents, maintenance, accounting records, and owner-ready reports into one property-aware platform.</p>
                 <div class="actions">
-                    <a class="button primary" href="{% url 'property_owner_intake' %}">Start Free Trial Setup</a>
+                    <a class="button primary" href="{% url 'property_owner_intake' %}">Sign Up / Start Owner Setup</a>
                     <a class="button secondary" href="#platform">See the System</a>
                     <a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
                 </div>
+                <p style="color:#b8c7d1; margin-top:14px; max-width:620px">Start Owner Setup opens the guided signup questionnaire. Preview Demo opens sample data only. Login is for accounts that already have access.</p>
             </div>
 
             <div class="hero-stack" aria-label="RentalReadyPro product preview">
@@ -1017,7 +1018,7 @@
                 <article class="feature">
                     <h3>1. Start owner setup</h3>
                     <p>Enter owner contact details, property count, unit count, current software, and the reports/workflows you need first.</p>
-                    <div class="actions"><a class="button primary" href="{% url 'property_owner_intake' %}">Start Free Trial Setup</a></div>
+                    <div class="actions"><a class="button primary" href="{% url 'property_owner_intake' %}">Sign Up / Start Owner Setup</a></div>
                 </article>
                 <article class="feature">
                     <h3>2. Prepare your records</h3>
@@ -1311,7 +1312,7 @@
                     <h2 style="font-size:clamp(2rem,3.8vw,3.5rem); margin-top:14px">Create the owner setup path for your portfolio.</h2>
                     <p>Start here to tell us your property count, units, current software, reporting needs, application fees, background checks, utilities, renters insurance, listings, accounting, and dashboard goals. We use this to open the right onboarding path.</p>
                     <div class="actions">
-                        <a class="button primary" href="{% url 'property_owner_intake' %}">Start Free Trial Setup</a>
+                        <a class="button primary" href="{% url 'property_owner_intake' %}">Sign Up / Start Owner Setup</a>
                         <a class="button secondary" href="{% url 'rental_ledger_demo' %}">Preview Demo First</a>
                     </div>
                 </div>
