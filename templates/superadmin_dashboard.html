@@ -24,7 +24,7 @@
 }
 .admin-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
@@ -127,6 +127,11 @@
         <div class="text-muted">Property owner groups</div>
     </div>
     <div class="admin-card">
+        <div class="admin-label">Owner Setups</div>
+        <div class="admin-value">{{ submitted_owner_intake_count }}</div>
+        <div class="text-muted">{{ active_owner_lead_count }} active lead{{ active_owner_lead_count|pluralize }}</div>
+    </div>
+    <div class="admin-card">
         <div class="admin-label">Properties</div>
         <div class="admin-value">{{ properties.count }}</div>
         <div class="text-muted">Public and managed properties</div>
@@ -153,7 +158,7 @@
             <span class="link-arrow">Open</span>
         </a>
         <a href="{% url 'superadmin_owner_intakes' %}" class="admin-card-link">
-            <span><strong>Owner Intake Inbox</strong><br><span class="text-muted">Questionnaires and setup codes.</span></span>
+            <span><strong>Owner Intake Inbox</strong><br><span class="text-muted">{{ submitted_owner_intake_count }} new setup request{{ submitted_owner_intake_count|pluralize }} and setup codes.</span></span>
             <span class="link-arrow">Open</span>
         </a>
         <a href="{% url 'superadmin_residents' %}" class="admin-card-link">

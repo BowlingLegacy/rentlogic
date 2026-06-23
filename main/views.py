@@ -3603,6 +3603,14 @@ def get_superadmin_workspace_context():
     )
     completed_payments = Payment.objects.filter(status="completed")
     site_payment_total = completed_payments.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    owner_intakes = PropertyOwnerIntake.objects.all()
+    submitted_owner_intake_count = owner_intakes.filter(status="submitted").count()
+    active_owner_lead_count = (
+        owner_intakes
+        .exclude(status="submitted")
+        .exclude(lead_stage__in=["closed_won", "closed_lost"])
+        .count()
+    )
 
     owner_buckets = OrderedDict()
 
@@ -3635,6 +3643,8 @@ def get_superadmin_workspace_context():
         "applications": sorted_resident_list(applications),
         "recent_messages": recent_messages,
         "owner_groups": owner_groups,
+        "submitted_owner_intake_count": submitted_owner_intake_count,
+        "active_owner_lead_count": active_owner_lead_count,
         "site_payment_total": site_payment_total,
     }
     context.update(company_mailbox_context())
