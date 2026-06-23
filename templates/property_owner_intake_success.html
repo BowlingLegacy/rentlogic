@@ -89,6 +89,25 @@
             flex-wrap: wrap;
             gap: .75rem;
         }
+        .path-panel {
+            background: #eef8f6;
+            border: 1px solid rgba(16,199,194,.22);
+            border-radius: 14px;
+            margin: 1.2rem 0;
+            padding: 1rem;
+        }
+        .path-panel h2 {
+            font-size: 1.1rem;
+            font-weight: 950;
+            margin-bottom: .6rem;
+        }
+        .path-panel ol {
+            margin-bottom: 0;
+            padding-left: 1.2rem;
+        }
+        .path-panel li {
+            margin-bottom: .35rem;
+        }
         .dark-btn {
             background: var(--night);
             border-radius: 8px;
@@ -130,9 +149,18 @@
                     <span>Useful first files include rent rolls, T-12 reports, resident lists, and sample receipts.</span>
                 </div>
             </div>
+            <div class="path-panel">
+                <h2>Fastest path from here</h2>
+                <ol>
+                    <li>Create or log into your owner portal account.</li>
+                    <li>Add the first property folder from the owner dashboard.</li>
+                    <li>Upload the current resident roster so units, rent, deposits, balances, and phones are ready.</li>
+                    <li>Open Stripe Payment Settings before accepting online rent payments.</li>
+                </ol>
+            </div>
             <div class="button-row">
-                <a href="{% url 'rental_ledger_demo' %}" class="gold-btn">Preview Demo</a>
-                <a href="{% url 'login' %}" class="dark-btn">Login</a>
+                <a href="{% url 'login' %}" class="gold-btn">Login / Create Access</a>
+                <a href="{% url 'rental_ledger_demo' %}" class="dark-btn">Preview Demo</a>
                 <a href="{% url 'rental_ledger_contact' %}" class="dark-btn">Contact RentalReadyPro</a>
                 <a href="{% url 'rental_ledger_pro_home' %}" class="dark-btn">Back Home</a>
             </div>
