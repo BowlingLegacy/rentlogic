@@ -1,27 +1,149 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="card shadow-sm mx-auto" style="max-width:520px;">
-    <div class="card-body">
-        <h1 class="fw-bold h3 mb-3">Request New Invite Code</h1>
-        <p class="text-muted">
-            If your resident file, owner setup, landlord invite, or assistant invite has been approved
-            but you have not created your portal account yet, enter the email connected to that setup.
-            A new single-use code will be sent if the email matches an approved unregistered account.
-        </p>
+<style>
+.code-request-shell {
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        #10151f;
+    color: #f8fbf7;
+    margin: -1rem;
+    min-height: 100vh;
+    padding: 1.25rem;
+}
+.code-request-wrap {
+    align-items: center;
+    display: grid;
+    gap: 1.2rem;
+    grid-template-columns: 1fr minmax(320px, 520px);
+    margin: 0 auto;
+    max-width: 1120px;
+    min-height: calc(100vh - 2.5rem);
+}
+.code-kicker {
+    color: #a9d95b;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.code-title {
+    color: #f8fbf7;
+    font-size: clamp(2.4rem, 5vw, 5rem);
+    font-weight: 950;
+    line-height: .94;
+    margin: .7rem 0 1rem;
+}
+.code-lead {
+    color: #c6d4dc;
+    font-size: 1.08rem;
+    line-height: 1.6;
+    max-width: 620px;
+}
+.code-paths {
+    display: grid;
+    gap: .75rem;
+    margin-top: 1.4rem;
+}
+.code-path {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 12px;
+    color: #dbe8ef;
+    padding: .9rem;
+}
+.code-card {
+    background: rgba(248,251,247,.98);
+    border-radius: 18px;
+    box-shadow: 0 26px 70px rgba(0,0,0,.28);
+    color: #10151f;
+    padding: 1.35rem;
+}
+.code-card h1 {
+    font-size: 1.75rem;
+    font-weight: 950;
+}
+.code-card p {
+    color: #596772;
+    line-height: 1.5;
+}
+.code-card input {
+    border: 1px solid rgba(32,42,56,.22);
+    border-radius: 10px;
+    padding: .8rem .9rem;
+    width: 100%;
+}
+.btn-owner {
+    background: #ffb342;
+    border: 1px solid #ffb342;
+    border-radius: 10px;
+    color: #111;
+    display: inline-flex;
+    font-weight: 900;
+    justify-content: center;
+    padding: .72rem 1rem;
+    text-decoration: none;
+    width: 100%;
+}
+.btn-owner:hover { background: #f2a52c; color: #111; }
+.link-grid {
+    display: grid;
+    gap: .6rem;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 1rem;
+}
+.link-grid a {
+    background: #fff;
+    border: 1px solid rgba(32,42,56,.16);
+    border-radius: 10px;
+    color: #10151f;
+    font-weight: 900;
+    padding: .65rem;
+    text-align: center;
+    text-decoration: none;
+}
+@media (max-width: 860px) {
+    .code-request-wrap { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+    .link-grid { grid-template-columns: 1fr; }
+}
+</style>
 
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary w-100">
-                Send Replacement Code
-            </button>
-        </form>
+<div class="code-request-shell">
+    <main class="code-request-wrap">
+        <section>
+            <div class="code-kicker">Access Recovery</div>
+            <h1 class="code-title">Get a fresh setup code.</h1>
+            <p class="code-lead">
+                Replacement codes are for approved resident, owner, landlord, assistant, or manager files that have not finished account setup.
+            </p>
+            <div class="code-paths">
+                <div class="code-path"><strong>Residents:</strong> use the email attached to the resident file or roster import.</div>
+                <div class="code-path"><strong>Owners and managers:</strong> use the email submitted during owner setup or the manager invite.</div>
+            </div>
+        </section>
 
-        <div class="text-center mt-3">
-            <a href="{% url 'enter_invite_code' %}">Back to invite code entry</a>
-        </div>
-    </div>
+        <section class="code-card">
+            <h1 class="mb-2">Request New Code</h1>
+            <p>
+                Enter the email connected to the approved file. If it matches an unregistered account,
+                a new single-use code will be sent.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn-owner">Send Replacement Code</button>
+            </form>
+
+            <div class="link-grid">
+                <a href="{% url 'enter_invite_code' %}">Enter Code</a>
+                <a href="{% url 'login' %}">Login</a>
+            </div>
+        </section>
+    </main>
 </div>
 
 {% endblock %}
