@@ -392,7 +392,19 @@ def owner_payment_settings(request):
             messages.success(request, "Stripe payment settings saved.")
             return redirect("owner_payment_settings")
     else:
-        form = StripePaymentConfigurationForm(properties=properties, owner_email=owner_email)
+        config_id = request.GET.get("config_id")
+        instance = None
+        if config_id:
+            instance = get_object_or_404(StripePaymentConfiguration, id=config_id)
+            if not is_super_admin(request.user) and not is_assistant_admin(request.user):
+                allowed_property_ids = set(properties.values_list("id", flat=True))
+                if instance.property_id and instance.property_id not in allowed_property_ids:
+                    messages.error(request, "You cannot edit payment settings for that property.")
+                    return redirect("owner_payment_settings")
+                if not instance.property_id and instance.owner_email.lower() != owner_email.lower():
+                    messages.error(request, "You cannot edit payment settings for that owner.")
+                    return redirect("owner_payment_settings")
+        form = StripePaymentConfigurationForm(instance=instance, properties=properties, owner_email=owner_email)
 
     configs = (
         StripePaymentConfiguration.objects

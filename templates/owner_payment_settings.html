@@ -138,9 +138,33 @@
     font-size: .9rem;
     line-height: 1.45;
 }
+.routing-guide {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+.routing-guide-card {
+    background: rgba(248,251,247,.96);
+    border: 1px solid rgba(16,199,194,.22);
+    border-radius: 14px;
+    color: #10151f;
+    padding: 1rem;
+}
+.routing-guide-card h2 {
+    font-size: 1.05rem;
+    font-weight: 950;
+    margin-bottom: .45rem;
+}
+.routing-guide-card ul {
+    color: #596772;
+    margin-bottom: 0;
+    padding-left: 1.1rem;
+}
 @media (max-width: 992px) {
     .payments-grid { grid-template-columns: 1fr; }
     .money-lanes { grid-template-columns: 1fr; }
+    .routing-guide { grid-template-columns: 1fr; }
 }
 </style>
 
@@ -172,6 +196,25 @@
         <article class="money-lane">
             <strong>Fallback behavior</strong>
             <span>If no owner/property Stripe route exists, the system falls back to the platform Stripe account. Use connected accounts before live owner rent collection.</span>
+        </article>
+    </section>
+
+    <section class="routing-guide">
+        <article class="routing-guide-card">
+            <h2>Recommended for most owners</h2>
+            <ul>
+                <li>Use one owner Stripe connected account when one owner receives rent for multiple properties.</li>
+                <li>Add property overrides only when a property needs its own payout destination.</li>
+                <li>Do not paste Stripe secret keys here. This page stores routing IDs only.</li>
+            </ul>
+        </article>
+        <article class="routing-guide-card">
+            <h2>Before going live</h2>
+            <ul>
+                <li>Confirm the route shows Ready for each property accepting online payments.</li>
+                <li>Run a small test payment before tenants are asked to use the portal.</li>
+                <li>Keep RentalReadyPro platform revenue separate from owner rent money.</li>
+            </ul>
         </article>
     </section>
 
@@ -228,6 +271,7 @@
                             <th>Mode</th>
                             <th>Status</th>
                             <th>Account</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -240,9 +284,10 @@
                                 <td>{{ config.get_account_mode_display }}</td>
                                 <td>{{ config.get_status_display }}</td>
                                 <td>{{ config.stripe_account_id|default:"-" }}</td>
+                                <td><a href="{% url 'owner_payment_settings' %}?config_id={{ config.id }}" class="btn-dark-soft">Edit</a></td>
                             </tr>
                         {% empty %}
-                            <tr><td colspan="4">No saved Stripe routing yet. Add an owner default or a property override.</td></tr>
+                            <tr><td colspan="5">No saved Stripe routing yet. Add an owner default or a property override.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -256,6 +301,12 @@
             </div>
             <form method="post">
                 {% csrf_token %}
+                {% if form.instance.pk %}
+                    <input type="hidden" name="config_id" value="{{ form.instance.pk }}">
+                    <div class="form-help mb-3">
+                        Editing saved route <strong>{{ form.instance }}</strong>. Save changes below or clear the browser URL to add a new route.
+                    </div>
+                {% endif %}
                 {% for field in form %}
                     <div class="mb-3">
                         <label class="form-label fw-bold">{{ field.label }}</label>
