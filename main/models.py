@@ -228,7 +228,7 @@ class Property(models.Model):
 
 class StripePaymentConfiguration(models.Model):
     ACCOUNT_MODE_CHOICES = [
-        ("platform", "Use Rental Ledger platform Stripe account"),
+        ("platform", "Use RentalReadyPro platform Stripe account"),
         ("owner_connect", "Use one owner Stripe account for multiple properties"),
         ("property_connect", "Use this property's own Stripe account"),
         ("manual", "Manual/offline payments only"),

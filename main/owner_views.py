@@ -52,7 +52,7 @@ def payment_setup_summary(property_obj):
     platform_ready = bool(settings.STRIPE_PUBLIC_KEY and settings.STRIPE_SECRET_KEY)
     return {
         "config": None,
-        "label": "Use Rental Ledger platform Stripe account",
+        "label": "Use RentalReadyPro platform Stripe account",
         "status": "Active" if platform_ready else "Missing platform keys",
         "ready": platform_ready,
         "connected_account": "",
