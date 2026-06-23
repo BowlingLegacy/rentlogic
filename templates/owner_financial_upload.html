@@ -1,15 +1,126 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+.financial-shell {
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        #10151f;
+    color: #f8fbf7;
+    margin: -1rem;
+    min-height: 100vh;
+    padding: 1.25rem;
+}
+.financial-head,
+.financial-card,
+.financial-step {
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.22);
+}
+.financial-head {
+    background: linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94));
+    border: 1px solid rgba(16,199,194,.32);
+    margin-bottom: 1rem;
+    padding: 1.2rem 1.4rem;
+}
+.financial-kicker {
+    color: #a9d95b;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.financial-title {
+    color: #f8fbf7;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-weight: 950;
+    line-height: 1;
+}
+.financial-card {
+    background: rgba(248,251,247,.97);
+    color: #10151f;
+    padding: 1.15rem;
+}
+.financial-steps {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+.financial-step {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    color: #10151f;
+    padding: 1rem;
+}
+.financial-step strong { display: block; margin-bottom: .3rem; }
+.financial-step span { color: #596772; display: block; font-size: .88rem; line-height: 1.4; }
+.upload-row {
+    background: #fff;
+    border: 1px solid #dfe8e4;
+    border-radius: 14px;
+    padding: 1rem;
+}
+.btn-owner {
+    background: #ffb342;
+    border: 1px solid #ffb342;
+    border-radius: 10px;
+    color: #111;
+    display: inline-flex;
+    font-weight: 900;
+    padding: .65rem .95rem;
+    text-decoration: none;
+}
+.btn-owner:hover { background: #f2a52c; color: #111; }
+.btn-dark-soft {
+    background: #172233;
+    border: 1px solid rgba(16,199,194,.38);
+    border-radius: 10px;
+    color: #eaf2f5;
+    font-weight: 800;
+    padding: .6rem .9rem;
+    text-decoration: none;
+}
+.btn-dark-soft:hover { background: #223149; color: #10c7c2; }
+@media (max-width: 992px) {
+    .financial-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 576px) {
+    .financial-steps { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="financial-shell">
+    <div class="financial-head d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <div class="financial-kicker">Accounting Setup</div>
+            <h1 class="financial-title mb-2">Upload Financial Source Files</h1>
+            <p class="mb-0" style="color:#c6d4dc;">
+                Add bank exports, rent rolls, T-12 summaries, receipts, invoices, or accounting files for import review.
+            </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'property_owner_dashboard' %}" class="btn-dark-soft">Owner Dashboard</a>
+            <a href="{% url 'custom_reports' %}" class="btn-dark-soft">Reports</a>
+        </div>
+    </div>
+
+    <section class="financial-steps">
+        <article class="financial-step"><strong>Match the property</strong><span>Every file is attached to one property so reports stay separated.</span></article>
+        <article class="financial-step"><strong>Keep source records</strong><span>Uploads stay available as the paper trail behind reports and imports.</span></article>
+        <article class="financial-step"><strong>Review before reports</strong><span>Imported totals should be checked before owners rely on T-12 or NOI numbers.</span></article>
+        <article class="financial-step"><strong>Go receipt-forward</strong><span>After history is loaded, ongoing records can come from receipts and invoice splits.</span></article>
+    </section>
+
 <div class="row g-4">
     <div class="col-lg-6">
-        <div class="soft-card p-4">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div class="financial-card">
+            <div class="mb-3">
                 <div>
-                    <h1 class="section-title mb-1">Upload Financial Documents</h1>
-                    <p class="text-muted mb-0">Attach the source file to the correct property for import review.</p>
+                    <h2 class="h3 fw-bold mb-1">New Upload</h2>
+                    <p class="text-muted mb-0">Use the notes field to explain what the file contains and which months it covers.</p>
                 </div>
-                <a href="{% url 'property_owner_dashboard' %}" class="message-btn">Back</a>
             </div>
 
             {% if properties %}
@@ -23,19 +134,22 @@
                             {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
                         </div>
                     {% endfor %}
-                    <button type="submit" class="gold-btn">Upload Financial Document</button>
+                    <button type="submit" class="btn-owner">Upload Financial Document</button>
                 </form>
             {% else %}
-                <div class="alert alert-warning mb-0">Add a property before uploading financial documents.</div>
+                <div class="alert alert-warning mb-0">
+                    Add a property before uploading financial documents.
+                    <a href="{% url 'owner_property_create' %}" class="alert-link">Create property setup</a>.
+                </div>
             {% endif %}
         </div>
     </div>
 
     <div class="col-lg-6">
-        <div class="soft-card p-4">
+        <div class="financial-card">
             <h2 class="h3 fw-bold">Uploaded Files</h2>
             {% for upload in uploads %}
-                <div class="border rounded p-3 mb-2 bg-white">
+                <div class="upload-row mb-2">
                     <div class="fw-bold">{{ upload.name }}</div>
                     <div class="text-muted">{{ upload.property.name }} | {{ upload.uploaded_at|date:"M j, Y g:i A" }}</div>
                     {% if upload.notes %}<div class="small mt-2">{{ upload.notes|linebreaks }}</div>{% endif %}
@@ -45,6 +159,7 @@
             {% endfor %}
         </div>
     </div>
+</div>
 </div>
 
 {% endblock %}

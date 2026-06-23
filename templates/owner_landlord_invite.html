@@ -1,15 +1,108 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="soft-card p-4 p-md-5" style="max-width:880px;margin:0 auto;">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+<style>
+.invite-shell {
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        #10151f;
+    color: #f8fbf7;
+    margin: -1rem;
+    min-height: 100vh;
+    padding: 1.25rem;
+}
+.invite-head,
+.invite-card,
+.invite-step {
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.22);
+}
+.invite-head {
+    background: linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94));
+    border: 1px solid rgba(16,199,194,.32);
+    margin-bottom: 1rem;
+    padding: 1.2rem 1.4rem;
+}
+.invite-kicker {
+    color: #a9d95b;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.invite-title {
+    color: #f8fbf7;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-weight: 950;
+    line-height: 1;
+}
+.invite-card {
+    background: rgba(248,251,247,.97);
+    color: #10151f;
+    margin: 0 auto;
+    max-width: 980px;
+    padding: 1.2rem;
+}
+.invite-grid {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+.invite-step {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    color: #10151f;
+    padding: 1rem;
+}
+.invite-step strong { display: block; margin-bottom: .3rem; }
+.invite-step span { color: #596772; display: block; font-size: .88rem; line-height: 1.4; }
+.btn-owner {
+    background: #ffb342;
+    border: 1px solid #ffb342;
+    border-radius: 10px;
+    color: #111;
+    display: inline-flex;
+    font-weight: 900;
+    padding: .65rem .95rem;
+    text-decoration: none;
+}
+.btn-owner:hover { background: #f2a52c; color: #111; }
+.btn-dark-soft {
+    background: #172233;
+    border: 1px solid rgba(16,199,194,.38);
+    border-radius: 10px;
+    color: #eaf2f5;
+    font-weight: 800;
+    padding: .6rem .9rem;
+    text-decoration: none;
+}
+.btn-dark-soft:hover { background: #223149; color: #10c7c2; }
+@media (max-width: 768px) {
+    .invite-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="invite-shell">
+    <div class="invite-head d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <h1 class="section-title mb-1">Invite Landlord</h1>
-            <p class="text-muted mb-0">Assign a landlord to one of your properties and send their setup code.</p>
+            <div class="invite-kicker">Team Access</div>
+            <h1 class="invite-title mb-2">Invite a Landlord or Manager</h1>
+            <p class="mb-0" style="color:#c6d4dc;">
+                Give a property-level operator their own setup code without handing them owner-level control.
+            </p>
         </div>
-        <a href="{% url 'property_owner_dashboard' %}" class="message-btn">Back to Owner Dashboard</a>
+        <a href="{% url 'property_owner_dashboard' %}" class="btn-dark-soft">Back to Owner Dashboard</a>
     </div>
 
+    <section class="invite-grid">
+        <article class="invite-step"><strong>Assign the property</strong><span>Pick which property this person should manage so their view stays separated.</span></article>
+        <article class="invite-step"><strong>Send setup code</strong><span>The invite creates a private login path and access code for the manager.</span></article>
+        <article class="invite-step"><strong>Keep owner control</strong><span>Owners still control portfolio setup, payment routing, reports, and billing.</span></article>
+    </section>
+
+<div class="invite-card">
     {% if properties %}
         <form method="post">
             {% csrf_token %}
@@ -23,12 +116,16 @@
                 {% endfor %}
             </div>
             <div class="d-flex justify-content-end mt-4">
-                <button type="submit" class="gold-btn">Send Landlord Setup Invite</button>
+                <button type="submit" class="btn-owner">Send Landlord Setup Invite</button>
             </div>
         </form>
     {% else %}
-        <div class="alert alert-warning mb-0">Add a property first before assigning a landlord.</div>
+        <div class="alert alert-warning mb-0">
+            Add a property first before assigning a landlord or manager.
+            <a href="{% url 'owner_property_create' %}" class="alert-link">Create property setup</a>.
+        </div>
     {% endif %}
+</div>
 </div>
 
 {% endblock %}
