@@ -360,7 +360,7 @@
                 {% else %}
                     <a class="button secondary" href="#reports">View Demo Reports</a>
                 {% endif %}
-                <a class="button secondary" href="{% url 'property_owner_intake' %}">Request Setup Call</a>
+                <a class="button secondary" href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
             </div>
         </div>
     </header>
@@ -415,7 +415,7 @@
                 {% elif interactive_demo_enabled %}
                     <a class="button primary" href="{% url 'demo_entry' %}">Open Interactive Demo</a>
                 {% endif %}
-                <a class="button secondary" href="{% url 'property_owner_intake' %}">Request Guided Setup</a>
+                <a class="button secondary" href="{% url 'property_owner_intake' %}">Start Guided Setup</a>
             </div>
         </section>
 

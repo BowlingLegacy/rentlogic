@@ -249,8 +249,14 @@
         }
 
         .owner-cta a {
-            color: #10151f;
+            background: #10151f;
+            border-radius: 7px;
+            color: #fff;
+            display: inline-flex;
             font-weight: 950;
+            margin-top: 10px;
+            padding: 9px 12px;
+            text-decoration: none;
         }
 
         @media (max-width: 920px) {
@@ -353,8 +359,9 @@
 
                 <div class="owner-cta">
                     New owner or property manager?
-                    <a href="{% url 'property_owner_intake' %}">Start the owner intake</a>
-                    so your properties, units, reports, and resident records can be set up correctly.
+                    <br>
+                    <a href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
+                    <div>Use this to set up properties, units, reports, and resident records correctly.</div>
                 </div>
             </div>
         </section>

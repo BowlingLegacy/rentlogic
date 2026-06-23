@@ -1164,7 +1164,7 @@
                                     <li>{{ feature }}</li>
                                 {% endfor %}
                             </ul>
-                            <a class="button primary" href="{% url 'property_owner_intake' %}">Request Fit Check</a>
+                            <a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
                         </article>
                     {% endfor %}
                 </div>
@@ -1183,7 +1183,7 @@
                             <h3>{{ fee.name }}</h3>
                             <div class="fee-price">{{ fee.price }}</div>
                             <p>{{ fee.note }}</p>
-                            <a class="fee-action" href="mailto:{{ lead_email|default:'michael@bowlinglegacy.com' }}?subject=Rental%20Ledger%20Pro%20-%20{{ fee.action|urlencode }}">{{ fee.action }}</a>
+                            <a class="fee-action" href="mailto:{{ lead_email|default:'michael@bowlinglegacy.com' }}?subject=RentalReadyPro%20-%20{{ fee.action|urlencode }}">{{ fee.action }}</a>
                         </article>
                     {% endfor %}
                 </div>

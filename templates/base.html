@@ -294,9 +294,20 @@
             <a href="/" class="nav-link-gold">Home</a>
             <a href="{% url 'properties_list' %}" class="nav-link-gold">Listings</a>
             <a href="{% url 'rental_ledger_contact' %}" class="nav-link-gold">Contact</a>
-            <a href="{% url 'login' %}" class="nav-link-gold">Portal</a>
             {% if user.is_authenticated %}
+                {% if user.is_superuser or user.role == "admin" %}
+                    <a href="{% url 'superadmin_dashboard' %}" class="nav-link-gold">Super Admin</a>
+                    <a href="{% url 'superadmin_owner_intakes' %}" class="nav-link-gold">Owner Intakes</a>
+                {% elif user.role == "property_owner" %}
+                    <a href="{% url 'property_owner_dashboard' %}" class="nav-link-gold">Owner Dashboard</a>
+                {% elif user.is_staff or user.role == "landlord" or user.role == "assistant" %}
+                    <a href="{% url 'landlord_dashboard' %}" class="nav-link-gold">Landlord Dashboard</a>
+                {% else %}
+                    <a href="{% url 'tenant_dashboard' %}" class="nav-link-gold">Resident Dashboard</a>
+                {% endif %}
                 <a href="{% url 'logout' %}" class="nav-link-gold">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="nav-link-gold">Login</a>
             {% endif %}
         </div>
     </div>
