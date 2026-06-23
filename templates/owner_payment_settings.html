@@ -114,8 +114,33 @@
     color: #334250;
     padding: .85rem;
 }
+.money-lanes {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+.money-lane {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    border-radius: 14px;
+    color: #10151f;
+    padding: .95rem;
+}
+.money-lane strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: .35rem;
+}
+.money-lane span {
+    color: #596772;
+    display: block;
+    font-size: .9rem;
+    line-height: 1.45;
+}
 @media (max-width: 992px) {
     .payments-grid { grid-template-columns: 1fr; }
+    .money-lanes { grid-template-columns: 1fr; }
 }
 </style>
 
@@ -129,8 +154,26 @@
         <div class="d-flex gap-2 flex-wrap">
             <a href="{% url 'property_owner_dashboard' %}" class="btn-dark-soft">Owner Dashboard</a>
             <a href="{% url 'owner_onboarding_wizard' %}" class="btn-owner">Setup Wizard</a>
+            {% if user.is_superuser or user.role == "admin" %}
+                <a href="{% url 'platform_revenue_settings' %}" class="btn-dark-soft">Platform Revenue</a>
+            {% endif %}
         </div>
     </div>
+
+    <section class="money-lanes">
+        <article class="money-lane">
+            <strong>Owner rent money</strong>
+            <span>Rent, deposits, utilities, and tenant payments should route to the owner or property Stripe destination when a connected account is active.</span>
+        </article>
+        <article class="money-lane">
+            <strong>RentalReadyPro revenue</strong>
+            <span>Subscriptions, platform payment fees, application processing, background-check admin, setup, referrals, and advertising are tracked separately in Platform Revenue.</span>
+        </article>
+        <article class="money-lane">
+            <strong>Fallback behavior</strong>
+            <span>If no owner/property Stripe route exists, the system falls back to the platform Stripe account. Use connected accounts before live owner rent collection.</span>
+        </article>
+    </section>
 
     <section class="payments-panel">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
