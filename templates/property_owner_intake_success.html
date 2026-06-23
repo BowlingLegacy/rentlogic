@@ -152,14 +152,15 @@
             <div class="path-panel">
                 <h2>Fastest path from here</h2>
                 <ol>
-                    <li>Create or log into your owner portal account.</li>
+                    <li>Log in if you already have an account, or enter the access code sent after setup approval.</li>
                     <li>Add the first property folder from the owner dashboard.</li>
                     <li>Upload the current resident roster so units, rent, deposits, balances, and phones are ready.</li>
                     <li>Open Stripe Payment Settings before accepting online rent payments.</li>
                 </ol>
             </div>
             <div class="button-row">
-                <a href="{% url 'login' %}" class="gold-btn">Login / Create Access</a>
+                <a href="{% url 'login' %}" class="gold-btn">Login</a>
+                <a href="{% url 'enter_invite_code' %}" class="dark-btn">Enter Access Code</a>
                 <a href="{% url 'rental_ledger_demo' %}" class="dark-btn">Preview Demo</a>
                 <a href="{% url 'rental_ledger_contact' %}" class="dark-btn">Contact RentalReadyPro</a>
                 <a href="{% url 'rental_ledger_pro_home' %}" class="dark-btn">Back Home</a>
