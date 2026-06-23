@@ -91,6 +91,13 @@
             font-weight: 950;
         }
 
+        .nav-links .login {
+            border: 1px solid rgba(255,255,255,.32);
+            border-radius: 6px;
+            color: #fff;
+            padding: 9px 13px;
+        }
+
         .hero {
             min-height: 100vh;
             position: relative;
@@ -884,6 +891,7 @@
             <a href="#launch">Launch Path</a>
             <a href="#faq">FAQ</a>
             <a href="{% url 'rental_ledger_contact' %}">Contact</a>
+            <a class="login" href="{% url 'login' %}">Login</a>
             <a href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
             <a class="demo" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
         </div>
