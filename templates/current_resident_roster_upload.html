@@ -2,21 +2,116 @@
 {% load formatting %}
 {% block content %}
 
-<div class="soft-card p-4 p-md-5">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+<style>
+.roster-shell {
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        #10151f;
+    color: #f8fbf7;
+    margin: -1rem;
+    min-height: 100vh;
+    padding: 1.25rem;
+}
+.roster-head,
+.roster-card,
+.roster-step {
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.22);
+}
+.roster-head {
+    background: linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94));
+    border: 1px solid rgba(16,199,194,.32);
+    margin-bottom: 1rem;
+    padding: 1.2rem 1.4rem;
+}
+.roster-kicker {
+    color: #a9d95b;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.roster-title {
+    color: #f8fbf7;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-weight: 950;
+    line-height: 1;
+}
+.roster-card {
+    background: rgba(248,251,247,.97);
+    border: 1px solid rgba(255,255,255,.16);
+    color: #10151f;
+    padding: 1.15rem;
+}
+.roster-steps {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+.roster-step {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    color: #10151f;
+    padding: 1rem;
+}
+.roster-step strong { display: block; margin-bottom: .3rem; }
+.roster-step span { color: #596772; display: block; font-size: .88rem; line-height: 1.4; }
+.btn-owner {
+    background: #ffb342;
+    border: 1px solid #ffb342;
+    border-radius: 10px;
+    color: #111;
+    display: inline-flex;
+    font-weight: 900;
+    padding: .65rem .95rem;
+    text-decoration: none;
+}
+.btn-owner:hover { background: #f2a52c; color: #111; }
+.btn-dark-soft {
+    background: #172233;
+    border: 1px solid rgba(16,199,194,.38);
+    border-radius: 10px;
+    color: #eaf2f5;
+    font-weight: 800;
+    padding: .6rem .9rem;
+    text-decoration: none;
+}
+.btn-dark-soft:hover { background: #223149; color: #10c7c2; }
+@media (max-width: 992px) {
+    .roster-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 576px) {
+    .roster-steps { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="roster-shell">
+    <div class="roster-head d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <h1 class="section-title mb-1">Approved Current Resident List</h1>
-            <p class="text-muted mb-0">
+            <div class="roster-kicker">Resident Data Import</div>
+            <h1 class="roster-title mb-2">Approved Current Resident List</h1>
+            <p class="mb-0" style="color:#c6d4dc;">
                 Upload this before residents use setup codes. The roster creates or updates resident files, unit rent setup, balances, deposits, and app setup readiness.
             </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'current_resident_roster_template' %}" class="message-btn">Download Template</a>
-            <a href="{% url 'owner_onboarding_wizard' %}" class="message-btn">Onboarding Wizard</a>
-            <a href="{% url 'custom_reports' %}" class="message-btn">Reports</a>
-            <a href="{% url 'landlord_attention' %}" class="message-btn">Needs Attention</a>
+            <a href="{% url 'current_resident_roster_template' %}" class="btn-owner">Download Template</a>
+            <a href="{% url 'owner_onboarding_wizard' %}" class="btn-dark-soft">Onboarding Wizard</a>
+            <a href="{% url 'custom_reports' %}" class="btn-dark-soft">Reports</a>
+            <a href="{% url 'landlord_attention' %}" class="btn-dark-soft">Needs Attention</a>
         </div>
     </div>
+
+    <section class="roster-steps">
+        <article class="roster-step"><strong>1. Download template</strong><span>Use the standard format when possible, or upload common resident-list spreadsheets.</span></article>
+        <article class="roster-step"><strong>2. Preview first</strong><span>Preview catches missing names, units, duplicate rows, and SMS consent problems before saving.</span></article>
+        <article class="roster-step"><strong>3. Import approved list</strong><span>Import creates resident files, unit rent settings, deposits, balances, and setup readiness.</span></article>
+        <article class="roster-step"><strong>4. Send setup codes</strong><span>After import, send app setup codes to residents who still need portal access.</span></article>
+    </section>
+
+<div class="roster-card">
 
     {% if messages %}
         {% for message in messages %}
@@ -48,13 +143,13 @@
             </div>
         </div>
         <div class="d-flex justify-content-end gap-2 flex-wrap mt-3">
-            <button type="submit" name="action" value="preview" class="message-btn">Preview Upload</button>
-            <button type="submit" name="action" value="import" class="gold-btn">Import Approved List</button>
+            <button type="submit" name="action" value="preview" class="btn-dark-soft">Preview Upload</button>
+            <button type="submit" name="action" value="import" class="btn-owner">Import Approved List</button>
         </div>
     </form>
 
     {% if roster_preview %}
-        <section class="soft-card p-3 p-md-4 mb-4">
+        <section class="roster-card p-3 p-md-4 mb-4">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
                 <div>
                     <h2 class="h4 fw-bold mb-1">Upload Preview</h2>
@@ -160,6 +255,7 @@
             </tbody>
         </table>
     </div>
+</div>
 </div>
 
 {% endblock %}
