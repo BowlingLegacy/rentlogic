@@ -7250,7 +7250,7 @@ def current_resident_roster_template(request):
         "yes",
     ]
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = 'attachment; filename="rental-ledger-resident-roster-template.csv"'
+    response["Content-Disposition"] = 'attachment; filename="rentalreadypro-resident-roster-template.csv"'
     writer = csv.writer(response)
     writer.writerow(headers)
     writer.writerow(example)

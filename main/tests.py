@@ -7010,7 +7010,7 @@ class LiveFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertIn("rental-ledger-resident-roster-template.csv", response["Content-Disposition"])
+        self.assertIn("rentalreadypro-resident-roster-template.csv", response["Content-Disposition"])
         self.assertContains(response, "sms_consent")
         self.assertContains(response, "Jane Resident")
 
