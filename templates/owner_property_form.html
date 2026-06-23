@@ -1,14 +1,148 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="soft-card p-4 p-md-5" style="max-width:960px;margin:0 auto;">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+<style>
+.property-form-shell {
+    background:
+        radial-gradient(circle at top right, rgba(16,199,194,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(118,100,255,.16), transparent 30%),
+        #10151f;
+    color: #f8fbf7;
+    margin: -1rem;
+    min-height: 100vh;
+    padding: 1.25rem;
+}
+.property-form-wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+}
+.property-form-head,
+.property-form-card,
+.setup-guide-card {
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.22);
+}
+.property-form-head {
+    background: linear-gradient(135deg, rgba(23,34,51,.98), rgba(16,21,31,.94));
+    border: 1px solid rgba(16,199,194,.32);
+    margin-bottom: 1rem;
+    padding: 1.2rem 1.4rem;
+}
+.property-kicker {
+    color: #a9d95b;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.property-title {
+    color: #f8fbf7;
+    font-size: clamp(2rem, 4vw, 3.15rem);
+    font-weight: 950;
+    line-height: 1;
+}
+.property-form-card {
+    background: rgba(248,251,247,.97);
+    border: 1px solid rgba(255,255,255,.16);
+    color: #10151f;
+    padding: 1.15rem;
+}
+.setup-guide {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+.setup-guide-card {
+    background: #fff;
+    border: 1px solid rgba(16,199,194,.2);
+    color: #10151f;
+    min-height: 130px;
+    padding: 1rem;
+}
+.setup-guide-card strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: .35rem;
+}
+.setup-guide-card span {
+    color: #596772;
+    display: block;
+    font-size: .88rem;
+    line-height: 1.4;
+}
+.btn-owner {
+    background: #ffb342;
+    border: 1px solid #ffb342;
+    border-radius: 10px;
+    color: #111;
+    display: inline-flex;
+    font-weight: 900;
+    padding: .65rem .95rem;
+    text-decoration: none;
+}
+.btn-owner:hover { background: #f2a52c; color: #111; }
+.btn-dark-soft {
+    background: #172233;
+    border: 1px solid rgba(16,199,194,.38);
+    border-radius: 10px;
+    color: #eaf2f5;
+    font-weight: 800;
+    padding: .6rem .9rem;
+    text-decoration: none;
+}
+.btn-dark-soft:hover { background: #223149; color: #10c7c2; }
+.property-form-card .form-control,
+.property-form-card .form-select {
+    border: 1px solid rgba(23,34,51,.18);
+    border-radius: 10px;
+    min-height: 46px;
+}
+.property-form-card textarea.form-control {
+    min-height: auto;
+}
+@media (max-width: 992px) {
+    .setup-guide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 576px) {
+    .setup-guide { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="property-form-shell">
+<div class="property-form-wrap">
+    <div class="property-form-head d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <h1 class="section-title mb-1">Add Property</h1>
-            <p class="text-muted mb-0">This property will be linked to your owner login email automatically.</p>
+            <div class="property-kicker">First Property Folder</div>
+            <h1 class="property-title mb-2">Add Property</h1>
+            <p class="mb-0" style="color:#c6d4dc;">This property will be linked to your owner login email automatically and becomes the folder for residents, payments, reports, listings, and documents.</p>
         </div>
-        <a href="{% url 'property_owner_dashboard' %}" class="message-btn">Back to Owner Dashboard</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'property_owner_dashboard' %}" class="btn-dark-soft">Owner Dashboard</a>
+            <a href="{% url 'owner_onboarding_wizard' %}" class="btn-owner">Setup Wizard</a>
+        </div>
     </div>
+
+    <section class="setup-guide">
+        <article class="setup-guide-card">
+            <strong>Property identity</strong>
+            <span>Name, address, photos, public description, and availability message.</span>
+        </article>
+        <article class="setup-guide-card">
+            <strong>Money defaults</strong>
+            <span>Rent, deposit, move-in rules, application fees, screening cost, and insurance links.</span>
+        </article>
+        <article class="setup-guide-card">
+            <strong>Tenant utilities</strong>
+            <span>List tenant-paid vendors so residents can be directed to set up service.</span>
+        </article>
+        <article class="setup-guide-card">
+            <strong>Next step</strong>
+            <span>After saving, upload onboarding documents, then import the resident roster.</span>
+        </article>
+    </section>
+
+    <div class="property-form-card">
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
@@ -23,9 +157,11 @@
             {% endfor %}
         </div>
         <div class="d-flex justify-content-end mt-4">
-            <button type="submit" class="gold-btn">Add Property</button>
+            <button type="submit" class="btn-owner">Add Property And Continue</button>
         </div>
     </form>
+</div>
+</div>
 </div>
 
 {% endblock %}
