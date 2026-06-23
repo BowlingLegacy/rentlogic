@@ -208,6 +208,34 @@ body {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.report-helper-grid {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 1rem;
+}
+
+.report-helper {
+    background: rgba(255,255,255,.78);
+    border: 1px solid rgba(16,199,194,.18);
+    border-radius: 14px;
+    padding: .9rem;
+}
+
+.report-helper strong {
+    color: var(--midnight);
+    display: block;
+    font-size: .96rem;
+    margin-bottom: .25rem;
+}
+
+.report-helper span {
+    color: var(--muted);
+    display: block;
+    font-size: .84rem;
+    line-height: 1.35;
+}
+
 .launcher-card {
     background: #fff;
     border: 1px solid rgba(16,199,194,.2);
@@ -272,6 +300,7 @@ body {
 
 @media (max-width: 992px) {
     .launcher-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .report-helper-grid { grid-template-columns: 1fr; }
     .launcher-head { align-items: flex-start; flex-direction: column; }
 }
 
@@ -343,6 +372,21 @@ body {
             <div class="launcher-note">Each card opens the builder with that report selected.</div>
         </div>
 
+        <div class="report-helper-grid">
+            <div class="report-helper">
+                <strong>Save named report recipes</strong>
+                <span>Name the report, choose filters, add sum or average math, then rerun it from Saved Report Templates.</span>
+            </div>
+            <div class="report-helper">
+                <strong>Use every major data area</strong>
+                <span>Residents, payments, balances, vendors, receipts, expense categories, rent setup, insurance, and financial entries can be reported.</span>
+            </div>
+            <div class="report-helper">
+                <strong>Export or print</strong>
+                <span>Generated reports can be printed for owners, lenders, accountants, or downloaded as CSV for spreadsheet work.</span>
+            </div>
+        </div>
+
         <div class="launcher-grid">
             <a href="{% url 't12_report' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="launcher-card primary">
                 <div class="launcher-label">Financial</div>
@@ -397,6 +441,48 @@ body {
                 <div class="launcher-label">Property</div>
                 <div class="launcher-name">Occupancy / Vacancy</div>
                 <div class="launcher-copy">Occupied units, vacant units, and occupancy rate.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=data_inventory{{ property_query_suffix }}" class="launcher-card primary">
+                <div class="launcher-label">Inventory</div>
+                <div class="launcher-name">Data Inventory</div>
+                <div class="launcher-copy">See what records exist before deciding what to report.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=vendor_directory{{ property_query_suffix }}" class="launcher-card">
+                <div class="launcher-label">Vendors</div>
+                <div class="launcher-name">Vendor Directory</div>
+                <div class="launcher-copy">Vendor list with service, contact, and category context.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=vendor_category_summary{{ property_query_suffix }}" class="launcher-card">
+                <div class="launcher-label">Spend</div>
+                <div class="launcher-name">Vendor / Category</div>
+                <div class="launcher-copy">Cross-reference vendors against expense categories.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=utility_cost_trend{{ property_query_suffix }}" class="launcher-card">
+                <div class="launcher-label">Utilities</div>
+                <div class="launcher-name">Utility Cost Trend</div>
+                <div class="launcher-copy">Power, gas, water, trash, internet, and related cost trends.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=delinquency_report{{ property_query_suffix }}" class="launcher-card">
+                <div class="launcher-label">Balances</div>
+                <div class="launcher-name">Delinquency</div>
+                <div class="launcher-copy">Residents with rent, utility, deposit, or other balances.</div>
+                <div class="launcher-go">Build report</div>
+            </a>
+
+            <a href="?report_type=deposit_liability{{ property_query_suffix }}" class="launcher-card">
+                <div class="launcher-label">Deposits</div>
+                <div class="launcher-name">Deposit Liability</div>
+                <div class="launcher-copy">Deposits held, due, applied, and remaining by resident.</div>
                 <div class="launcher-go">Build report</div>
             </a>
         </div>
@@ -559,7 +645,7 @@ body {
             <p class="text-muted mb-0">
                 Use Resident Directory for roster exports, Unit Rent Setup for onboarding checks,
                 Receipt Expense Detail for receipt-backed costs, Vendor Directory for service contacts and spend,
-                and Financial Entries / Expenses for mixed operating reports from uploaded accounting data.
+                Data Inventory to see what data is available, and Financial Entries / Expenses for mixed operating reports from uploaded accounting data.
             </p>
         </section>
     {% endif %}
