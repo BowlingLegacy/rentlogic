@@ -1924,6 +1924,7 @@ def property_owner_intake(request):
         intake = form.save()
         access_email_sent = False
         access_email_error = ""
+        access_code = ""
         user = intake.user or User.objects.filter(email__iexact=intake.email, role="property_owner").first()
         if user and user.has_usable_password():
             intake.user = user
@@ -1937,6 +1938,7 @@ def property_owner_intake(request):
             intake.status = "invited"
             intake.invite_sent_at = timezone.now()
             intake.save(update_fields=["user", "status", "invite_sent_at"])
+            access_code = user.invite_code
             try:
                 access_email_sent = send_portal_access_invite_email(user, intake.full_name, "Property Owner")
             except Exception as exc:
@@ -1987,6 +1989,8 @@ def property_owner_intake(request):
         )
         request.session["owner_setup_access_email_sent"] = bool(access_email_sent)
         request.session["owner_setup_access_email_error"] = access_email_error
+        request.session["owner_setup_access_code"] = access_code
+        request.session["owner_setup_email"] = intake.email
         messages.success(request, "Your property owner questionnaire has been submitted.")
         return redirect("property_owner_intake_success")
 
@@ -1997,6 +2001,8 @@ def property_owner_intake_success(request):
     return render(request, "property_owner_intake_success.html", {
         "access_email_sent": request.session.pop("owner_setup_access_email_sent", False),
         "access_email_error": request.session.pop("owner_setup_access_email_error", ""),
+        "access_code": request.session.pop("owner_setup_access_code", ""),
+        "owner_setup_email": request.session.pop("owner_setup_email", ""),
     })
 
 

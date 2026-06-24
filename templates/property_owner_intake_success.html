@@ -125,6 +125,36 @@
             display: block;
             margin-bottom: .25rem;
         }
+        .access-code-panel {
+            background: #10151f;
+            border: 2px solid var(--cyan);
+            border-radius: 14px;
+            color: #fff;
+            margin: 1.2rem 0;
+            padding: 1.2rem;
+        }
+        .access-code-panel strong {
+            display: block;
+            font-size: .9rem;
+            letter-spacing: .08em;
+            margin-bottom: .35rem;
+            text-transform: uppercase;
+        }
+        .access-code {
+            background: rgba(255,255,255,.12);
+            border-radius: 10px;
+            color: var(--amber);
+            display: inline-flex;
+            font-size: 2rem;
+            font-weight: 950;
+            letter-spacing: .14em;
+            margin: .4rem 0;
+            padding: .45rem .8rem;
+        }
+        .access-code-panel p {
+            color: #dbe7ef;
+            margin: .35rem 0 0;
+        }
         .dark-btn {
             background: var(--night);
             border-radius: 8px;
@@ -164,10 +194,18 @@
                     {% if access_email_error %}<div class="small mt-2">Email note: {{ access_email_error }}</div>{% endif %}
                 </div>
             {% endif %}
+            {% if access_code %}
+                <div class="access-code-panel">
+                    <strong>Your one-time owner access code</strong>
+                    <div class="access-code">{{ access_code }}</div>
+                    <p>Use this code now at Enter Access Code to create your owner login. This is shown only on this confirmation screen and is the same code the email tries to send{% if owner_setup_email %} to {{ owner_setup_email }}{% endif %}.</p>
+                    <p>Owner setup codes are currently delivered by email and shown here as a backup. SMS delivery for owner setup can be added separately after the SMS workflow is expanded beyond resident messaging.</p>
+                </div>
+            {% endif %}
             <div class="next-grid">
                 <div class="next-card">
                     <strong>Watch your email</strong>
-                    <span>You should receive a confirmation. We also received your setup details and can prepare the next step.</span>
+                    <span>You should receive a confirmation email. If email is delayed, use the on-screen access code above.</span>
                 </div>
                 <div class="next-card">
                     <strong>Preview while we prepare</strong>

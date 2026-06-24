@@ -3314,6 +3314,9 @@ class LiveFlowTests(TestCase):
         self.assertIn("Desired reports: valuation_estimate, vendor_expense, utility_cost_trend", mail.outbox[1].body)
         self.assertEqual(mail.outbox[2].subject, "RentalReadyPro questionnaire received")
         self.assertEqual(mail.outbox[2].to, ["portfolio@example.com"])
+        success_response = self.client.get(reverse("property_owner_intake_success"))
+        self.assertContains(success_response, "Your one-time owner access code")
+        self.assertContains(success_response, intake.user.invite_code)
 
     def test_property_owner_intake_accepts_blank_property_counts(self):
         response = self.client.post(reverse("property_owner_intake"), {
