@@ -2789,6 +2789,22 @@ def prepare_and_send_resident_app_setup_code(request, application):
     }
 
 
+def describe_setup_sms_log(sms_log):
+    if not sms_log:
+        return ""
+
+    status = sms_log.status
+    if status == "sent":
+        return "SMS sent"
+    if status == "skipped_no_consent":
+        return "SMS skipped because resident has not opted in"
+    if status == "not_configured":
+        return "SMS not configured"
+    if status == "failed":
+        return f"SMS failed: {sms_log.error_message or 'provider rejected the message'}"
+    return f"SMS {sms_log.get_status_display().lower()}"
+
+
 @login_required
 @user_passes_test(can_access_landlord_dashboard)
 def send_resident_app_setup_code(request, application_id):
@@ -2817,7 +2833,7 @@ def send_resident_app_setup_code(request, application_id):
         delivery_notes.append("email sent")
 
     if result["sms_log"]:
-        delivery_notes.append(f"SMS {result['sms_log'].get_status_display().lower()}")
+        delivery_notes.append(describe_setup_sms_log(result["sms_log"]))
 
     delivery_text = ", ".join(delivery_notes) if delivery_notes else "no message was sent"
     messages.success(
@@ -2854,7 +2870,10 @@ def bulk_send_resident_app_setup_codes(request):
     sent_count = 0
     skipped_count = 0
     email_count = 0
-    sms_attempt_count = 0
+    sms_sent_count = 0
+    sms_skipped_count = 0
+    sms_failed_count = 0
+    sms_not_configured_count = 0
     skipped_names = []
 
     for application in applications:
@@ -2869,11 +2888,20 @@ def bulk_send_resident_app_setup_codes(request):
         if result["email_sent"]:
             email_count += 1
         if result["sms_log"]:
-            sms_attempt_count += 1
+            if result["sms_log"].status == "sent":
+                sms_sent_count += 1
+            elif result["sms_log"].status == "skipped_no_consent":
+                sms_skipped_count += 1
+            elif result["sms_log"].status == "not_configured":
+                sms_not_configured_count += 1
+            elif result["sms_log"].status == "failed":
+                sms_failed_count += 1
 
     summary = (
         f"Bulk app setup codes complete. Ready: {sent_count}. "
-        f"Email sent: {email_count}. SMS attempted: {sms_attempt_count}. Skipped: {skipped_count}."
+        f"Email sent: {email_count}. SMS sent: {sms_sent_count}. "
+        f"SMS skipped no consent: {sms_skipped_count}. SMS failed: {sms_failed_count}. "
+        f"SMS not configured: {sms_not_configured_count}. Skipped: {skipped_count}."
     )
     if skipped_names:
         summary = f"{summary} Skipped: {', '.join(skipped_names[:5])}"
