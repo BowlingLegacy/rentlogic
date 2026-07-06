@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
@@ -722,6 +724,11 @@ class PropertyOwnerIntakeForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
         label="Reports you want available",
     )
+    website = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+        label="",
+    )
     property_count = forms.IntegerField(
         required=False,
         min_value=1,
@@ -831,6 +838,62 @@ class PropertyOwnerIntakeForm(forms.ModelForm):
 
     def clean_total_units(self):
         return self.cleaned_data.get("total_units") or 0
+
+    @staticmethod
+    def _looks_like_random_text(value):
+        text = (value or "").strip().lower()
+        if not text:
+            return False
+
+        alpha = re.sub(r"[^a-z]", "", text)
+        if len(alpha) < 10:
+            return False
+
+        words = re.findall(r"[a-z]{10,}", text)
+        if not words:
+            return False
+
+        vowels = sum(1 for char in alpha if char in "aeiou")
+        vowel_ratio = vowels / len(alpha)
+        has_long_unbroken_word = any(len(word) >= 14 for word in words)
+        has_no_natural_spacing = " " not in text and len(alpha) >= 10
+
+        return (
+            vowel_ratio < 0.24
+            or vowel_ratio > 0.68
+            or (has_long_unbroken_word and vowel_ratio < 0.34)
+            or (has_no_natural_spacing and vowel_ratio < 0.28)
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if cleaned_data.get("website"):
+            raise forms.ValidationError("Your submission could not be accepted.")
+
+        spam_check_fields = [
+            "full_name",
+            "company_name",
+            "current_software",
+            "current_pain_points",
+            "migration_notes",
+            "dashboard_goals",
+            "additional_notes",
+        ]
+        suspicious_fields = [
+            field_name
+            for field_name in spam_check_fields
+            if self._looks_like_random_text(cleaned_data.get(field_name))
+        ]
+        property_count = cleaned_data.get("property_count") or 0
+        total_units = cleaned_data.get("total_units") or 0
+
+        if len(suspicious_fields) >= 3 or (
+            len(suspicious_fields) >= 2 and property_count > 1000 and total_units > 1000
+        ):
+            raise forms.ValidationError("Your submission could not be accepted.")
+
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
