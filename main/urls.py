@@ -8,6 +8,9 @@ from . import blog_views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("app/", views.resident_app, name="resident_app"),
+    path("manifest.webmanifest", views.web_app_manifest, name="web_app_manifest"),
+    path("service-worker.js", views.service_worker, name="service_worker"),
     path("rental-ready-pro/", views.rental_ledger_pro_home, name="rental_ledger_pro_home"),
     path("rental-ready-pro/contact/", views.rental_ledger_contact, name="rental_ledger_contact"),
     path("rental-ready-pro/demo/", views.rental_ledger_demo, name="rental_ledger_demo"),

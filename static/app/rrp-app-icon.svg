@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RentalReadyPro">
+  <defs>
+    <linearGradient id="bg" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10c7c2"/>
+      <stop offset=".48" stop-color="#a9d95b"/>
+      <stop offset="1" stop-color="#ffb342"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="130" y1="112" x2="390" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#172233"/>
+      <stop offset="1" stop-color="#10151f"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#10151f"/>
+  <rect x="34" y="34" width="444" height="444" rx="92" fill="url(#bg)"/>
+  <rect x="82" y="94" width="348" height="324" rx="56" fill="url(#panel)"/>
+  <path d="M147 179h102c39 0 67 25 67 61 0 25-13 44-34 54l47 72h-68l-39-63h-18v63h-57V179Zm57 47v35h41c12 0 20-7 20-18 0-10-8-17-20-17h-41Z" fill="#f8fbf7"/>
+  <path d="M327 179h40v187h-55V226h-35l50-47Z" fill="#ffb342"/>
+  <path d="M145 395h222" stroke="#10c7c2" stroke-width="18" stroke-linecap="round"/>
+</svg>

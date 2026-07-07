@@ -29,6 +29,7 @@ from django.core.mail import EmailMessage, send_mail
 from django.db.models import Count, Max, Min, Q, Sum
 from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import strip_tags
 from django.utils import timezone
@@ -1915,6 +1916,123 @@ def privacy_policy(request):
 
 def terms_of_service(request):
     return render(request, "terms_of_service.html")
+
+
+def resident_app(request):
+    launch_url = reverse("login")
+    launch_label = "Sign In"
+    portal_type = "Resident Portal"
+
+    if request.user.is_authenticated:
+        if request.user.is_superuser or request.user.role == "admin":
+            launch_url = reverse("superadmin_dashboard")
+            launch_label = "Open Command Center"
+            portal_type = "Admin Portal"
+        elif request.user.role == "property_owner":
+            launch_url = reverse("property_owner_dashboard")
+            launch_label = "Open Owner Dashboard"
+            portal_type = "Owner Portal"
+        elif request.user.is_staff or request.user.role in ["landlord", "assistant"]:
+            launch_url = reverse("landlord_dashboard")
+            launch_label = "Open Landlord Dashboard"
+            portal_type = "Landlord Portal"
+        else:
+            launch_url = reverse("tenant_dashboard")
+            launch_label = "Open Resident Dashboard"
+
+    return render(request, "resident_app.html", {
+        "launch_url": launch_url,
+        "launch_label": launch_label,
+        "portal_type": portal_type,
+    })
+
+
+def web_app_manifest(request):
+    return JsonResponse({
+        "name": "RentalReadyPro Resident",
+        "short_name": "RentalReadyPro",
+        "description": "Resident and owner portal for RentalReadyPro properties.",
+        "start_url": reverse("resident_app"),
+        "scope": "/",
+        "display": "standalone",
+        "orientation": "portrait",
+        "background_color": "#10151f",
+        "theme_color": "#10c7c2",
+        "icons": [
+            {
+                "src": static("app/rrp-app-icon.svg"),
+                "sizes": "any",
+                "type": "image/svg+xml",
+                "purpose": "any maskable",
+            }
+        ],
+        "shortcuts": [
+            {
+                "name": "Enter Access Code",
+                "short_name": "Access Code",
+                "url": reverse("enter_invite_code"),
+                "description": "Finish resident or owner setup with a private access code.",
+            },
+            {
+                "name": "Resident Dashboard",
+                "short_name": "Dashboard",
+                "url": reverse("tenant_dashboard"),
+                "description": "Open balances, documents, inbox, requests, and payment history.",
+            },
+            {
+                "name": "Request Code",
+                "short_name": "Request Code",
+                "url": reverse("request_invite_code"),
+                "description": "Request a replacement portal setup code.",
+            },
+        ],
+    }, content_type="application/manifest+json")
+
+
+def service_worker(request):
+    service_worker_js = """
+const CACHE_NAME = "rentalreadypro-app-v1";
+const APP_SHELL = [
+  "/app/",
+  "/login/",
+  "/enter-invite-code/",
+  "/request-invite-code/",
+  "/manifest.webmanifest"
+];
+
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+    )).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", event => {
+  const request = event.request;
+  if (request.method !== "GET") {
+    return;
+  }
+
+  const url = new URL(request.url);
+  if (url.origin !== location.origin) {
+    return;
+  }
+
+  event.respondWith(
+    fetch(request)
+      .then(response => response)
+      .catch(() => caches.match(request).then(cached => cached || caches.match("/app/")))
+  );
+});
+"""
+    return HttpResponse(service_worker_js, content_type="application/javascript")
 
 
 def property_owner_intake(request):

@@ -1,8 +1,15 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10c7c2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="RentalReadyPro">
+    <link rel="manifest" href="{% url 'web_app_manifest' %}">
+    <link rel="icon" href="{% static 'app/rrp-app-icon.svg' %}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{% static 'app/rrp-app-icon.svg' %}">
     <title>RentalReadyPro - Dynamic Command</title>
     <style>
         :root {
@@ -934,6 +941,7 @@
             <a href="#launch">Launch Path</a>
             <a href="#faq">FAQ</a>
             <a href="{% url 'rental_ledger_contact' %}">Contact</a>
+            <a href="{% url 'resident_app' %}">App</a>
             <a class="login" href="{% url 'login' %}">Login</a>
             <a href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
             <a class="demo" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
@@ -948,6 +956,7 @@
                 <p class="hero-copy">RentalReadyPro brings rent collection, resident files, messages, documents, maintenance, accounting records, and owner-ready reports into one property-aware platform.</p>
                 <div class="actions">
                     <a class="button primary" href="{% url 'property_owner_intake' %}">Sign Up / Start Owner Setup</a>
+                    <a class="button secondary" href="{% url 'resident_app' %}">Open App</a>
                     <a class="button secondary" href="{% url 'login' %}">Login</a>
                     <a class="button secondary" href="#platform">See the System</a>
                     <a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
@@ -1489,5 +1498,12 @@
             </div>
         </section>
     </main>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function () {
+                navigator.serviceWorker.register("{% url 'service_worker' %}");
+            });
+        }
+    </script>
 </body>
 </html>

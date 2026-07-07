@@ -1,0 +1,313 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RentalReadyPro App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#10c7c2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="RentalReadyPro">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="{% url 'web_app_manifest' %}">
+    <link rel="icon" href="{% static 'app/rrp-app-icon.svg' %}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{% static 'app/rrp-app-icon.svg' %}">
+    <style>
+        :root {
+            --night: #10151f;
+            --panel: rgba(255,255,255,.94);
+            --line: rgba(255,255,255,.18);
+            --cyan: #10c7c2;
+            --lime: #a9d95b;
+            --amber: #ffb342;
+            --violet: #7664ff;
+            --ink: #14202b;
+            --muted: #627281;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background:
+                radial-gradient(circle at 12% 8%, rgba(16,199,194,.34), transparent 32%),
+                radial-gradient(circle at 88% 0%, rgba(255,179,66,.22), transparent 26%),
+                radial-gradient(circle at 65% 84%, rgba(118,100,255,.24), transparent 34%),
+                var(--night);
+            color: #f8fbf7;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            padding: max(18px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+        }
+        a { color: inherit; text-decoration: none; }
+        .app-shell {
+            display: grid;
+            gap: 18px;
+            margin: 0 auto;
+            max-width: 520px;
+        }
+        .hero {
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 24px 72px rgba(0,0,0,.34);
+        }
+        .hero::before {
+            background:
+                linear-gradient(160deg, rgba(16,21,31,.72), rgba(16,21,31,.38)),
+                url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=82") center/cover;
+            content: "";
+            inset: 0;
+            position: absolute;
+        }
+        .hero-content {
+            min-height: 340px;
+            padding: 22px;
+            position: relative;
+            z-index: 1;
+        }
+        .brand-row {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+        }
+        .mark {
+            align-items: center;
+            background: linear-gradient(135deg, var(--cyan), var(--lime) 48%, var(--amber));
+            border-radius: 16px;
+            color: var(--night);
+            display: inline-flex;
+            font-size: 1.08rem;
+            font-weight: 950;
+            height: 54px;
+            justify-content: center;
+            min-width: 74px;
+            padding: 0 12px;
+        }
+        .portal-pill {
+            backdrop-filter: blur(14px);
+            background: rgba(255,255,255,.13);
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 999px;
+            color: #dceff0;
+            font-size: .8rem;
+            font-weight: 800;
+            padding: 9px 12px;
+        }
+        h1 {
+            font-size: clamp(2.35rem, 14vw, 4.2rem);
+            letter-spacing: 0;
+            line-height: .94;
+            margin: 56px 0 14px;
+        }
+        .hero-copy {
+            color: #dce7e9;
+            font-size: 1.02rem;
+            line-height: 1.48;
+            margin: 0;
+            max-width: 360px;
+        }
+        .primary-action {
+            align-items: center;
+            background: var(--amber);
+            border-radius: 18px;
+            color: #121923;
+            display: flex;
+            font-size: 1.08rem;
+            font-weight: 950;
+            justify-content: space-between;
+            margin-top: 24px;
+            min-height: 58px;
+            padding: 0 18px;
+        }
+        .install-btn {
+            background: rgba(16,199,194,.16);
+            border: 1px solid rgba(16,199,194,.36);
+            border-radius: 16px;
+            color: #f8fbf7;
+            cursor: pointer;
+            display: none;
+            font: inherit;
+            font-weight: 850;
+            min-height: 52px;
+            padding: 0 16px;
+            width: 100%;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,.5);
+            border-radius: 24px;
+            box-shadow: 0 16px 46px rgba(0,0,0,.18);
+            color: var(--ink);
+            padding: 16px;
+        }
+        .panel-title {
+            color: var(--muted);
+            font-size: .78rem;
+            font-weight: 950;
+            letter-spacing: .12em;
+            margin: 0 0 12px;
+            text-transform: uppercase;
+        }
+        .quick-grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .quick-link {
+            background: #fff;
+            border: 1px solid #dde8e5;
+            border-radius: 18px;
+            min-height: 96px;
+            padding: 14px;
+        }
+        .quick-link strong {
+            color: var(--ink);
+            display: block;
+            font-size: 1rem;
+            line-height: 1.15;
+            margin-bottom: 8px;
+        }
+        .quick-link span {
+            color: var(--muted);
+            display: block;
+            font-size: .83rem;
+            line-height: 1.28;
+        }
+        .wide-link {
+            align-items: center;
+            background: #fff;
+            border: 1px solid #dde8e5;
+            border-radius: 18px;
+            color: var(--ink);
+            display: flex;
+            font-weight: 850;
+            justify-content: space-between;
+            margin-top: 10px;
+            min-height: 54px;
+            padding: 0 15px;
+        }
+        .status-strip {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .status-item {
+            background: rgba(255,255,255,.11);
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 18px;
+            padding: 13px 10px;
+        }
+        .status-item strong {
+            color: #fff;
+            display: block;
+            font-size: .98rem;
+            line-height: 1.1;
+        }
+        .status-item span {
+            color: #c2d4da;
+            display: block;
+            font-size: .74rem;
+            margin-top: 5px;
+        }
+        .footnote {
+            color: #b7c7cc;
+            font-size: .8rem;
+            line-height: 1.45;
+            text-align: center;
+        }
+        @media (min-width: 760px) {
+            body { padding: 40px 20px; }
+            .app-shell { max-width: 920px; grid-template-columns: 1.05fr .95fr; align-items: start; }
+            .hero { grid-row: span 3; }
+            .hero-content { min-height: 640px; }
+            h1 { margin-top: 170px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="app-shell">
+        <section class="hero">
+            <div class="hero-content">
+                <div class="brand-row">
+                    <div class="mark">RRP</div>
+                    <div class="portal-pill">{{ portal_type }}</div>
+                </div>
+                <h1>Open your rental command app.</h1>
+                <p class="hero-copy">
+                    Balances, documents, messages, maintenance, setup codes, and payment history in one phone-first portal.
+                </p>
+                <a class="primary-action" href="{{ launch_url }}">
+                    <span>{{ launch_label }}</span>
+                    <span aria-hidden="true">→</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="status-strip" aria-label="App status">
+            <div class="status-item"><strong>Pay</strong><span>Rent, utilities, deposits</span></div>
+            <div class="status-item"><strong>Sign</strong><span>Leases and forms</span></div>
+            <div class="status-item"><strong>Message</strong><span>Secure inbox</span></div>
+        </section>
+
+        <button id="installAppButton" class="install-btn" type="button">Install RentalReadyPro</button>
+
+        <section class="panel">
+            <p class="panel-title">Fast Start</p>
+            <div class="quick-grid">
+                <a class="quick-link" href="{% url 'enter_invite_code' %}">
+                    <strong>Enter Access Code</strong>
+                    <span>Paste the private code sent by text or email.</span>
+                </a>
+                <a class="quick-link" href="{% url 'request_invite_code' %}">
+                    <strong>Request Code</strong>
+                    <span>Get a replacement setup code when one expires.</span>
+                </a>
+                <a class="quick-link" href="{% url 'tenant_dashboard' %}">
+                    <strong>Dashboard</strong>
+                    <span>Open balances, documents, inbox, and requests.</span>
+                </a>
+                <a class="quick-link" href="{% url 'resident_payment_history' %}">
+                    <strong>Payment History</strong>
+                    <span>View rent, utilities, deposit, and receipts.</span>
+                </a>
+            </div>
+            <a class="wide-link" href="{% url 'resident_requests' %}">
+                <span>Messages and maintenance requests</span>
+                <span aria-hidden="true">→</span>
+            </a>
+        </section>
+
+        <p class="footnote">
+            Add this page to your phone home screen for app-style access. On iPhone, use Share then Add to Home Screen.
+        </p>
+    </main>
+
+    <script>
+        let deferredInstallPrompt;
+        const installButton = document.getElementById("installAppButton");
+
+        window.addEventListener("beforeinstallprompt", event => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            installButton.style.display = "block";
+        });
+
+        installButton.addEventListener("click", async () => {
+            if (!deferredInstallPrompt) {
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            installButton.style.display = "none";
+        });
+
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("{% url 'service_worker' %}");
+            });
+        }
+    </script>
+</body>
+</html>
