@@ -15,53 +15,57 @@
     <style>
         :root {
             --night: #10151f;
+            --ink: #13202c;
             --panel: rgba(255,255,255,.94);
             --line: rgba(255,255,255,.18);
             --cyan: #10c7c2;
             --lime: #a9d95b;
             --amber: #ffb342;
             --violet: #7664ff;
-            --ink: #14202b;
-            --muted: #627281;
+            --rose: #ff5f7e;
+            --muted: #647484;
         }
         * { box-sizing: border-box; }
         body {
             background:
-                radial-gradient(circle at 12% 8%, rgba(16,199,194,.34), transparent 32%),
-                radial-gradient(circle at 88% 0%, rgba(255,179,66,.22), transparent 26%),
-                radial-gradient(circle at 65% 84%, rgba(118,100,255,.24), transparent 34%),
+                radial-gradient(circle at 14% 8%, rgba(16,199,194,.34), transparent 31%),
+                radial-gradient(circle at 88% 0%, rgba(255,179,66,.22), transparent 25%),
+                radial-gradient(circle at 62% 88%, rgba(118,100,255,.25), transparent 34%),
                 var(--night);
             color: #f8fbf7;
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             margin: 0;
             min-height: 100vh;
-            padding: max(18px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+            padding: max(18px, env(safe-area-inset-top)) 14px max(24px, env(safe-area-inset-bottom));
         }
         a { color: inherit; text-decoration: none; }
         .app-shell {
             display: grid;
-            gap: 18px;
+            gap: 16px;
             margin: 0 auto;
-            max-width: 520px;
+            max-width: 1080px;
         }
         .hero {
             border: 1px solid var(--line);
-            border-radius: 28px;
+            border-radius: 30px;
+            min-height: 390px;
             overflow: hidden;
             position: relative;
-            box-shadow: 0 24px 72px rgba(0,0,0,.34);
+            box-shadow: 0 24px 72px rgba(0,0,0,.35);
         }
         .hero::before {
             background:
-                linear-gradient(160deg, rgba(16,21,31,.72), rgba(16,21,31,.38)),
-                url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=82") center/cover;
+                linear-gradient(150deg, rgba(16,21,31,.82), rgba(16,21,31,.44)),
+                url("{{ property_photo_url }}") center/cover;
             content: "";
             inset: 0;
             position: absolute;
         }
         .hero-content {
-            min-height: 340px;
-            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            min-height: 390px;
+            padding: 20px;
             position: relative;
             z-index: 1;
         }
@@ -77,7 +81,7 @@
             border-radius: 16px;
             color: var(--night);
             display: inline-flex;
-            font-size: 1.08rem;
+            font-size: 1.05rem;
             font-weight: 950;
             height: 54px;
             justify-content: center;
@@ -90,22 +94,35 @@
             border: 1px solid rgba(255,255,255,.2);
             border-radius: 999px;
             color: #dceff0;
-            font-size: .8rem;
-            font-weight: 800;
+            font-size: .78rem;
+            font-weight: 850;
             padding: 9px 12px;
         }
+        .hero-main {
+            margin-top: auto;
+            max-width: 620px;
+            padding-top: 64px;
+        }
+        .property-label {
+            color: var(--amber);
+            font-size: .78rem;
+            font-weight: 950;
+            letter-spacing: .12em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
         h1 {
-            font-size: clamp(2.35rem, 14vw, 4.2rem);
+            font-size: clamp(2.4rem, 12vw, 5.4rem);
             letter-spacing: 0;
-            line-height: .94;
-            margin: 56px 0 14px;
+            line-height: .92;
+            margin: 0 0 14px;
         }
         .hero-copy {
             color: #dce7e9;
             font-size: 1.02rem;
             line-height: 1.48;
             margin: 0;
-            max-width: 360px;
+            max-width: 520px;
         }
         .primary-action {
             align-items: center;
@@ -113,79 +130,13 @@
             border-radius: 18px;
             color: #121923;
             display: flex;
-            font-size: 1.08rem;
+            font-size: 1.05rem;
             font-weight: 950;
             justify-content: space-between;
-            margin-top: 24px;
+            margin-top: 22px;
             min-height: 58px;
             padding: 0 18px;
-        }
-        .install-btn {
-            background: rgba(16,199,194,.16);
-            border: 1px solid rgba(16,199,194,.36);
-            border-radius: 16px;
-            color: #f8fbf7;
-            cursor: pointer;
-            display: none;
-            font: inherit;
-            font-weight: 850;
-            min-height: 52px;
-            padding: 0 16px;
-            width: 100%;
-        }
-        .panel {
-            background: var(--panel);
-            border: 1px solid rgba(255,255,255,.5);
-            border-radius: 24px;
-            box-shadow: 0 16px 46px rgba(0,0,0,.18);
-            color: var(--ink);
-            padding: 16px;
-        }
-        .panel-title {
-            color: var(--muted);
-            font-size: .78rem;
-            font-weight: 950;
-            letter-spacing: .12em;
-            margin: 0 0 12px;
-            text-transform: uppercase;
-        }
-        .quick-grid {
-            display: grid;
-            gap: 10px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .quick-link {
-            background: #fff;
-            border: 1px solid #dde8e5;
-            border-radius: 18px;
-            min-height: 96px;
-            padding: 14px;
-        }
-        .quick-link strong {
-            color: var(--ink);
-            display: block;
-            font-size: 1rem;
-            line-height: 1.15;
-            margin-bottom: 8px;
-        }
-        .quick-link span {
-            color: var(--muted);
-            display: block;
-            font-size: .83rem;
-            line-height: 1.28;
-        }
-        .wide-link {
-            align-items: center;
-            background: #fff;
-            border: 1px solid #dde8e5;
-            border-radius: 18px;
-            color: var(--ink);
-            display: flex;
-            font-weight: 850;
-            justify-content: space-between;
-            margin-top: 10px;
-            min-height: 54px;
-            padding: 0 15px;
+            width: min(100%, 370px);
         }
         .status-strip {
             display: grid;
@@ -210,18 +161,217 @@
             font-size: .74rem;
             margin-top: 5px;
         }
+        .panel {
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,.5);
+            border-radius: 24px;
+            box-shadow: 0 16px 46px rgba(0,0,0,.18);
+            color: var(--ink);
+            padding: 16px;
+        }
+        .panel-title {
+            color: var(--muted);
+            font-size: .76rem;
+            font-weight: 950;
+            letter-spacing: .12em;
+            margin: 0 0 12px;
+            text-transform: uppercase;
+        }
+        .action-grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .action-card {
+            background: #fff;
+            border: 1px solid #dde8e5;
+            border-radius: 18px;
+            min-height: 136px;
+            overflow: hidden;
+            padding: 14px;
+            position: relative;
+        }
+        .action-card::before {
+            background: var(--cyan);
+            content: "";
+            height: 5px;
+            inset: 0 0 auto;
+            position: absolute;
+        }
+        .action-card.lime::before { background: var(--lime); }
+        .action-card.amber::before { background: var(--amber); }
+        .action-card.violet::before { background: var(--violet); }
+        .action-card strong {
+            color: var(--ink);
+            display: block;
+            font-size: 1.04rem;
+            line-height: 1.15;
+            margin: 10px 0 8px;
+        }
+        .action-card span {
+            color: var(--muted);
+            display: block;
+            font-size: .84rem;
+            line-height: 1.32;
+        }
+        .action-card em {
+            bottom: 12px;
+            color: #0b6f72;
+            font-size: .78rem;
+            font-style: normal;
+            font-weight: 900;
+            position: absolute;
+        }
+        .install-btn {
+            background: rgba(16,199,194,.16);
+            border: 1px solid rgba(16,199,194,.36);
+            border-radius: 16px;
+            color: #f8fbf7;
+            cursor: pointer;
+            display: none;
+            font: inherit;
+            font-weight: 850;
+            min-height: 52px;
+            padding: 0 16px;
+            width: 100%;
+        }
+        .workflow-list {
+            display: grid;
+            gap: 10px;
+        }
+        .workflow-item {
+            align-items: center;
+            background: #fff;
+            border: 1px solid #dde8e5;
+            border-radius: 16px;
+            display: flex;
+            gap: 12px;
+            min-height: 62px;
+            padding: 12px;
+        }
+        .workflow-dot {
+            background: linear-gradient(135deg, var(--cyan), var(--violet));
+            border-radius: 14px;
+            color: #fff;
+            flex: 0 0 42px;
+            font-weight: 950;
+            height: 42px;
+            line-height: 42px;
+            text-align: center;
+        }
+        .workflow-item strong {
+            color: var(--ink);
+            display: block;
+            font-size: .95rem;
+        }
+        .workflow-item span {
+            color: var(--muted);
+            display: block;
+            font-size: .8rem;
+            margin-top: 3px;
+        }
+        .ad-card {
+            background:
+                linear-gradient(135deg, rgba(16,199,194,.94), rgba(118,100,255,.9)),
+                #14202b;
+            border: 1px solid rgba(255,255,255,.24);
+            border-radius: 24px;
+            box-shadow: 0 18px 54px rgba(0,0,0,.24);
+            color: #fff;
+            min-height: 210px;
+            overflow: hidden;
+            padding: 18px;
+            position: relative;
+        }
+        .ad-card::after {
+            background: rgba(255,255,255,.14);
+            border-radius: 999px;
+            content: "";
+            height: 170px;
+            position: absolute;
+            right: -54px;
+            top: -44px;
+            width: 170px;
+        }
+        .ad-label {
+            font-size: .75rem;
+            font-weight: 950;
+            letter-spacing: .12em;
+            margin-bottom: 20px;
+            opacity: .86;
+            position: relative;
+            text-transform: uppercase;
+            z-index: 1;
+        }
+        .ad-headline {
+            font-size: 1.45rem;
+            font-weight: 950;
+            line-height: 1.05;
+            margin: 0 0 10px;
+            max-width: 360px;
+            position: relative;
+            z-index: 1;
+        }
+        .ad-detail {
+            color: rgba(255,255,255,.86);
+            font-size: .9rem;
+            line-height: 1.42;
+            margin: 0 0 18px;
+            max-width: 390px;
+            position: relative;
+            z-index: 1;
+        }
+        .ad-cta {
+            background: rgba(255,255,255,.18);
+            border: 1px solid rgba(255,255,255,.28);
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: .82rem;
+            font-weight: 900;
+            min-height: 40px;
+            padding: 10px 14px;
+            position: relative;
+            z-index: 1;
+        }
+        .ad-dots {
+            display: flex;
+            gap: 6px;
+            margin-top: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .ad-dot {
+            background: rgba(255,255,255,.34);
+            border-radius: 999px;
+            height: 7px;
+            width: 20px;
+        }
+        .ad-dot.active { background: #fff; }
         .footnote {
             color: #b7c7cc;
             font-size: .8rem;
             line-height: 1.45;
             text-align: center;
         }
+        @media (max-width: 430px) {
+            .action-grid { grid-template-columns: 1fr; }
+            .hero, .hero-content { min-height: 430px; }
+        }
         @media (min-width: 760px) {
             body { padding: 40px 20px; }
-            .app-shell { max-width: 920px; grid-template-columns: 1.05fr .95fr; align-items: start; }
-            .hero { grid-row: span 3; }
-            .hero-content { min-height: 640px; }
-            h1 { margin-top: 170px; }
+            .app-shell {
+                grid-template-columns: 1.05fr .95fr;
+                align-items: start;
+            }
+            .hero {
+                grid-row: span 3;
+                min-height: 720px;
+            }
+            .hero-content { min-height: 720px; padding: 28px; }
+            .secondary-column {
+                display: grid;
+                gap: 16px;
+            }
         }
     </style>
 </head>
@@ -233,56 +383,78 @@
                     <div class="mark">RRP</div>
                     <div class="portal-pill">{{ portal_type }}</div>
                 </div>
-                <h1>Open your rental command app.</h1>
-                <p class="hero-copy">
-                    Balances, documents, messages, maintenance, setup codes, and payment history in one phone-first portal.
-                </p>
-                <a class="primary-action" href="{{ launch_url }}">
-                    <span>{{ launch_label }}</span>
-                    <span aria-hidden="true">→</span>
-                </a>
+                <div class="hero-main">
+                    <div class="property-label">{{ property_name }}</div>
+                    <h1>{% if app_mode == "resident" %}Your property app.{% elif app_mode == "landlord" %}Your operations app.{% else %}Open the app.{% endif %}</h1>
+                    <p class="hero-copy">{{ property_tagline }}</p>
+                    <a class="primary-action" href="{{ launch_url }}">
+                        <span>{{ launch_label }}</span>
+                        <span aria-hidden="true">-&gt;</span>
+                    </a>
+                </div>
             </div>
         </section>
 
-        <section class="status-strip" aria-label="App status">
-            <div class="status-item"><strong>Pay</strong><span>Rent, utilities, deposits</span></div>
-            <div class="status-item"><strong>Sign</strong><span>Leases and forms</span></div>
-            <div class="status-item"><strong>Message</strong><span>Secure inbox</span></div>
-        </section>
+        <div class="secondary-column">
+            <section class="status-strip" aria-label="App status">
+                {% for stat in app_stats %}
+                    <div class="status-item"><strong>{{ stat.value }}</strong><span>{{ stat.label }}</span></div>
+                {% endfor %}
+            </section>
 
-        <button id="installAppButton" class="install-btn" type="button">Install RentalReadyPro</button>
+            <button id="installAppButton" class="install-btn" type="button">Install RentalReadyPro</button>
 
-        <section class="panel">
-            <p class="panel-title">Fast Start</p>
-            <div class="quick-grid">
-                <a class="quick-link" href="{% url 'enter_invite_code' %}">
-                    <strong>Enter Access Code</strong>
-                    <span>Paste the private code sent by text or email.</span>
-                </a>
-                <a class="quick-link" href="{% url 'request_invite_code' %}">
-                    <strong>Request Code</strong>
-                    <span>Get a replacement setup code when one expires.</span>
-                </a>
-                <a class="quick-link" href="{% url 'tenant_dashboard' %}">
-                    <strong>Dashboard</strong>
-                    <span>Open balances, documents, inbox, and requests.</span>
-                </a>
-                <a class="quick-link" href="{% url 'resident_payment_history' %}">
-                    <strong>Payment History</strong>
-                    <span>View rent, utilities, deposit, and receipts.</span>
-                </a>
-            </div>
-            <a class="wide-link" href="{% url 'resident_requests' %}">
-                <span>Messages and maintenance requests</span>
-                <span aria-hidden="true">→</span>
-            </a>
-        </section>
+            <section class="panel">
+                <p class="panel-title">{% if app_mode == "resident" %}Resident Tools{% elif app_mode == "landlord" %}Landlord Tools{% else %}Fast Start{% endif %}</p>
+                <div class="action-grid">
+                    {% for action in primary_actions %}
+                        <a class="action-card {{ action.tone }}" href="{{ action.url }}">
+                            <strong>{{ action.label }}</strong>
+                            <span>{{ action.detail }}</span>
+                            <em>Open</em>
+                        </a>
+                    {% endfor %}
+                </div>
+            </section>
 
-        <p class="footnote">
-            Add this page to your phone home screen for app-style access. On iPhone, use Share then Add to Home Screen.
-        </p>
+            <section class="panel">
+                <p class="panel-title">{% if app_mode == "resident" %}Resident Flow{% elif app_mode == "landlord" %}Operations Flow{% else %}Setup Flow{% endif %}</p>
+                <div class="workflow-list">
+                    {% if app_mode == "resident" %}
+                        <a class="workflow-item" href="{% url 'tenant_dashboard' %}"><div class="workflow-dot">1</div><div><strong>Pay and review balances</strong><span>Rent, utilities, deposits, and receipts stay together.</span></div></a>
+                        <a class="workflow-item" href="{% url 'tenant_dashboard' %}#resident-inbox"><div class="workflow-dot">2</div><div><strong>Sign onboarding docs</strong><span>Lease updates, acknowledgments, and property forms.</span></div></a>
+                        <a class="workflow-item" href="{% url 'resident_requests' %}"><div class="workflow-dot">3</div><div><strong>Send maintenance requests</strong><span>Repairs and messages go into the property queue.</span></div></a>
+                    {% elif app_mode == "landlord" %}
+                        <a class="workflow-item" href="{% url 'landlord_dashboard' %}"><div class="workflow-dot">1</div><div><strong>Track rent collection</strong><span>See who has paid and who needs attention.</span></div></a>
+                        <a class="workflow-item" href="{% url 'accounting_receipts' %}"><div class="workflow-dot">2</div><div><strong>Process receipts</strong><span>Upload, split, categorize, approve, or ignore duplicates.</span></div></a>
+                        <a class="workflow-item" href="{% url 'custom_reports' %}"><div class="workflow-dot">3</div><div><strong>Review ledgers and reports</strong><span>Expense detail, rent roll, T-12, and custom reports.</span></div></a>
+                    {% else %}
+                        <a class="workflow-item" href="{% url 'enter_invite_code' %}"><div class="workflow-dot">1</div><div><strong>Enter private code</strong><span>Connect the right person to the right property file.</span></div></a>
+                        <a class="workflow-item" href="{% url 'login' %}"><div class="workflow-dot">2</div><div><strong>Sign in</strong><span>Open the workspace for your role.</span></div></a>
+                        <a class="workflow-item" href="{% url 'request_invite_code' %}"><div class="workflow-dot">3</div><div><strong>Replace expired code</strong><span>Request a fresh setup code when needed.</span></div></a>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="ad-card" id="referralAdCard" aria-label="Referral offer">
+                <div class="ad-label" id="adLabel">{{ referral_ads.0.label }}</div>
+                <h2 class="ad-headline" id="adHeadline">{{ referral_ads.0.headline }}</h2>
+                <p class="ad-detail" id="adDetail">{{ referral_ads.0.detail }}</p>
+                <span class="ad-cta" id="adCta">{{ referral_ads.0.cta }}</span>
+                <div class="ad-dots" aria-hidden="true">
+                    {% for ad in referral_ads %}
+                        <span class="ad-dot {% if forloop.first %}active{% endif %}"></span>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <p class="footnote">
+                Add this page to your phone home screen for app-style access. On iPhone, use Share then Add to Home Screen.
+            </p>
+        </div>
     </main>
 
+    {{ referral_ads|json_script:"referralAdsData" }}
     <script>
         let deferredInstallPrompt;
         const installButton = document.getElementById("installAppButton");
@@ -302,6 +474,32 @@
             deferredInstallPrompt = null;
             installButton.style.display = "none";
         });
+
+        const referralAds = JSON.parse(document.getElementById("referralAdsData").textContent);
+        const label = document.getElementById("adLabel");
+        const headline = document.getElementById("adHeadline");
+        const detail = document.getElementById("adDetail");
+        const cta = document.getElementById("adCta");
+        const dots = Array.from(document.querySelectorAll(".ad-dot"));
+        let adIndex = 0;
+
+        function showAd(index) {
+            const ad = referralAds[index];
+            label.textContent = ad.label;
+            headline.textContent = ad.headline;
+            detail.textContent = ad.detail;
+            cta.textContent = ad.cta;
+            dots.forEach((dot, dotIndex) => {
+                dot.classList.toggle("active", dotIndex === index);
+            });
+        }
+
+        if (referralAds.length > 1) {
+            setInterval(() => {
+                adIndex = (adIndex + 1) % referralAds.length;
+                showAd(adIndex);
+            }, 45000);
+        }
 
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {

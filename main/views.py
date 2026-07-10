@@ -1922,28 +1922,127 @@ def resident_app(request):
     launch_url = reverse("login")
     launch_label = "Sign In"
     portal_type = "Resident Portal"
+    app_mode = "guest"
+    property_name = "RentalReadyPro"
+    property_photo_url = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=82"
+    property_tagline = "One app for rent, documents, messages, maintenance, and owner-ready records."
+    primary_actions = [
+        {"label": "Enter Access Code", "detail": "Use the private setup code sent by text or email.", "url": reverse("enter_invite_code"), "tone": "cyan"},
+        {"label": "Request Code", "detail": "Replace an expired or missing setup code.", "url": reverse("request_invite_code"), "tone": "lime"},
+        {"label": "Sign In", "detail": "Open your resident, landlord, owner, or assistant workspace.", "url": reverse("login"), "tone": "amber"},
+        {"label": "Apply", "detail": "Start a property application when a listing is open.", "url": reverse("apply"), "tone": "violet"},
+    ]
+    app_stats = [
+        {"value": "Pay", "label": "Rent and utilities"},
+        {"value": "Sign", "label": "Leases and forms"},
+        {"value": "Send", "label": "Requests and messages"},
+    ]
 
     if request.user.is_authenticated:
         if request.user.is_superuser or request.user.role == "admin":
             launch_url = reverse("superadmin_dashboard")
             launch_label = "Open Command Center"
             portal_type = "Admin Portal"
+            app_mode = "landlord"
+            property_tagline = "Portfolio command tools for owner setup, ledgers, residents, and reports."
+            primary_actions = [
+                {"label": "Command Center", "detail": "Open system-level owner, resident, and revenue controls.", "url": reverse("superadmin_dashboard"), "tone": "cyan"},
+                {"label": "Reports", "detail": "Review rent roll, T-12, custom reports, and ledgers.", "url": reverse("custom_reports"), "tone": "lime"},
+                {"label": "Messages", "detail": "Send resident notices, property posts, and secure replies.", "url": reverse("group_resident_message"), "tone": "amber"},
+                {"label": "Receipts", "detail": "Process receipts and review expense support.", "url": reverse("accounting_receipts"), "tone": "violet"},
+            ]
+            app_stats = [
+                {"value": "Ledger", "label": "Review expenses"},
+                {"value": "Rent", "label": "Watch collections"},
+                {"value": "Files", "label": "Manage residents"},
+            ]
         elif request.user.role == "property_owner":
             launch_url = reverse("property_owner_dashboard")
             launch_label = "Open Owner Dashboard"
             portal_type = "Owner Portal"
+            app_mode = "landlord"
+            owner_properties = staff_managed_properties(request.user).order_by("name")
+            property_obj = owner_properties.first()
+            if property_obj:
+                property_name = property_obj.name
+                if property_obj.photo:
+                    property_photo_url = property_obj.photo.url
+            property_tagline = "Owner view for property performance, reports, listings, and payment setup."
+            primary_actions = [
+                {"label": "Owner Dashboard", "detail": "Open portfolio status, setup tasks, and property reports.", "url": reverse("property_owner_dashboard"), "tone": "cyan"},
+                {"label": "Financial Uploads", "detail": "Send statements, ledgers, and source files for review.", "url": reverse("owner_financial_upload"), "tone": "lime"},
+                {"label": "Payment Settings", "detail": "Connect property Stripe routing and platform revenue rules.", "url": reverse("owner_payment_settings"), "tone": "amber"},
+                {"label": "Listings", "detail": "Prepare and publish vacancy listing packets.", "url": reverse("listing_center"), "tone": "violet"},
+            ]
+            app_stats = [
+                {"value": "NOI", "label": "Performance reports"},
+                {"value": "Rent", "label": "Property income"},
+                {"value": "Docs", "label": "Owner files"},
+            ]
         elif request.user.is_staff or request.user.role in ["landlord", "assistant"]:
             launch_url = reverse("landlord_dashboard")
             launch_label = "Open Landlord Dashboard"
             portal_type = "Landlord Portal"
+            app_mode = "landlord"
+            managed_properties = staff_managed_properties(request.user).order_by("name")
+            property_obj = managed_properties.first()
+            if property_obj:
+                property_name = property_obj.name
+                if property_obj.photo:
+                    property_photo_url = property_obj.photo.url
+            property_tagline = "Daily operations for receipts, rent collection, maintenance, messaging, blogs, and ledgers."
+            primary_actions = [
+                {"label": "Rent Watch", "detail": "See who has paid, who still owes, and what needs follow-up.", "url": reverse("landlord_dashboard"), "tone": "cyan"},
+                {"label": "Receipts", "detail": "Upload, categorize, split, and approve expense support.", "url": reverse("accounting_receipts"), "tone": "lime"},
+                {"label": "Requests", "detail": "Read resident requests and respond from the work queue.", "url": reverse("landlord_attention"), "tone": "amber"},
+                {"label": "Messages and Blog", "detail": "Send notices or post property updates.", "url": reverse("group_resident_message"), "tone": "violet"},
+            ]
+            app_stats = [
+                {"value": "Paid?", "label": "Rent status"},
+                {"value": "Fix", "label": "Requests"},
+                {"value": "Books", "label": "Expense ledger"},
+            ]
         else:
             launch_url = reverse("tenant_dashboard")
             launch_label = "Open Resident Dashboard"
+            app_mode = "resident"
+            application, _ = get_resident_portal_application(request)
+            if application:
+                if application.property:
+                    property_name = application.property.name
+                    if application.property.photo:
+                        property_photo_url = application.property.photo.url
+                property_tagline = f"Room {application.space_label} resident app for payments, documents, notices, maintenance, and property posts."
+            primary_actions = [
+                {"label": "Pay Rent", "detail": "Pay rent, utilities, deposits, or view balance details.", "url": reverse("tenant_dashboard"), "tone": "cyan"},
+                {"label": "Sign Documents", "detail": "Review onboarding forms, lease updates, and acknowledgments.", "url": reverse("tenant_dashboard") + "#resident-inbox", "tone": "lime"},
+                {"label": "Maintenance", "detail": "Send repair requests, questions, and secure messages.", "url": reverse("resident_requests"), "tone": "amber"},
+                {"label": "Property Board", "detail": "Read community updates and property notices.", "url": reverse("properties_list"), "tone": "violet"},
+            ]
+            app_stats = [
+                {"value": "Pay", "label": "Rent and fees"},
+                {"value": "Sign", "label": "Documents"},
+                {"value": "Post", "label": "Requests"},
+            ]
+
+    referral_ads = [
+        {"label": "Renters Insurance", "headline": "Protect the room, the laptop, and the stuff that matters.", "detail": "Add a renters insurance referral card without blocking rent or maintenance tasks.", "cta": "View option"},
+        {"label": "DoorDash", "headline": "Dinner handled after a long moving day.", "detail": "Food delivery referral space for resident convenience and platform revenue.", "cta": "Open offer"},
+        {"label": "Life Insurance", "headline": "A simple reminder to protect the people who count on you.", "detail": "Optional referral placement for residents and families.", "cta": "Learn more"},
+        {"label": "Uber", "headline": "Need a ride to work, court, school, or the store?", "detail": "Transportation referral card for resident support and partner income.", "cta": "Get ride info"},
+    ]
 
     return render(request, "resident_app.html", {
         "launch_url": launch_url,
         "launch_label": launch_label,
         "portal_type": portal_type,
+        "app_mode": app_mode,
+        "property_name": property_name,
+        "property_photo_url": property_photo_url,
+        "property_tagline": property_tagline,
+        "primary_actions": primary_actions,
+        "app_stats": app_stats,
+        "referral_ads": referral_ads,
     })
 
 
