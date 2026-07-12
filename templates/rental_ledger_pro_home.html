@@ -941,7 +941,7 @@
             <a href="#launch">Launch Path</a>
             <a href="#faq">FAQ</a>
             <a href="{% url 'rental_ledger_contact' %}">Contact</a>
-            <a href="{% url 'resident_app' %}">App</a>
+            <a href="{% url 'resident_app' %}">Open App</a>
             <a class="login" href="{% url 'login' %}">Login</a>
             <a href="{% url 'property_owner_intake' %}">Start Owner Setup</a>
             <a class="demo" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
@@ -956,7 +956,7 @@
                 <p class="hero-copy">RentalReadyPro brings rent collection, resident files, messages, documents, maintenance, accounting records, and owner-ready reports into one property-aware platform.</p>
                 <div class="actions">
                     <a class="button primary" href="{% url 'property_owner_intake' %}">Sign Up / Start Owner Setup</a>
-                    <a class="button secondary" href="{% url 'resident_app' %}">Open App</a>
+                    <a class="button secondary" href="{% url 'resident_app' %}">Open Mobile App</a>
                     <a class="button secondary" href="{% url 'login' %}">Login</a>
                     <a class="button secondary" href="#platform">See the System</a>
                     <a class="button secondary" href="{% if demo_public_url %}{{ demo_public_url }}{% else %}{% url 'rental_ledger_demo' %}{% endif %}">Preview Demo</a>
@@ -1085,6 +1085,48 @@
                         <li>Setup steps and maintenance</li>
                     </ul>
                     <div class="actions"><a class="button secondary" href="{% url 'rental_ledger_product_page' 'property-app' %}">Open Tenant View</a></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="mobile-app">
+            <div class="section-head">
+                <div>
+                    <div class="eyebrow">Mobile App</div>
+                    <h2>A phone-first app without splitting the system in two.</h2>
+                </div>
+                <p style="max-width:540px">RentalReadyPro starts as an installable mobile app powered by the same secure website and database. Later, iPhone and Android store apps can connect to that same backend, so tenant payments, documents, messages, receipts, and reports stay in one place.</p>
+            </div>
+            <div class="power-grid">
+                <article class="feature">
+                    <h3>Tenant app</h3>
+                    <p>Tenants open the property-branded app to pay rent and utilities, sign documents, read property posts, submit maintenance, and see payment history.</p>
+                    <ul>
+                        <li>Private setup code by text or email</li>
+                        <li>Property-specific colors, photo, and notices</li>
+                        <li>Rent, deposits, utilities, documents, requests</li>
+                    </ul>
+                    <div class="actions"><a class="button secondary" href="{% url 'resident_app' %}">Open Tenant App</a></div>
+                </article>
+                <article class="feature">
+                    <h3>Landlord app</h3>
+                    <p>Landlords and assistants open a daily work app for collections, resident messages, receipt capture, maintenance requests, and expense review.</p>
+                    <ul>
+                        <li>Rent and utility watch list</li>
+                        <li>Receipt capture and expense ledger</li>
+                        <li>Messages, blogs, maintenance, resident files</li>
+                    </ul>
+                    <div class="actions"><a class="button secondary" href="{% url 'resident_app' %}">Open Landlord App</a></div>
+                </article>
+                <article class="feature">
+                    <h3>Owner app</h3>
+                    <p>Owners can check portfolio performance, reports, Stripe/payment setup, listings, onboarding progress, and property records from the same app entry point.</p>
+                    <ul>
+                        <li>Property dashboards and reports</li>
+                        <li>Owner setup and launch path</li>
+                        <li>Stripe routing and revenue separation</li>
+                    </ul>
+                    <div class="actions"><a class="button primary" href="{% url 'property_owner_intake' %}">Start Owner Setup</a></div>
                 </article>
             </div>
         </section>

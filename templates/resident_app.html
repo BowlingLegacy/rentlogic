@@ -235,6 +235,47 @@
             padding: 0 16px;
             width: 100%;
         }
+        .install-guide {
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.17);
+            border-radius: 22px;
+            color: #eaf4f3;
+            display: grid;
+            gap: 10px;
+            padding: 15px;
+        }
+        .install-guide h2 {
+            font-size: 1.05rem;
+            line-height: 1.15;
+            margin: 0;
+        }
+        .install-guide p {
+            color: #bdd0d4;
+            font-size: .84rem;
+            line-height: 1.42;
+            margin: 0;
+        }
+        .install-steps {
+            display: grid;
+            gap: 8px;
+        }
+        .install-step {
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: 15px;
+            display: grid;
+            gap: 3px;
+            padding: 11px;
+        }
+        .install-step strong {
+            color: #fff;
+            font-size: .9rem;
+        }
+        .install-step span {
+            color: #c8d8dc;
+            font-size: .78rem;
+            line-height: 1.34;
+        }
         .workflow-list {
             display: grid;
             gap: 10px;
@@ -404,6 +445,21 @@
 
             <button id="installAppButton" class="install-btn" type="button">Install RentalReadyPro</button>
 
+            <section class="install-guide" aria-label="Install RentalReadyPro on your phone">
+                <h2>Use it like a phone app today.</h2>
+                <p>This app uses the same secure RentalReadyPro account and property data as the website. Nothing has to be entered twice.</p>
+                <div class="install-steps">
+                    <div class="install-step">
+                        <strong>iPhone</strong>
+                        <span>Tap Share, then Add to Home Screen.</span>
+                    </div>
+                    <div class="install-step">
+                        <strong>Android</strong>
+                        <span>Tap the browser menu, then Install App or Add to Home Screen.</span>
+                    </div>
+                </div>
+            </section>
+
             <section class="panel">
                 <p class="panel-title">{% if app_mode == "resident" %}Resident Tools{% elif app_mode == "landlord" %}Landlord Tools{% else %}Fast Start{% endif %}</p>
                 <div class="action-grid">
@@ -449,7 +505,7 @@
             </section>
 
             <p class="footnote">
-                Add this page to your phone home screen for app-style access. On iPhone, use Share then Add to Home Screen.
+                Native iPhone and Android store apps can use this same backend later. This version is the fastest working mobile app path.
             </p>
         </div>
     </main>
