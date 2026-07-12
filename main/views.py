@@ -1015,6 +1015,10 @@ def add_months(value, months):
     return date(year, month, 1)
 
 
+def first_day_of_next_month(value=None):
+    return add_months(first_day_of_month(value or timezone.localdate()), 1)
+
+
 def payment_service_month(payment):
     if payment.service_month:
         return first_day_of_month(payment.service_month)
@@ -8530,12 +8534,21 @@ def create_checkout_session(request, application_id, payment_type="rent"):
             return JsonResponse({"error": "You are not authorized to pay this account."}, status=403)
 
     stale_before = timezone.now() - timedelta(minutes=30)
-    Payment.objects.filter(
-        application=application,
-        payment_type=payment_type,
-        status="pending",
-        created_at__lt=stale_before,
-    ).update(status="failed")
+    if requested_payment_type == "total":
+        Payment.objects.filter(
+            application=application,
+            payment_type="other",
+            status="pending",
+            description__icontains="combined",
+            created_at__lt=stale_before,
+        ).update(status="failed")
+    else:
+        Payment.objects.filter(
+            application=application,
+            payment_type=payment_type,
+            status="pending",
+            created_at__lt=stale_before,
+        ).update(status="failed")
 
     pending_lookup = {
         "application": application,
@@ -8558,17 +8571,14 @@ def create_checkout_session(request, application_id, payment_type="rent"):
             "error": "A payment is already pending. Please wait before trying again."
         })
 
-    if payment_type == "rent" and application.balance <= 0:
-        return JsonResponse({
-            "error": "No rent balance due."
-        })
-
     amount = Decimal("0.00")
     description = ""
+    service_month = None
 
     if payment_type == "rent":
         amount = application.balance if application.balance > 0 else application.monthly_rent
-        description = "Rent Payment"
+        description = "Rent Payment" if application.balance > 0 else "Upcoming Rent Payment"
+        service_month = timezone.localdate().replace(day=1) if application.balance > 0 else first_day_of_next_month()
 
     elif payment_type == "deposit":
         amount = max(application.deposit_required - application.deposit_paid, Decimal("0.00"))
@@ -8576,7 +8586,8 @@ def create_checkout_session(request, application_id, payment_type="rent"):
 
     elif payment_type == "utility":
         amount = application.utility_balance if application.utility_balance > 0 else application.utility_monthly
-        description = "Utility Payment"
+        description = "Utility Payment" if application.utility_balance > 0 else "Upcoming Utility Payment"
+        service_month = timezone.localdate().replace(day=1) if application.utility_balance > 0 else first_day_of_next_month()
 
     elif payment_type == "application_fee":
         amount = max(application.application_fee_amount - application.application_fee_paid, Decimal("0.00"))
@@ -8594,6 +8605,7 @@ def create_checkout_session(request, application_id, payment_type="rent"):
         amount = rent_due + deposit_due + utility_due
         description = "Combined Payment - Total Due"
         payment_type = "other"
+        service_month = timezone.localdate().replace(day=1)
 
     else:
         return JsonResponse({"error": "Invalid payment type"})
@@ -8608,6 +8620,7 @@ def create_checkout_session(request, application_id, payment_type="rent"):
         description=description,
         amount=amount,
         status="pending",
+        service_month=service_month,
     )
 
     if demo_payments_enabled_for_request(request):

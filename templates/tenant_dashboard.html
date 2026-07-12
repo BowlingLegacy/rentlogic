@@ -660,6 +660,11 @@ body {
                                    class="gold-btn d-block text-center text-decoration-none mt-3">
                                     Pay Total Due
                                 </a>
+                            {% elif application.monthly_rent > 0 %}
+                                <a href="{% url 'pay_by_type' application.id 'rent' %}"
+                                   class="gold-btn d-block text-center text-decoration-none mt-3">
+                                    Pay Upcoming Rent
+                                </a>
                             {% endif %}
                             <div class="text-center mt-3">
                                 <a href="{{ resident_balance_url }}" class="gold-link">
