@@ -2225,10 +2225,66 @@ self.addEventListener("fetch", event => {
     return HttpResponse(service_worker_js, content_type="application/javascript")
 
 
+def owner_intake_submission_started_at(request):
+    try:
+        return timezone.datetime.fromtimestamp(
+            int(request.POST.get("started_at", "0")),
+            tz=timezone.get_current_timezone(),
+        )
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def owner_intake_should_reject_submission(request, form):
+    started_at = owner_intake_submission_started_at(request)
+    if not started_at:
+        return "Your submission could not be accepted. Please reload the setup form and try again."
+
+    if timezone.now() - started_at < timedelta(seconds=6):
+        return "Your submission could not be accepted. Please take a moment to review the setup form before submitting."
+
+    cleaned_data = form.cleaned_data
+    recent_duplicate = PropertyOwnerIntake.objects.filter(
+        email__iexact=cleaned_data.get("email", ""),
+        created_at__gte=timezone.now() - timedelta(minutes=20),
+    ).exists()
+    if recent_duplicate:
+        return "A setup request for this email was just received. Please wait before submitting another one."
+
+    property_count = cleaned_data.get("property_count") or 0
+    total_units = cleaned_data.get("total_units") or 0
+    text_fields = [
+        "full_name",
+        "company_name",
+        "current_software",
+        "current_pain_points",
+        "migration_notes",
+        "dashboard_goals",
+        "additional_notes",
+    ]
+    suspicious_text_count = sum(
+        1
+        for field_name in text_fields
+        if PropertyOwnerIntakeForm._looks_like_random_text(cleaned_data.get(field_name))
+    )
+    if (property_count > 1000 or total_units > 1000) and suspicious_text_count >= 2:
+        return "Your submission could not be accepted."
+
+    return ""
+
+
 def property_owner_intake(request):
     form = PropertyOwnerIntakeForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
+        rejection_reason = owner_intake_should_reject_submission(request, form)
+        if rejection_reason:
+            form.add_error(None, rejection_reason)
+            return render(request, "property_owner_intake.html", {
+                "form": form,
+                "started_at": int(timezone.now().timestamp()),
+            })
+
         intake = form.save()
         access_email_sent = False
         access_email_error = ""
@@ -2302,7 +2358,10 @@ def property_owner_intake(request):
         messages.success(request, "Your property owner questionnaire has been submitted.")
         return redirect("property_owner_intake_success")
 
-    return render(request, "property_owner_intake.html", {"form": form})
+    return render(request, "property_owner_intake.html", {
+        "form": form,
+        "started_at": int(timezone.now().timestamp()),
+    })
 
 
 def property_owner_intake_success(request):

@@ -200,6 +200,7 @@
         <form method="post" class="p-4 p-md-5">
             {% csrf_token %}
             {{ form.website }}
+            <input type="hidden" name="started_at" value="{{ started_at }}">
             {% if form.non_field_errors %}
                 <div class="alert alert-danger">{{ form.non_field_errors }}</div>
             {% endif %}
