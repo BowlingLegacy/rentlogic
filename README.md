@@ -52,6 +52,8 @@ gunicorn core.wsgi:application
 
 ## Launch Checklist
 
+Detailed owner/property go-live runbook: [`docs/go_live_checklist.md`](docs/go_live_checklist.md).
+
 1. Confirm `rentalreadypro.com` and `www.rentalreadypro.com` are verified in Render.
 2. Confirm `rentalledgerpro.com` and `www.rentalledgerpro.com` redirect or remain attached as alternate domains during the transition.
 3. Confirm `ALLOWED_HOSTS` includes both RentalReadyPro and RentalLedgerPro domains plus the Render service host.
