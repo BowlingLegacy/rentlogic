@@ -810,6 +810,97 @@ def apply_completed_payment_to_balance(payment):
     application.save()
 
 
+def is_combined_payment(payment):
+    return payment.payment_type == "other" and "combined" in (payment.description or "").lower()
+
+
+def combined_payment_allocations(payment):
+    application = payment.application
+    remaining = money(payment.amount)
+    allocations = []
+
+    rent_due = application.balance if application.balance > 0 else Decimal("0.00")
+    rent_paid = min(rent_due, remaining)
+    if rent_paid > 0:
+        allocations.append(("rent", "Rent Payment", rent_paid))
+        remaining -= rent_paid
+
+    deposit_due = max(application.deposit_required - application.deposit_paid, Decimal("0.00"))
+    deposit_paid = min(deposit_due, remaining)
+    if deposit_paid > 0:
+        allocations.append(("deposit", "Deposit Payment", deposit_paid))
+        remaining -= deposit_paid
+
+    utility_due = application.utility_balance if application.utility_balance > 0 else Decimal("0.00")
+    utility_paid = min(utility_due, remaining)
+    if utility_paid > 0:
+        allocations.append(("utility", "Utility Payment", utility_paid))
+        remaining -= utility_paid
+
+    if remaining > 0:
+        allocations.append(("other", "Other Payment", remaining))
+
+    return allocations
+
+
+def split_completed_combined_payment(payment):
+    if payment.status != "completed" or not is_combined_payment(payment):
+        return [payment]
+
+    related_identifier = payment.stripe_payment_intent or payment.stripe_session_id
+    if related_identifier:
+        already_split = (
+            Payment.objects
+            .filter(application=payment.application, status="completed")
+            .exclude(id=payment.id)
+            .filter(Q(stripe_payment_intent=related_identifier) | Q(stripe_session_id=related_identifier))
+            .exists()
+        )
+        if already_split:
+            return [payment]
+
+    allocations = combined_payment_allocations(payment)
+    if not allocations:
+        return [payment]
+
+    original_description = payment.description
+    original_amount = payment.amount
+    first_type, first_description, first_amount = allocations[0]
+    payment.payment_type = first_type
+    payment.description = first_description
+    payment.amount = first_amount
+    if not payment.service_month and first_type in ["rent", "utility"]:
+        payment.service_month = timezone.localdate().replace(day=1)
+    payment.notes = (
+        f"{payment.notes}\nSplit from combined payment of ${original_amount} ({original_description})."
+    ).strip()
+    payment.save(update_fields=["payment_type", "description", "amount", "service_month", "notes"])
+
+    split_payments = [payment]
+    for payment_type, description, amount in allocations[1:]:
+        split_payment = Payment.objects.create(
+            application=payment.application,
+            payment_type=payment_type,
+            payment_method=payment.payment_method,
+            description=description,
+            reference_number=payment.reference_number,
+            notes=f"Split from combined payment {payment.id} of ${original_amount}.",
+            recorded_by=payment.recorded_by,
+            received_at=payment.received_at,
+            service_month=timezone.localdate().replace(day=1) if payment_type in ["rent", "utility"] else None,
+            months_covered=payment.months_covered,
+            amount=amount,
+            status="completed",
+            stripe_session_id=payment.stripe_session_id,
+            stripe_payment_intent=payment.stripe_payment_intent,
+            stripe_payment_configuration=payment.stripe_payment_configuration,
+            stripe_destination_account=payment.stripe_destination_account,
+        )
+        split_payments.append(split_payment)
+
+    return split_payments
+
+
 def platform_revenue_date_for_payment(payment):
     if payment.received_at:
         return timezone.localtime(payment.received_at).date()
@@ -8358,6 +8449,7 @@ def submit_onboarding_document(request, document_id):
 
 def create_checkout_session(request, application_id, payment_type="rent"):
     application = get_object_or_404(HousingApplication, id=application_id)
+    requested_payment_type = payment_type
 
     if not staff_required(request.user):
         user_application = getattr(request.user, "resident_profile", None)
@@ -8378,11 +8470,21 @@ def create_checkout_session(request, application_id, payment_type="rent"):
         created_at__lt=stale_before,
     ).update(status="failed")
 
-    existing_pending = Payment.objects.filter(
-        application=application,
-        payment_type=payment_type,
-        status="pending",
-    ).exists()
+    pending_lookup = {
+        "application": application,
+        "status": "pending",
+    }
+    if requested_payment_type == "total":
+        existing_pending = Payment.objects.filter(
+            **pending_lookup,
+            payment_type="other",
+            description__icontains="combined",
+        ).exists()
+    else:
+        existing_pending = Payment.objects.filter(
+            **pending_lookup,
+            payment_type=payment_type,
+        ).exists()
 
     if existing_pending:
         return JsonResponse({
@@ -8448,7 +8550,8 @@ def create_checkout_session(request, application_id, payment_type="rent"):
         payment.received_at = timezone.now()
         payment.service_month = timezone.localdate().replace(day=1)
         payment.save(update_fields=["payment_method", "status", "description", "received_at", "service_month"])
-        apply_completed_payment_to_balance(payment)
+        for completed_payment in split_completed_combined_payment(payment):
+            apply_completed_payment_to_balance(completed_payment)
         messages.success(request, "Demo payment recorded. No real card or bank transaction was processed.")
         return redirect("payment_success")
 
@@ -8531,11 +8634,18 @@ def stripe_webhook(request):
         payment.payment_method = "stripe_cashapp"
         payment.save(update_fields=["payment_method"])
 
-    apply_completed_payment_to_balance(payment)
     record_platform_revenue_for_completed_payment(payment)
+    completed_payments = split_completed_combined_payment(payment)
+    for completed_payment in completed_payments:
+        apply_completed_payment_to_balance(completed_payment)
 
     application = payment.application
     owner_email = settings.RENTAL_LEDGER_LEAD_EMAIL
+    total_paid = sum((completed_payment.amount for completed_payment in completed_payments), Decimal("0.00"))
+    payment_summary = "\n".join(
+        f"- {completed_payment.get_payment_type_display()}: ${completed_payment.amount}"
+        for completed_payment in completed_payments
+    )
 
     if application.property and application.property.owner_email:
         owner_email = application.property.owner_email
@@ -8549,7 +8659,10 @@ Payment Type:
 {payment.get_payment_type_display()}
 
 Amount:
-${payment.amount}
+${total_paid}
+
+Ledger Split:
+{payment_summary}
 """,
         from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
         recipient_list=[owner_email],
