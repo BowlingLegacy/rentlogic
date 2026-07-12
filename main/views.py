@@ -2139,9 +2139,9 @@ def resident_app(request):
 
 def web_app_manifest(request):
     return JsonResponse({
-        "name": "RentalReadyPro Resident",
+        "name": "RentalReadyPro App",
         "short_name": "RentalReadyPro",
-        "description": "Resident and owner portal for RentalReadyPro properties.",
+        "description": "Mobile workspace for RentalReadyPro residents, landlords, owners, and property teams.",
         "start_url": reverse("resident_app"),
         "scope": "/",
         "display": "standalone",
@@ -2164,10 +2164,10 @@ def web_app_manifest(request):
                 "description": "Finish resident or owner setup with a private access code.",
             },
             {
-                "name": "Resident Dashboard",
-                "short_name": "Dashboard",
-                "url": reverse("tenant_dashboard"),
-                "description": "Open balances, documents, inbox, requests, and payment history.",
+                "name": "Open App",
+                "short_name": "App",
+                "url": reverse("resident_app"),
+                "description": "Open the right workspace for your account role.",
             },
             {
                 "name": "Request Code",
@@ -2181,7 +2181,7 @@ def web_app_manifest(request):
 
 def service_worker(request):
     service_worker_js = """
-const CACHE_NAME = "rentalreadypro-app-v1";
+const CACHE_NAME = "rentalreadypro-app-v2";
 const APP_SHELL = [
   "/app/",
   "/login/",
