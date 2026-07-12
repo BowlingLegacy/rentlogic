@@ -901,6 +901,14 @@ def split_completed_combined_payment(payment):
     return split_payments
 
 
+def demo_payments_enabled_for_request(request):
+    if not getattr(settings, "DEMO_MODE", False):
+        return False
+
+    host = request.get_host().lower()
+    return settings.DEBUG or "demo" in host or host.startswith("localhost") or host.startswith("127.0.0.1")
+
+
 def platform_revenue_date_for_payment(payment):
     if payment.received_at:
         return timezone.localtime(payment.received_at).date()
@@ -8602,7 +8610,7 @@ def create_checkout_session(request, application_id, payment_type="rent"):
         status="pending",
     )
 
-    if getattr(settings, "DEMO_MODE", False):
+    if demo_payments_enabled_for_request(request):
         payment.payment_method = "other"
         payment.status = "completed"
         payment.description = f"Demo payment - {description}"
