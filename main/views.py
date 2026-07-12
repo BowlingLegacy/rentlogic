@@ -8576,18 +8576,40 @@ def create_checkout_session(request, application_id, payment_type="rent"):
     service_month = None
 
     if payment_type == "rent":
-        amount = application.balance if application.balance > 0 else application.monthly_rent
-        description = "Rent Payment" if application.balance > 0 else "Upcoming Rent Payment"
-        service_month = timezone.localdate().replace(day=1) if application.balance > 0 else first_day_of_next_month()
+        if application.balance > 0:
+            amount = application.balance
+            description = "Rent Payment"
+            service_month = timezone.localdate().replace(day=1)
+        else:
+            service_month = first_day_of_next_month()
+            paid_for_month = (
+                Payment.objects
+                .filter(application=application, payment_type="rent", status="completed", service_month=service_month)
+                .aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+            amount = max(application.monthly_rent - paid_for_month, Decimal("0.00"))
+            description = "Upcoming Rent Payment"
 
     elif payment_type == "deposit":
         amount = max(application.deposit_required - application.deposit_paid, Decimal("0.00"))
         description = "Deposit Payment"
 
     elif payment_type == "utility":
-        amount = application.utility_balance if application.utility_balance > 0 else application.utility_monthly
-        description = "Utility Payment" if application.utility_balance > 0 else "Upcoming Utility Payment"
-        service_month = timezone.localdate().replace(day=1) if application.utility_balance > 0 else first_day_of_next_month()
+        if application.utility_balance > 0:
+            amount = application.utility_balance
+            description = "Utility Payment"
+            service_month = timezone.localdate().replace(day=1)
+        else:
+            service_month = first_day_of_next_month()
+            paid_for_month = (
+                Payment.objects
+                .filter(application=application, payment_type="utility", status="completed", service_month=service_month)
+                .aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+            amount = max(application.utility_monthly - paid_for_month, Decimal("0.00"))
+            description = "Upcoming Utility Payment"
 
     elif payment_type == "application_fee":
         amount = max(application.application_fee_amount - application.application_fee_paid, Decimal("0.00"))
