@@ -51,6 +51,21 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             document.querySelectorAll("input[type='text'], input[type='tel'], input:not([type])").forEach(attachPhoneFormatter);
+
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    mutation.addedNodes.forEach(function (node) {
+                        if (!node.querySelectorAll) {
+                            return;
+                        }
+                        if (node.matches && node.matches("input[type='text'], input[type='tel'], input:not([type])")) {
+                            attachPhoneFormatter(node);
+                        }
+                        node.querySelectorAll("input[type='text'], input[type='tel'], input:not([type])").forEach(attachPhoneFormatter);
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
         });
     })();
 </script>
