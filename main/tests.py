@@ -1,5 +1,5 @@
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from io import BytesIO, StringIO
 from unittest.mock import patch
 
@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import AccountingReceipt, AccountingReceiptSplit, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, OwnerBillingAccount, Payment, PlatformFeeSetting, PlatformRevenueEntry, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
-from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, payment_amount_for_month, prorated_monthly_charge, record_platform_revenue_for_completed_payment, rent_roll_rows_for_properties, t12_report_rows
+from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, owner_intake_submission_started_at, payment_amount_for_month, prorated_monthly_charge, record_platform_revenue_for_completed_payment, rent_roll_rows_for_properties, t12_report_rows
 
 
 @override_settings(
@@ -3261,9 +3261,10 @@ class LiveFlowTests(TestCase):
     def test_property_owner_intake_questionnaire_saves_system_needs(self):
         form_response = self.client.get(reverse("property_owner_intake"))
         self.assertEqual(form_response.status_code, 200)
-        self.assertContains(form_response, "Tell us what your dashboard needs to do.")
-        self.assertContains(form_response, "Submit Questionnaire")
+        self.assertContains(form_response, "This is the first setup step. Tell us about your portfolio")
+        self.assertContains(form_response, "Start Setup")
 
+        started_at = str(int((timezone.now() - timedelta(seconds=10)).timestamp()))
         response = self.client.post(reverse("property_owner_intake"), {
             "full_name": "Portfolio Owner",
             "company_name": "North Street Holdings",
@@ -3285,9 +3286,10 @@ class LiveFlowTests(TestCase):
             "offers_renters_insurance": "on",
             "tenant_utility_setup_notes": "Power: Pacific Power. Water/sewer: city utility account.",
             "dashboard_goals": "Show NOI and rent collection by property.",
+            "started_at": started_at,
         })
 
-        self.assertRedirects(response, reverse("property_owner_intake_success"))
+        self.assertRedirects(response, reverse("property_owner_intake_success"), fetch_redirect_response=False)
         intake = PropertyOwnerIntake.objects.get(email="portfolio@example.com")
         self.assertEqual(intake.property_count, 4)
         self.assertEqual(intake.total_units, 120)
@@ -3319,6 +3321,7 @@ class LiveFlowTests(TestCase):
         self.assertContains(success_response, intake.user.invite_code)
 
     def test_property_owner_intake_accepts_blank_property_counts(self):
+        started_at = str(int((timezone.now() - timedelta(seconds=10)).timestamp()))
         response = self.client.post(reverse("property_owner_intake"), {
             "full_name": "Early Lead",
             "company_name": "Blank Count Holdings",
@@ -3328,6 +3331,7 @@ class LiveFlowTests(TestCase):
             "total_units": "",
             "needs_accounting": "on",
             "dashboard_goals": "I want to see if this fits before counting every unit.",
+            "started_at": started_at,
         })
 
         self.assertRedirects(response, reverse("property_owner_intake_success"))
@@ -3335,6 +3339,131 @@ class LiveFlowTests(TestCase):
         self.assertEqual(intake.property_count, 1)
         self.assertEqual(intake.total_units, 0)
         self.assertTrue(intake.needs_accounting)
+
+    def test_owner_intake_started_at_parser_rejects_missing_timestamp(self):
+        request = RequestFactory().post("/")
+
+        self.assertIsNone(owner_intake_submission_started_at(request))
+
+    def test_owner_intake_started_at_parser_accepts_valid_timestamp(self):
+        timestamp = 1700000000
+        request = RequestFactory().post("/", {"started_at": str(timestamp)})
+
+        parsed_at = owner_intake_submission_started_at(request)
+
+        self.assertEqual(
+            parsed_at,
+            timezone.datetime.fromtimestamp(timestamp, tz=timezone.get_current_timezone()),
+        )
+        self.assertTrue(timezone.is_aware(parsed_at))
+
+    def test_owner_intake_started_at_parser_rejects_zero_timestamp(self):
+        request = RequestFactory().post("/", {"started_at": "0"})
+
+        self.assertIsNone(owner_intake_submission_started_at(request))
+
+    def test_owner_intake_started_at_parser_rejects_negative_timestamp(self):
+        request = RequestFactory().post("/", {"started_at": "-1"})
+
+        self.assertIsNone(owner_intake_submission_started_at(request))
+
+    def test_owner_intake_started_at_parser_rejects_malformed_timestamp(self):
+        request = RequestFactory().post("/", {"started_at": "not-a-timestamp"})
+
+        self.assertIsNone(owner_intake_submission_started_at(request))
+
+    def test_property_owner_intake_rejects_missing_started_at(self):
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Portfolio Owner",
+            "company_name": "North Street Holdings",
+            "email": "missing-started-at@example.com",
+            "phone": "555-0191",
+            "property_count": "4",
+            "total_units": "120",
+            "needs_accounting": "on",
+            "dashboard_goals": "Show NOI and rent collection by property.",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please reload the setup form and try again.")
+        self.assertFalse(PropertyOwnerIntake.objects.filter(email="missing-started-at@example.com").exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_property_owner_intake_rejects_zero_started_at(self):
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Portfolio Owner",
+            "company_name": "North Street Holdings",
+            "email": "zero-started-at@example.com",
+            "phone": "555-0191",
+            "property_count": "4",
+            "total_units": "120",
+            "needs_accounting": "on",
+            "dashboard_goals": "Show NOI and rent collection by property.",
+            "started_at": "0",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please reload the setup form and try again.")
+        self.assertFalse(PropertyOwnerIntake.objects.filter(email="zero-started-at@example.com").exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_property_owner_intake_rejects_negative_started_at(self):
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Portfolio Owner",
+            "company_name": "North Street Holdings",
+            "email": "negative-started-at@example.com",
+            "phone": "555-0191",
+            "property_count": "4",
+            "total_units": "120",
+            "needs_accounting": "on",
+            "dashboard_goals": "Show NOI and rent collection by property.",
+            "started_at": "-1",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please reload the setup form and try again.")
+        self.assertFalse(PropertyOwnerIntake.objects.filter(email="negative-started-at@example.com").exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_property_owner_intake_rejects_malformed_started_at(self):
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Portfolio Owner",
+            "company_name": "North Street Holdings",
+            "email": "malformed-started-at@example.com",
+            "phone": "555-0191",
+            "property_count": "4",
+            "total_units": "120",
+            "needs_accounting": "on",
+            "dashboard_goals": "Show NOI and rent collection by property.",
+            "started_at": "not-a-timestamp",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please reload the setup form and try again.")
+        self.assertFalse(PropertyOwnerIntake.objects.filter(email="malformed-started-at@example.com").exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_property_owner_intake_rejection_refreshes_started_at_for_retry(self):
+        before_post = timezone.now()
+
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Portfolio Owner",
+            "company_name": "North Street Holdings",
+            "email": "retry-started-at@example.com",
+            "phone": "555-0191",
+            "property_count": "4",
+            "total_units": "120",
+            "needs_accounting": "on",
+            "dashboard_goals": "Show NOI and rent collection by property.",
+            "started_at": "0",
+        })
+
+        after_post = timezone.now()
+        refreshed_started_at = response.context["started_at"]
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(refreshed_started_at, int(before_post.timestamp()))
+        self.assertLessEqual(refreshed_started_at, int(after_post.timestamp()))
+        self.assertContains(response, f'name="started_at" value="{refreshed_started_at}"')
 
     def test_property_owner_intake_success_page_has_next_steps(self):
         response = self.client.get(reverse("property_owner_intake_success"))
