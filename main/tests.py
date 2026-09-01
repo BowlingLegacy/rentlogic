@@ -1,10 +1,12 @@
 from decimal import Decimal
 from datetime import date, datetime, timedelta
 from io import BytesIO, StringIO
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib import admin
 from django.conf import settings
+from django.contrib.messages import get_messages
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -15,7 +17,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import AccountingReceipt, AccountingReceiptSplit, ApplicantDocument, BlogComment, BlogPost, CompanyMailboxConnection, CurrentResidentRosterEntry, ExistingResidentIntake, ExpenseCategory, FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, OwnerBillingAccount, Payment, PlatformFeeSetting, PlatformRevenueEntry, Property, PropertyOnboardingDocument, PropertyOwnerIntake, PropertyRoomRent, PropertyUtilityVendor, RentHistory, RentalListing, RentalListingChannel, ReportTemplate, ResidentMessage, ResidentMessageReply, ResidentUtilitySetup, SignedDocument, SmsMessageLog, User
-from .views import apply_completed_payment_to_balance, ensure_existing_resident_portal_application, owner_intake_submission_started_at, payment_amount_for_month, prorated_monthly_charge, record_platform_revenue_for_completed_payment, rent_roll_rows_for_properties, t12_report_rows
+from .views import apply_completed_payment_to_balance, describe_setup_sms_log, ensure_existing_resident_portal_application, first_day_of_next_month, owner_intake_submission_started_at, payment_amount_for_month, prorated_monthly_charge, record_platform_revenue_for_completed_payment, rent_roll_rows_for_properties, split_completed_combined_payment, t12_report_rows
 
 
 @override_settings(
@@ -134,6 +136,52 @@ class LiveFlowTests(TestCase):
 
         application.refresh_from_db()
         self.assertEqual(application.application_fee_paid, Decimal("35.00"))
+
+    def test_completed_combined_payment_splits_into_typed_ledger_rows(self):
+        application = HousingApplication.objects.create(
+            full_name="Combined Pay Resident",
+            phone="555-0107",
+            email="combined-pay@example.com",
+            age=42,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            balance=Decimal("300.00"),
+            deposit_required=Decimal("200.00"),
+            deposit_paid=Decimal("0.00"),
+            utility_balance=Decimal("50.00"),
+        )
+        payment = Payment.objects.create(
+            application=application,
+            payment_type="other",
+            payment_method="stripe_card",
+            description="Combined Payment - Total Due",
+            amount=Decimal("550.00"),
+            status="completed",
+            stripe_session_id="cs_test_combined",
+            stripe_payment_intent="pi_test_combined",
+        )
+
+        completed_payments = split_completed_combined_payment(payment)
+        for completed_payment in completed_payments:
+            apply_completed_payment_to_balance(completed_payment)
+
+        application.refresh_from_db()
+        split_rows = list(Payment.objects.filter(application=application).order_by("id"))
+        current_month = timezone.localdate().replace(day=1)
+
+        self.assertEqual([row.payment_type for row in split_rows], ["rent", "deposit", "utility"])
+        self.assertEqual([row.amount for row in split_rows], [Decimal("300.00"), Decimal("200.00"), Decimal("50.00")])
+        self.assertEqual(split_rows[0].id, payment.id)
+        self.assertEqual(split_rows[0].description, "Rent Payment")
+        self.assertEqual(split_rows[0].service_month, current_month)
+        self.assertEqual(split_rows[1].service_month, None)
+        self.assertEqual(split_rows[2].service_month, current_month)
+        self.assertTrue(all(row.stripe_payment_intent == "pi_test_combined" for row in split_rows))
+        self.assertIn("Split from combined payment", split_rows[0].notes)
+        self.assertEqual(application.balance, Decimal("0.00"))
+        self.assertEqual(application.deposit_paid, Decimal("200.00"))
+        self.assertEqual(application.utility_balance, Decimal("0.00"))
 
     def test_completed_stripe_payment_records_platform_revenue_once(self):
         property_obj = Property.objects.create(
@@ -762,6 +810,103 @@ class LiveFlowTests(TestCase):
         )
         self.assertEqual(Payment.objects.filter(application=application, status="pending").count(), 1)
 
+    @patch("main.views.stripe.checkout.Session.create")
+    def test_total_checkout_expires_stale_pending_combined_payment(self, create_session):
+        create_session.return_value.id = "cs_test_total_due"
+        create_session.return_value.url = "https://checkout.stripe.test/total-due"
+
+        user = User.objects.create_user(
+            username="stale-total-resident",
+            email="stale-total-resident@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        application = HousingApplication.objects.create(
+            user=user,
+            full_name="Stale Total Resident",
+            phone="555-0110",
+            email="stale-total-resident@example.com",
+            age=50,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            balance=Decimal("300.00"),
+            deposit_required=Decimal("200.00"),
+            deposit_paid=Decimal("0.00"),
+            utility_balance=Decimal("50.00"),
+        )
+        stale_payment = Payment.objects.create(
+            application=application,
+            payment_type="other",
+            payment_method="stripe_card",
+            description="Combined Payment - Total Due",
+            amount=Decimal("550.00"),
+            status="pending",
+        )
+        Payment.objects.filter(id=stale_payment.id).update(
+            created_at=timezone.now() - timedelta(minutes=31)
+        )
+
+        self.client.login(username="stale-total-resident", password="StrongPass123!")
+        response = self.client.get(reverse("pay_by_type", args=[application.id, "total"]))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "https://checkout.stripe.test/total-due")
+        create_session.assert_called_once()
+        stale_payment.refresh_from_db()
+        new_payment = Payment.objects.exclude(id=stale_payment.id).get(application=application)
+        self.assertEqual(stale_payment.status, "failed")
+        self.assertEqual(new_payment.payment_type, "other")
+        self.assertEqual(new_payment.description, "Combined Payment - Total Due")
+        self.assertEqual(new_payment.amount, Decimal("550.00"))
+        self.assertEqual(new_payment.status, "pending")
+        self.assertEqual(new_payment.service_month, timezone.localdate().replace(day=1))
+        self.assertEqual(new_payment.stripe_session_id, "cs_test_total_due")
+        session_kwargs = create_session.call_args.kwargs
+        self.assertEqual(session_kwargs["line_items"][0]["price_data"]["unit_amount"], 55000)
+
+    @patch("main.views.stripe.checkout.Session.create")
+    def test_zero_balance_resident_can_start_upcoming_rent_payment(self, create_session):
+        create_session.return_value.id = "cs_test_upcoming_rent"
+        create_session.return_value.url = "https://checkout.stripe.test/upcoming-rent"
+
+        user = User.objects.create_user(
+            username="upcoming-rent-resident",
+            email="upcoming-rent-resident@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        application = HousingApplication.objects.create(
+            user=user,
+            full_name="Upcoming Rent Resident",
+            phone="555-0106",
+            email="upcoming-rent-resident@example.com",
+            age=50,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            balance=Decimal("0.00"),
+            monthly_rent=Decimal("650.00"),
+        )
+
+        self.client.login(username="upcoming-rent-resident", password="StrongPass123!")
+        response = self.client.get(reverse("pay_by_type", args=[application.id, "rent"]))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "https://checkout.stripe.test/upcoming-rent")
+        create_session.assert_called_once()
+        session_kwargs = create_session.call_args.kwargs
+        self.assertEqual(
+            session_kwargs["line_items"][0]["price_data"]["product_data"]["name"],
+            "Upcoming Rent Payment",
+        )
+        self.assertEqual(session_kwargs["line_items"][0]["price_data"]["unit_amount"], 65000)
+        payment = Payment.objects.get(application=application, payment_type="rent")
+        self.assertEqual(payment.amount, Decimal("650.00"))
+        self.assertEqual(payment.description, "Upcoming Rent Payment")
+        self.assertEqual(payment.status, "pending")
+        self.assertEqual(payment.service_month, first_day_of_next_month())
+
     def test_resident_cannot_pay_another_resident_account(self):
         user = User.objects.create_user(
             username="resident",
@@ -803,6 +948,163 @@ class LiveFlowTests(TestCase):
         response = self.client.get(reverse("pay_by_type", args=[other_application.id, "rent"]))
 
         self.assertEqual(response.status_code, 403)
+
+    @override_settings(DEMO_MODE=True, DEBUG=False)
+    @patch("main.views.stripe.checkout.Session.create")
+    def test_demo_mode_production_host_uses_stripe_checkout(self, create_session):
+        create_session.return_value.id = "cs_test_live_host"
+        create_session.return_value.url = "https://checkout.stripe.test/live-host"
+
+        user = User.objects.create_user(
+            username="live-host-resident",
+            email="live-host-resident@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        application = HousingApplication.objects.create(
+            user=user,
+            full_name="Live Host Resident",
+            phone="555-0104",
+            email="live-host-resident@example.com",
+            age=50,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            balance=Decimal("900.00"),
+        )
+
+        self.client.login(username="live-host-resident", password="StrongPass123!")
+        response = self.client.get(
+            reverse("pay_by_type", args=[application.id, "rent"]),
+            HTTP_HOST="rentalreadypro.com",
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "https://checkout.stripe.test/live-host")
+        create_session.assert_called_once()
+        payment = Payment.objects.get(application=application, payment_type="rent")
+        self.assertEqual(payment.status, "pending")
+        self.assertEqual(payment.payment_method, "stripe_card")
+        self.assertEqual(payment.description, "Rent Payment")
+
+    @patch("main.views.stripe.checkout.Session.create")
+    def test_upcoming_rent_checkout_stops_when_next_month_is_already_paid(self, create_session):
+        user = User.objects.create_user(
+            username="upcoming-paid-resident",
+            email="upcoming-paid-resident@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        application = HousingApplication.objects.create(
+            user=user,
+            full_name="Upcoming Paid Resident",
+            phone="555-0105",
+            email="upcoming-paid-resident@example.com",
+            age=50,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            balance=Decimal("0.00"),
+            monthly_rent=Decimal("650.00"),
+        )
+        Payment.objects.create(
+            application=application,
+            payment_type="rent",
+            payment_method="stripe_card",
+            amount=Decimal("650.00"),
+            status="completed",
+            service_month=first_day_of_next_month(),
+        )
+
+        self.client.login(username="upcoming-paid-resident", password="StrongPass123!")
+        response = self.client.get(reverse("pay_by_type", args=[application.id, "rent"]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"error": "No balance due"})
+        create_session.assert_not_called()
+        self.assertFalse(Payment.objects.filter(application=application, status="pending").exists())
+
+    @patch("main.views.stripe.checkout.Session.create")
+    def test_upcoming_utility_checkout_charges_only_remaining_next_month_amount(self, create_session):
+        create_session.return_value.id = "cs_test_upcoming_utility"
+        create_session.return_value.url = "https://checkout.stripe.test/upcoming-utility"
+
+        user = User.objects.create_user(
+            username="upcoming-utility-resident",
+            email="upcoming-utility-resident@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        application = HousingApplication.objects.create(
+            user=user,
+            full_name="Upcoming Utility Resident",
+            phone="555-0109",
+            email="upcoming-utility-resident@example.com",
+            age=50,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            balance=Decimal("0.00"),
+            utility_balance=Decimal("0.00"),
+            utility_monthly=Decimal("80.00"),
+        )
+        Payment.objects.create(
+            application=application,
+            payment_type="utility",
+            payment_method="stripe_card",
+            amount=Decimal("30.00"),
+            status="completed",
+            service_month=first_day_of_next_month(),
+        )
+
+        self.client.login(username="upcoming-utility-resident", password="StrongPass123!")
+        response = self.client.get(reverse("pay_by_type", args=[application.id, "utility"]))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "https://checkout.stripe.test/upcoming-utility")
+        create_session.assert_called_once()
+        session_kwargs = create_session.call_args.kwargs
+        self.assertEqual(
+            session_kwargs["line_items"][0]["price_data"]["product_data"]["name"],
+            "Upcoming Utility Payment",
+        )
+        self.assertEqual(session_kwargs["line_items"][0]["price_data"]["unit_amount"], 5000)
+        payment = Payment.objects.get(application=application, payment_type="utility", status="pending")
+        self.assertEqual(payment.amount, Decimal("50.00"))
+        self.assertEqual(payment.description, "Upcoming Utility Payment")
+        self.assertEqual(payment.service_month, first_day_of_next_month())
+
+    def test_tenant_dashboard_shows_upcoming_rent_action_when_current_balance_clear(self):
+        user = User.objects.create_user(
+            username="dashboard-upcoming-resident",
+            email="dashboard-upcoming-resident@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        application = HousingApplication.objects.create(
+            user=user,
+            full_name="Dashboard Upcoming Resident",
+            phone="555-0108",
+            email="dashboard-upcoming-resident@example.com",
+            age=50,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+            balance=Decimal("0.00"),
+            deposit_required=Decimal("0.00"),
+            deposit_paid=Decimal("0.00"),
+            utility_balance=Decimal("0.00"),
+            monthly_rent=Decimal("650.00"),
+        )
+
+        self.client.login(username="dashboard-upcoming-resident", password="StrongPass123!")
+        response = self.client.get(reverse("tenant_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_due"], Decimal("0.00"))
+        self.assertContains(response, "Pay Upcoming Rent")
+        self.assertContains(response, f'href="{reverse("pay_by_type", args=[application.id, "rent"])}"')
+        self.assertNotContains(response, "Pay Total Due")
 
     def test_staff_can_record_manual_bank_transfer_rent_payment(self):
         staff_user = User.objects.create_user(
@@ -1741,6 +2043,40 @@ class LiveFlowTests(TestCase):
         self.assertEqual(sms_log.status, "skipped_no_consent")
         self.assertIn("iPhone: https://apps.apple.com/app/rental-ledger-pro", sms_log.body)
         self.assertIn("Android: https://play.google.com/store/apps/details?id=com.rentalreadypro", sms_log.body)
+
+    def test_setup_sms_log_description_uses_status_specific_copy(self):
+        application = HousingApplication.objects.create(
+            full_name="SMS Description Resident",
+            phone="555-0772",
+            email="sms-description@example.com",
+            age=50,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Current resident.",
+        )
+
+        def make_log(status, error_message=""):
+            return SmsMessageLog.objects.create(
+                application=application,
+                to_phone="555-0772",
+                body="Setup code message",
+                status=status,
+                error_message=error_message,
+            )
+
+        self.assertEqual(describe_setup_sms_log(None), "")
+        self.assertEqual(describe_setup_sms_log(make_log("sent")), "SMS sent")
+        self.assertEqual(
+            describe_setup_sms_log(make_log("skipped_no_consent")),
+            "SMS skipped because resident has not opted in",
+        )
+        self.assertEqual(describe_setup_sms_log(make_log("not_configured")), "SMS not configured")
+        self.assertEqual(describe_setup_sms_log(make_log("failed", "carrier rejected")), "SMS failed: carrier rejected")
+        self.assertEqual(
+            describe_setup_sms_log(make_log("failed")),
+            "SMS failed: provider rejected the message",
+        )
+        self.assertEqual(describe_setup_sms_log(make_log("queued")), "SMS queued")
 
     def test_landlord_does_not_send_app_setup_code_to_completed_login(self):
         landlord = User.objects.create_user(
@@ -3262,6 +3598,7 @@ class LiveFlowTests(TestCase):
         form_response = self.client.get(reverse("property_owner_intake"))
         self.assertEqual(form_response.status_code, 200)
         self.assertContains(form_response, "This is the first setup step. Tell us about your portfolio")
+        self.assertContains(form_response, 'type="hidden" name="website"')
         self.assertContains(form_response, "Start Setup")
 
         started_at = str(int((timezone.now() - timedelta(seconds=10)).timestamp()))
@@ -3465,12 +3802,111 @@ class LiveFlowTests(TestCase):
         self.assertLessEqual(refreshed_started_at, int(after_post.timestamp()))
         self.assertContains(response, f'name="started_at" value="{refreshed_started_at}"')
 
+    def test_property_owner_intake_rejects_recent_duplicate_email(self):
+        PropertyOwnerIntake.objects.create(
+            full_name="Existing Owner",
+            company_name="Existing Holdings",
+            email="duplicate-owner@example.com",
+            phone="555-0191",
+            property_count=4,
+            total_units=120,
+            dashboard_goals="Track portfolio operations.",
+        )
+        started_at = str(int((timezone.now() - timedelta(seconds=10)).timestamp()))
+
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Portfolio Owner",
+            "company_name": "North Street Holdings",
+            "email": "duplicate-owner@example.com",
+            "phone": "555-0192",
+            "property_count": "4",
+            "total_units": "120",
+            "needs_accounting": "on",
+            "dashboard_goals": "Show NOI and rent collection by property.",
+            "started_at": started_at,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "A setup request for this email was just received.")
+        self.assertEqual(PropertyOwnerIntake.objects.filter(email__iexact="duplicate-owner@example.com").count(), 1)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_property_owner_intake_rejects_too_fast_submission(self):
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Portfolio Owner",
+            "company_name": "North Street Holdings",
+            "email": "too-fast-owner@example.com",
+            "phone": "555-0191",
+            "property_count": "4",
+            "total_units": "120",
+            "needs_accounting": "on",
+            "dashboard_goals": "Show NOI and rent collection by property.",
+            "started_at": str(int(timezone.now().timestamp())),
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please take a moment to review the setup form before submitting.")
+        self.assertFalse(PropertyOwnerIntake.objects.filter(email="too-fast-owner@example.com").exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_property_owner_intake_rejects_honeypot_submission(self):
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "Portfolio Owner",
+            "company_name": "North Street Holdings",
+            "email": "bot@example.com",
+            "phone": "555-0191",
+            "property_count": "4",
+            "total_units": "120",
+            "needs_accounting": "on",
+            "dashboard_goals": "Show NOI and rent collection by property.",
+            "website": "https://spam.example.com",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(PropertyOwnerIntake.objects.filter(email="bot@example.com").exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_property_owner_intake_rejects_random_text_spam(self):
+        started_at = str(int((timezone.now() - timedelta(seconds=10)).timestamp()))
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "fumvkozywk",
+            "company_name": "xkelqyivvd",
+            "email": "femmer@bblinc.com",
+            "phone": "+1-852-475-4846",
+            "property_count": "5730",
+            "total_units": "5743",
+            "property_types": ["multifamily", "commercial", "mixed_use", "single_family", "specialty"],
+            "current_software": "ivmoileefi",
+            "desired_reports": [
+                "t12",
+                "rent_roll",
+                "delinquency_report",
+                "deposit_liability",
+                "income_statement",
+                "expense_by_category",
+                "vendor_expense",
+                "property_performance_summary",
+                "valuation_estimate",
+                "insurance_compliance",
+                "capital_improvement_log",
+                "utility_cost_trend",
+            ],
+            "dashboard_goals": "hpwinmsshywimnjpltustvmsnmujdd",
+            "current_pain_points": "noeougutszhymmqdodplfkxdtgzyzf",
+            "migration_notes": "xqqovptlmhuqxqdvkfqfnxfrizmgoo",
+            "started_at": started_at,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(PropertyOwnerIntake.objects.filter(email="femmer@bblinc.com").exists())
+        self.assertEqual(len(mail.outbox), 0)
+
     def test_property_owner_intake_success_page_has_next_steps(self):
         response = self.client.get(reverse("property_owner_intake_success"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Watch your email")
-        self.assertContains(response, "Open Demo")
+        self.assertContains(response, "Preview Demo")
         self.assertContains(response, "Contact RentalReadyPro")
 
     def test_existing_resident_intake_button_opens_for_new_property_and_saves_profile(self):
@@ -3815,6 +4251,85 @@ class LiveFlowTests(TestCase):
         self.assertEqual(len(mail.outbox), 2)
         self.assertIn(pending_one.portal_setup_code, mail.outbox[0].body)
         self.assertIn(pending_two.portal_setup_code, mail.outbox[1].body)
+
+    def test_bulk_setup_code_summary_counts_sms_statuses(self):
+        landlord = User.objects.create_user(
+            username="bulk-summary-landlord",
+            email="bulk-summary-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Bulk Summary Property", landlord_email=landlord.email)
+        applications = []
+        for index, resident_name in enumerate([
+            "SMS Sent Resident",
+            "SMS Skipped Resident",
+            "SMS Failed Resident",
+            "SMS Not Configured Resident",
+            "Completed Login Resident",
+        ], start=1):
+            user = User.objects.create_user(
+                username=f"bulk-summary-{index}",
+                email=f"bulk-summary-{index}@example.com",
+                password=None,
+                role="tenant",
+            )
+            applications.append(HousingApplication.objects.create(
+                property=property_obj,
+                user=user,
+                full_name=resident_name,
+                phone=f"555-08{index:02d}",
+                email=user.email,
+                age=42,
+                income_source="Employment",
+                monthly_income=Decimal("3000.00"),
+                housing_need="Current resident.",
+            ))
+
+        def fake_prepare_setup_code(request, application):
+            if application.full_name == "Completed Login Resident":
+                return {
+                    "sent": False,
+                    "skipped": True,
+                    "reason": "login already completed",
+                    "code": "",
+                    "email_sent": False,
+                    "sms_log": None,
+                }
+
+            status_by_name = {
+                "SMS Sent Resident": "sent",
+                "SMS Skipped Resident": "skipped_no_consent",
+                "SMS Failed Resident": "failed",
+                "SMS Not Configured Resident": "not_configured",
+            }
+            return {
+                "sent": True,
+                "skipped": False,
+                "reason": "",
+                "code": "ABC123",
+                "email_sent": application.full_name == "SMS Sent Resident",
+                "sms_log": SimpleNamespace(status=status_by_name[application.full_name]),
+            }
+
+        self.client.login(username="bulk-summary-landlord", password="StrongPass123!")
+        with patch("main.views.prepare_and_send_resident_app_setup_code", side_effect=fake_prepare_setup_code):
+            response = self.client.post(reverse("bulk_send_resident_app_setup_codes"), {
+                "current_filter": "needs_login",
+                "resident_ids": [str(application.id) for application in applications],
+            })
+
+        self.assertRedirects(response, f"{reverse('landlord_resident_files')}?filter=needs_login")
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertIn(
+            (
+                "Bulk app setup codes complete. Ready: 4. Email sent: 1. SMS sent: 1. "
+                "SMS skipped no consent: 1. SMS failed: 1. SMS not configured: 1. Skipped: 1. "
+                "Skipped: Completed Login Resident (login already completed)"
+            ),
+            messages,
+        )
 
     def test_superadmin_resident_inspection_hides_unconverted_applications(self):
         superuser = User.objects.create_user(
@@ -7432,6 +7947,18 @@ class LiveFlowTests(TestCase):
         self.assertContains(response, "michael@bowlinglegacy.com")
         self.assertContains(response, "(541) 326-8047")
 
+    def test_rental_ledger_public_pages_use_owner_setup_ctas(self):
+        contact_response = self.client.get(reverse("rental_ledger_contact"))
+        product_response = self.client.get(reverse("rental_ledger_product_page", args=["financial-command"]))
+
+        for response in [contact_response, product_response]:
+            with self.subTest(path=response.wsgi_request.path):
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "Preview Demo")
+                self.assertContains(response, "Start Owner Setup")
+                self.assertContains(response, f'href="{reverse("property_owner_intake")}"')
+                self.assertNotContains(response, ">Sign Up</a>")
+
     @override_settings(DEMO_PUBLIC_URL="https://rentalledger-demo.onrender.com/demo/")
     def test_rental_ledger_contact_page_links_to_public_demo_when_configured(self):
         response = self.client.get(reverse("rental_ledger_contact"))
@@ -7439,6 +7966,204 @@ class LiveFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Open Demo")
         self.assertContains(response, "https://rentalledger-demo.onrender.com/demo/")
+
+    def test_phone_formatter_observes_dynamic_inputs(self):
+        response = self.client.get(reverse("property_owner_intake"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "function attachPhoneFormatter(input)")
+        self.assertContains(response, "new MutationObserver")
+        self.assertContains(response, "mutation.addedNodes")
+        self.assertContains(response, "observer.observe(document.body, { childList: true, subtree: true })")
+
+    def test_resident_app_routes_guest_to_login_with_install_assets(self):
+        response = self.client.get(reverse("resident_app"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Resident Portal")
+        self.assertContains(response, "Sign In")
+        self.assertContains(response, f'href="{reverse("login")}"')
+        self.assertContains(response, f'href="{reverse("web_app_manifest")}"')
+        self.assertContains(response, f'navigator.serviceWorker.register("{reverse("service_worker")}")')
+
+    def test_resident_app_launch_target_follows_authenticated_role(self):
+        cases = [
+            (
+                User.objects.create_superuser(
+                    username="app-admin",
+                    email="app-admin@example.com",
+                    password="StrongPass123!",
+                ),
+                "Admin Portal",
+                "Open Command Center",
+                reverse("superadmin_dashboard"),
+            ),
+            (
+                User.objects.create_user(
+                    username="app-owner",
+                    email="app-owner@example.com",
+                    password="StrongPass123!",
+                    role="property_owner",
+                ),
+                "Owner Portal",
+                "Open Owner Dashboard",
+                reverse("property_owner_dashboard"),
+            ),
+            (
+                User.objects.create_user(
+                    username="app-landlord",
+                    email="app-landlord@example.com",
+                    password="StrongPass123!",
+                    role="landlord",
+                    is_staff=True,
+                ),
+                "Landlord Portal",
+                "Open Landlord Dashboard",
+                reverse("landlord_dashboard"),
+            ),
+            (
+                User.objects.create_user(
+                    username="app-resident",
+                    email="app-resident@example.com",
+                    password="StrongPass123!",
+                    role="tenant",
+                ),
+                "Resident Portal",
+                "Open Resident Dashboard",
+                reverse("tenant_dashboard"),
+            ),
+        ]
+
+        for user, portal_type, launch_label, launch_url in cases:
+            with self.subTest(username=user.username):
+                self.client.force_login(user)
+                response = self.client.get(reverse("resident_app"))
+                self.client.logout()
+
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, portal_type)
+                self.assertContains(response, launch_label)
+                self.assertContains(response, f'href="{launch_url}"')
+
+    def test_resident_app_personalizes_property_details_by_role(self):
+        owner = User.objects.create_user(
+            username="app-personalized-owner",
+            email="app-personalized-owner@example.com",
+            password="StrongPass123!",
+            role="property_owner",
+        )
+        landlord = User.objects.create_user(
+            username="app-personalized-landlord",
+            email="app-personalized-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        resident = User.objects.create_user(
+            username="app-personalized-resident",
+            email="app-personalized-resident@example.com",
+            password="StrongPass123!",
+            role="tenant",
+        )
+        owner_property = Property.objects.create(
+            name="Alder Owner Flats",
+            owner_email=owner.email,
+            photo="property_photos/owner-app.jpg",
+        )
+        landlord_property = Property.objects.create(
+            name="Bay Landlord Rooms",
+            landlord_email=landlord.email,
+            photo="property_photos/landlord-app.jpg",
+        )
+        resident_property = Property.objects.create(
+            name="Cedar Resident House",
+            photo="property_photos/resident-app.jpg",
+        )
+        HousingApplication.objects.create(
+            property=resident_property,
+            user=resident,
+            full_name="App Personalization Resident",
+            phone="555-0901",
+            email=resident.email,
+            age=38,
+            income_source="Employment",
+            monthly_income=Decimal("3100.00"),
+            housing_need="Current resident.",
+            space_label="12B",
+        )
+
+        cases = [
+            (
+                owner,
+                owner_property.name,
+                "/media/property_photos/owner-app.jpg",
+                "Owner view for property performance",
+                "Owner Dashboard",
+            ),
+            (
+                landlord,
+                landlord_property.name,
+                "/media/property_photos/landlord-app.jpg",
+                "Daily operations for receipts",
+                "Rent Watch",
+            ),
+            (
+                resident,
+                resident_property.name,
+                "/media/property_photos/resident-app.jpg",
+                "Room 12B resident app",
+                "Pay Rent",
+            ),
+        ]
+
+        for user, property_name, property_photo_url, expected_copy, expected_action in cases:
+            with self.subTest(username=user.username):
+                self.client.force_login(user)
+                response = self.client.get(reverse("resident_app"))
+                self.client.logout()
+
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.context["property_name"], property_name)
+                self.assertEqual(response.context["property_photo_url"], property_photo_url)
+                self.assertContains(response, property_name)
+                self.assertContains(response, expected_copy)
+                self.assertContains(response, expected_action)
+
+    def test_web_app_manifest_exposes_installable_app_metadata(self):
+        response = self.client.get(reverse("web_app_manifest"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response["Content-Type"].startswith("application/manifest+json"))
+        manifest = response.json()
+        self.assertEqual(manifest["name"], "RentalReadyPro App")
+        self.assertEqual(manifest["start_url"], reverse("resident_app"))
+        self.assertEqual(manifest["display"], "standalone")
+        self.assertEqual(manifest["orientation"], "portrait")
+        self.assertEqual(manifest["icons"][0]["type"], "image/svg+xml")
+        self.assertTrue(manifest["icons"][0]["src"].endswith("/app/rrp-app-icon.svg"))
+        self.assertEqual(
+            [shortcut["url"] for shortcut in manifest["shortcuts"]],
+            [reverse("enter_invite_code"), reverse("resident_app"), reverse("request_invite_code")],
+        )
+
+    def test_service_worker_caches_app_shell_and_falls_back_to_app(self):
+        response = self.client.get(reverse("service_worker"))
+        body = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response["Content-Type"].startswith("application/javascript"))
+        self.assertIn('const CACHE_NAME = "rentalreadypro-app-v2";', body)
+        self.assertIn('"/app/"', body)
+        self.assertIn('"/manifest.webmanifest"', body)
+        self.assertIn('caches.match("/app/")', body)
+
+    def test_base_template_includes_app_navigation_and_pwa_assets(self):
+        response = self.client.get(reverse("privacy_policy"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'href="{reverse("resident_app")}" class="nav-link-gold">App</a>')
+        self.assertContains(response, f'href="{reverse("web_app_manifest")}"')
+        self.assertContains(response, f'navigator.serviceWorker.register("{reverse("service_worker")}")')
 
     def test_password_reset_links_expire_after_thirty_minutes(self):
         self.assertEqual(settings.PASSWORD_RESET_TIMEOUT, 1800)
@@ -7950,6 +8675,55 @@ class LiveFlowTests(TestCase):
         self.assertEqual(mail.outbox[0].to, ["owner@example.com"])
         self.assertEqual(mail.outbox[0].reply_to, ["document-reply@example.com"])
 
+    @override_settings(
+        EMAIL_HOST="smtp.example.test",
+        EMAIL_PORT=2525,
+        EMAIL_USE_TLS=True,
+        EMAIL_HOST_USER="smtp-user",
+        EMAIL_HOST_PASSWORD="smtp-password",
+        DEFAULT_FROM_EMAIL="noreply@example.test",
+        DEMO_MODE=True,
+    )
+    def test_diagnose_email_sends_test_message_with_configured_credentials(self):
+        output = StringIO()
+
+        call_command("diagnose_email", "--send", "--to", "ops@example.test", stdout=output)
+
+        diagnostic_output = output.getvalue()
+        self.assertIn("RentalReadyPro email diagnostic", diagnostic_output)
+        self.assertIn("EMAIL_HOST: smtp.example.test", diagnostic_output)
+        self.assertIn("EMAIL_HOST_USER set: True", diagnostic_output)
+        self.assertIn("EMAIL_HOST_PASSWORD set: True", diagnostic_output)
+        self.assertIn("DEMO_MODE: True", diagnostic_output)
+        self.assertIn("Messages accepted by backend: 1", diagnostic_output)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["ops@example.test"])
+        self.assertEqual(mail.outbox[0].from_email, "noreply@example.test")
+        self.assertIn("RentalReadyPro email delivery test", mail.outbox[0].body)
+
+    def test_diagnose_email_without_send_only_prints_configuration(self):
+        output = StringIO()
+
+        call_command("diagnose_email", stdout=output)
+
+        diagnostic_output = output.getvalue()
+        self.assertIn("RentalReadyPro email diagnostic", diagnostic_output)
+        self.assertIn("No email was sent.", diagnostic_output)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_diagnose_email_send_requires_recipient(self):
+        with self.assertRaisesMessage(CommandError, "Use --to EMAIL when --send is provided."):
+            call_command("diagnose_email", "--send", stdout=StringIO())
+
+    @override_settings(EMAIL_HOST_USER="", EMAIL_HOST_PASSWORD="")
+    def test_diagnose_email_send_requires_smtp_credentials(self):
+        with self.assertRaisesMessage(
+            CommandError,
+            "EMAIL_HOST_USER and EMAIL_HOST_PASSWORD must both be set before sending email.",
+        ):
+            call_command("diagnose_email", "--send", "--to", "ops@example.test", stdout=StringIO())
+        self.assertEqual(len(mail.outbox), 0)
+
     def test_staff_can_mark_uploaded_document_reviewed(self):
         staff_user = User.objects.create_user(
             username="staff",
@@ -8188,6 +8962,288 @@ class LiveFlowTests(TestCase):
         self.assertFalse(Property.objects.filter(id=abc_property.id).exists())
         self.assertFalse(Property.objects.filter(id=newtest_property.id).exists())
         self.assertTrue(Property.objects.filter(id=real_property.id).exists())
+
+    def test_cleanup_spam_owner_intakes_dry_run_marks_nothing(self):
+        spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="fumvkozywk",
+            company_name="xkelqyivvd",
+            email="junk@bellff.com",
+            phone="555-0126",
+            property_count=5730,
+            total_units=5743,
+            dashboard_goals="hpwinmsshywimnjpltustvmsnmujdd",
+        )
+        real_intake = PropertyOwnerIntake.objects.create(
+            full_name="Real Owner",
+            company_name="Real Portfolio",
+            email="owner@real.test",
+            phone="555-0127",
+            property_count=12,
+            total_units=48,
+            dashboard_goals="Track rent collection and owner reports.",
+        )
+
+        output = StringIO()
+        call_command("cleanup_spam_owner_intakes", stdout=output)
+
+        command_output = output.getvalue()
+        self.assertIn("Suspect intakes: 1", command_output)
+        self.assertIn("junk@bellff.com", command_output)
+        self.assertNotIn("owner@real.test", command_output)
+        self.assertIn("Dry run only. No records were changed.", command_output)
+        spam_intake.refresh_from_db()
+        real_intake.refresh_from_db()
+        self.assertEqual(spam_intake.lead_stage, "new")
+        self.assertEqual(spam_intake.internal_notes, "")
+        self.assertEqual(real_intake.lead_stage, "new")
+
+    def test_cleanup_spam_owner_intakes_confirm_marks_only_suspects_closed_lost(self):
+        spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="fumvkozywk",
+            company_name="xkelqyivvd",
+            email="junk@bellsbeer.com",
+            phone="555-0128",
+            property_count=5730,
+            total_units=5743,
+            current_pain_points="noeougutszhymmqdodplfkxdtgzyzf",
+        )
+        real_intake = PropertyOwnerIntake.objects.create(
+            full_name="Real Owner",
+            company_name="Real Portfolio",
+            email="owner@real.test",
+            phone="555-0129",
+            property_count=12,
+            total_units=48,
+            current_pain_points="Needs cleaner rent roll reporting.",
+        )
+
+        output = StringIO()
+        call_command("cleanup_spam_owner_intakes", "--confirm", stdout=output)
+
+        self.assertIn("Marked suspect owner intakes closed lost: 1", output.getvalue())
+        spam_intake.refresh_from_db()
+        real_intake.refresh_from_db()
+        self.assertEqual(spam_intake.lead_stage, "closed_lost")
+        self.assertIn("Spam cleanup", spam_intake.internal_notes)
+        self.assertIn("known junk email domain", spam_intake.internal_notes)
+        self.assertEqual(real_intake.lead_stage, "new")
+        self.assertEqual(real_intake.internal_notes, "")
+
+    def test_cleanup_spam_owner_intakes_confirm_respects_limit(self):
+        first_spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="fumvkozywk",
+            company_name="xkelqyivvd",
+            email="first@bellff.com",
+            phone="555-0132",
+            property_count=5730,
+            total_units=5743,
+        )
+        second_spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="qimnoplzer",
+            company_name="vustmnoqaz",
+            email="second@deepmails.org",
+            phone="555-0133",
+            property_count=6380,
+            total_units=6910,
+        )
+        PropertyOwnerIntake.objects.filter(id=first_spam_intake.id).update(
+            created_at=timezone.now() - timedelta(minutes=10)
+        )
+        PropertyOwnerIntake.objects.filter(id=second_spam_intake.id).update(
+            created_at=timezone.now()
+        )
+
+        output = StringIO()
+        call_command("cleanup_spam_owner_intakes", "--confirm", "--limit", "1", stdout=output)
+
+        self.assertIn("Suspect intakes: 1", output.getvalue())
+        self.assertIn("Marked suspect owner intakes closed lost: 1", output.getvalue())
+        first_spam_intake.refresh_from_db()
+        second_spam_intake.refresh_from_db()
+        self.assertEqual(first_spam_intake.lead_stage, "new")
+        self.assertEqual(second_spam_intake.lead_stage, "closed_lost")
+
+    def test_cleanup_spam_owner_intakes_delete_removes_only_suspects(self):
+        spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="fumvkozywk",
+            company_name="xkelqyivvd",
+            email="junk@deepmails.org",
+            phone="555-0130",
+            property_count=5730,
+            total_units=5743,
+        )
+        real_intake = PropertyOwnerIntake.objects.create(
+            full_name="Real Owner",
+            company_name="Real Portfolio",
+            email="owner@real.test",
+            phone="555-0131",
+            property_count=12,
+            total_units=48,
+        )
+
+        output = StringIO()
+        call_command("cleanup_spam_owner_intakes", "--delete", "--confirm", stdout=output)
+
+        self.assertIn("Deleted suspect owner intakes: 1", output.getvalue())
+        self.assertFalse(PropertyOwnerIntake.objects.filter(id=spam_intake.id).exists())
+        self.assertTrue(PropertyOwnerIntake.objects.filter(id=real_intake.id).exists())
+
+    def test_cleanup_demo_data_dry_run_deletes_nothing(self):
+        demo_property = Property.objects.create(name="Demo Ridge Apartments")
+        demo_application = HousingApplication.objects.create(
+            property=demo_property,
+            full_name="Demo Resident",
+            phone="555-0120",
+            email="demo.resident@example.com",
+            age=48,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Seeded demo resident.",
+        )
+        demo_upload = FinancialUpload.objects.create(
+            property=demo_property,
+            name="Demo Ridge Apartments Demo Summary",
+            file="financial_uploads/demo-summary.csv",
+        )
+        demo_entry = FinancialEntry.objects.create(
+            upload=demo_upload,
+            property_name="Demo Ridge Apartments",
+            sheet_name="Demo Summary",
+            amount=Decimal("1250.00"),
+        )
+        demo_receipt = AccountingReceipt.objects.create(
+            property=demo_property,
+            receipt_file="accounting_receipts/demo-receipt.pdf",
+            financial_upload=demo_upload,
+            financial_entry=demo_entry,
+            amount=Decimal("50.00"),
+        )
+        demo_user = User.objects.create_user(
+            username="demo-owner-olivia",
+            email="olivia.owner@example.com",
+            role="property_owner",
+        )
+        demo_owner_intake = PropertyOwnerIntake.objects.create(
+            full_name="Owner Lead",
+            company_name="Morgan Multifamily Group",
+            email="owner-lead@example.com",
+            phone="555-0121",
+        )
+
+        output = StringIO()
+        call_command("cleanup_demo_data", stdout=output)
+
+        self.assertIn("Dry run only. No records were deleted.", output.getvalue())
+        self.assertTrue(Property.objects.filter(id=demo_property.id).exists())
+        self.assertTrue(HousingApplication.objects.filter(id=demo_application.id).exists())
+        self.assertTrue(FinancialUpload.objects.filter(id=demo_upload.id).exists())
+        self.assertTrue(FinancialEntry.objects.filter(id=demo_entry.id).exists())
+        self.assertTrue(AccountingReceipt.objects.filter(id=demo_receipt.id).exists())
+        self.assertTrue(User.objects.filter(id=demo_user.id).exists())
+        self.assertTrue(PropertyOwnerIntake.objects.filter(id=demo_owner_intake.id).exists())
+
+    def test_cleanup_demo_data_confirm_deletes_only_demo_records(self):
+        demo_property = Property.objects.create(name="Cedar Market Lofts")
+        real_property = Property.objects.create(name="Painted Lady Inn")
+        demo_user = User.objects.create_user(
+            username="demo-landlord-larry",
+            email="larry.landlord@example.com",
+            role="landlord",
+            is_staff=True,
+        )
+        real_user = User.objects.create_user(
+            username="real-landlord",
+            email="larry@real.test",
+            role="landlord",
+            is_staff=True,
+        )
+        demo_application = HousingApplication.objects.create(
+            property=demo_property,
+            full_name="Demo Application",
+            phone="555-0122",
+            email="cedar.applicant@example.com",
+            age=49,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Seeded demo application.",
+        )
+        real_application = HousingApplication.objects.create(
+            property=real_property,
+            full_name="Real Application",
+            phone="555-0123",
+            email="resident@real.test",
+            age=50,
+            income_source="Employment",
+            monthly_income=Decimal("3000.00"),
+            housing_need="Real application.",
+        )
+        demo_upload = FinancialUpload.objects.create(
+            property=demo_property,
+            name="Cedar Market Lofts Demo Receipt Batch",
+            file="financial_uploads/demo-receipts.csv",
+        )
+        real_upload = FinancialUpload.objects.create(
+            property=real_property,
+            name="Quarterly Operating Report",
+            file="financial_uploads/real-report.csv",
+        )
+        demo_entry = FinancialEntry.objects.create(
+            upload=demo_upload,
+            property_name="Cedar Market Lofts",
+            sheet_name="Demo Receipts",
+            amount=Decimal("75.00"),
+        )
+        real_entry = FinancialEntry.objects.create(
+            upload=real_upload,
+            property_name="Painted Lady Inn",
+            sheet_name="June Receipts",
+            amount=Decimal("85.00"),
+        )
+        demo_receipt = AccountingReceipt.objects.create(
+            property=demo_property,
+            receipt_file="accounting_receipts/demo-receipt.pdf",
+            financial_upload=demo_upload,
+            financial_entry=demo_entry,
+            amount=Decimal("75.00"),
+        )
+        real_receipt = AccountingReceipt.objects.create(
+            property=real_property,
+            receipt_file="accounting_receipts/real-receipt.pdf",
+            financial_upload=real_upload,
+            financial_entry=real_entry,
+            amount=Decimal("85.00"),
+        )
+        demo_owner_intake = PropertyOwnerIntake.objects.create(
+            full_name="Stonebridge Owner",
+            company_name="Stonebridge Housing",
+            email="stonebridge@example.com",
+            phone="555-0124",
+        )
+        real_owner_intake = PropertyOwnerIntake.objects.create(
+            full_name="Real Owner",
+            company_name="Real Portfolio",
+            email="owner@real.test",
+            phone="555-0125",
+        )
+
+        output = StringIO()
+        call_command("cleanup_demo_data", "--confirm", stdout=output)
+
+        self.assertIn("Demo data cleanup complete.", output.getvalue())
+        self.assertFalse(Property.objects.filter(id=demo_property.id).exists())
+        self.assertFalse(HousingApplication.objects.filter(id=demo_application.id).exists())
+        self.assertFalse(FinancialUpload.objects.filter(id=demo_upload.id).exists())
+        self.assertFalse(FinancialEntry.objects.filter(id=demo_entry.id).exists())
+        self.assertFalse(AccountingReceipt.objects.filter(id=demo_receipt.id).exists())
+        self.assertFalse(User.objects.filter(id=demo_user.id).exists())
+        self.assertFalse(PropertyOwnerIntake.objects.filter(id=demo_owner_intake.id).exists())
+        self.assertTrue(Property.objects.filter(id=real_property.id).exists())
+        self.assertTrue(HousingApplication.objects.filter(id=real_application.id).exists())
+        self.assertTrue(FinancialUpload.objects.filter(id=real_upload.id).exists())
+        self.assertTrue(FinancialEntry.objects.filter(id=real_entry.id).exists())
+        self.assertTrue(AccountingReceipt.objects.filter(id=real_receipt.id).exists())
+        self.assertTrue(User.objects.filter(id=real_user.id).exists())
+        self.assertTrue(PropertyOwnerIntake.objects.filter(id=real_owner_intake.id).exists())
 
     def test_issue_painted_lady_platform_lease_command_preserves_signed_lease(self):
         property_obj = Property.objects.create(name="The Painted Lady Inn")
