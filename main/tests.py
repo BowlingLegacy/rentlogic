@@ -3709,6 +3709,11 @@ class LiveFlowTests(TestCase):
 
         self.assertIsNone(owner_intake_submission_started_at(request))
 
+    def test_owner_intake_started_at_parser_rejects_overflow_timestamp(self):
+        request = RequestFactory().post("/", {"started_at": str(10**100)})
+
+        self.assertIsNone(owner_intake_submission_started_at(request))
+
     def test_property_owner_intake_rejects_missing_started_at(self):
         response = self.client.post(reverse("property_owner_intake"), {
             "full_name": "Portfolio Owner",
