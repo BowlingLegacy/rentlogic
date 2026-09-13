@@ -9034,6 +9034,24 @@ class LiveFlowTests(TestCase):
         self.assertEqual(real_intake.lead_stage, "new")
         self.assertEqual(real_intake.internal_notes, "")
 
+    def test_cleanup_spam_owner_intakes_ignores_single_spam_signal(self):
+        single_signal_intake = PropertyOwnerIntake.objects.create(
+            full_name="Normal Owner",
+            company_name="Normal Portfolio",
+            email="owner@bellff.com",
+            phone="555-0135",
+            property_count=12,
+            total_units=48,
+        )
+
+        output = StringIO()
+        call_command("cleanup_spam_owner_intakes", "--confirm", stdout=output)
+
+        self.assertIn("Suspect intakes: 0", output.getvalue())
+        single_signal_intake.refresh_from_db()
+        self.assertEqual(single_signal_intake.lead_stage, "new")
+        self.assertEqual(single_signal_intake.internal_notes, "")
+
     def test_cleanup_spam_owner_intakes_confirm_respects_limit(self):
         first_spam_intake = PropertyOwnerIntake.objects.create(
             full_name="fumvkozywk",
