@@ -3906,6 +3906,25 @@ class LiveFlowTests(TestCase):
         self.assertFalse(PropertyOwnerIntake.objects.filter(email="femmer@bblinc.com").exists())
         self.assertEqual(len(mail.outbox), 0)
 
+    def test_property_owner_intake_rejects_random_text_spam_with_one_implausible_count(self):
+        started_at = str(int((timezone.now() - timedelta(seconds=10)).timestamp()))
+        response = self.client.post(reverse("property_owner_intake"), {
+            "full_name": "fumvkozywk",
+            "company_name": "xkelqyivvd",
+            "email": "single-count-spam@example.com",
+            "phone": "+1-852-475-4847",
+            "property_count": "4",
+            "total_units": "5743",
+            "needs_accounting": "on",
+            "dashboard_goals": "Track owner statements and monthly rent collection.",
+            "started_at": started_at,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your submission could not be accepted.")
+        self.assertFalse(PropertyOwnerIntake.objects.filter(email="single-count-spam@example.com").exists())
+        self.assertEqual(len(mail.outbox), 0)
+
     def test_property_owner_intake_success_page_has_next_steps(self):
         response = self.client.get(reverse("property_owner_intake_success"))
 
