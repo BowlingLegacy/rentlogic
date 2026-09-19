@@ -9092,6 +9092,26 @@ class LiveFlowTests(TestCase):
         self.assertEqual(single_signal_intake.lead_stage, "new")
         self.assertEqual(single_signal_intake.internal_notes, "")
 
+    def test_cleanup_spam_owner_intakes_flags_spaced_random_long_text(self):
+        spaced_text_intake = PropertyOwnerIntake.objects.create(
+            full_name="Normal Owner",
+            company_name="Normal Portfolio",
+            email="owner@gongjua.com",
+            phone="555-0137",
+            property_count=12,
+            total_units=48,
+            dashboard_goals="h p w i n m s s h y w i m n j p l t u s t v m s n m u j d d",
+        )
+
+        output = StringIO()
+        call_command("cleanup_spam_owner_intakes", "--confirm", stdout=output)
+
+        self.assertIn("Suspect intakes: 1", output.getvalue())
+        spaced_text_intake.refresh_from_db()
+        self.assertEqual(spaced_text_intake.lead_stage, "closed_lost")
+        self.assertIn("known junk email domain", spaced_text_intake.internal_notes)
+        self.assertIn("random-looking long text", spaced_text_intake.internal_notes)
+
     def test_cleanup_spam_owner_intakes_confirm_respects_limit(self):
         first_spam_intake = PropertyOwnerIntake.objects.create(
             full_name="fumvkozywk",
