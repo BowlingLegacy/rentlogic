@@ -9021,6 +9021,27 @@ class LiveFlowTests(TestCase):
         self.assertEqual(spam_intake.internal_notes, "")
         self.assertEqual(real_intake.lead_stage, "new")
 
+    def test_cleanup_spam_owner_intakes_delete_dry_run_keeps_suspects(self):
+        spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="fumvkozywk",
+            company_name="xkelqyivvd",
+            email="junk@bellff.com",
+            phone="555-0126",
+            property_count=5730,
+            total_units=5743,
+        )
+
+        output = StringIO()
+        call_command("cleanup_spam_owner_intakes", "--delete", stdout=output)
+
+        command_output = output.getvalue()
+        self.assertIn("Suspect intakes: 1", command_output)
+        self.assertIn("Dry run only. No records were changed.", command_output)
+        self.assertIn("Run again with --delete --confirm to delete these records.", command_output)
+        spam_intake.refresh_from_db()
+        self.assertEqual(spam_intake.lead_stage, "new")
+        self.assertEqual(spam_intake.internal_notes, "")
+
     def test_cleanup_spam_owner_intakes_confirm_marks_only_suspects_closed_lost(self):
         spam_intake = PropertyOwnerIntake.objects.create(
             full_name="fumvkozywk",
