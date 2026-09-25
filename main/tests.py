@@ -9205,6 +9205,21 @@ class LiveFlowTests(TestCase):
         self.assertEqual(spam_intake.lead_stage, "new")
         self.assertEqual(spam_intake.internal_notes, "")
 
+    @patch("main.management.commands.cleanup_spam_owner_intakes.spam_reasons")
+    def test_cleanup_spam_owner_intakes_zero_limit_skips_spam_checks(self, spam_reasons):
+        PropertyOwnerIntake.objects.create(
+            full_name="fumvkozywk",
+            company_name="xkelqyivvd",
+            email="junk@bellff.com",
+            phone="555-0134",
+            property_count=5730,
+            total_units=5743,
+        )
+
+        call_command("cleanup_spam_owner_intakes", "--limit", "0", stdout=StringIO())
+
+        spam_reasons.assert_not_called()
+
     def test_cleanup_spam_owner_intakes_zero_limit_deletes_no_records(self):
         spam_intake = PropertyOwnerIntake.objects.create(
             full_name="fumvkozywk",
