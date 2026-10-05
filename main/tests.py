@@ -9167,6 +9167,43 @@ class LiveFlowTests(TestCase):
         self.assertEqual(first_spam_intake.lead_stage, "new")
         self.assertEqual(second_spam_intake.lead_stage, "closed_lost")
 
+    def test_cleanup_spam_owner_intakes_preview_respects_limit(self):
+        first_spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="fumvkozywk",
+            company_name="xkelqyivvd",
+            email="first-preview@bellff.com",
+            phone="555-0140",
+            property_count=5730,
+            total_units=5743,
+        )
+        second_spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="qimnoplzer",
+            company_name="vustmnoqaz",
+            email="second-preview@deepmails.org",
+            phone="555-0141",
+            property_count=6380,
+            total_units=6910,
+        )
+        PropertyOwnerIntake.objects.filter(id=first_spam_intake.id).update(
+            created_at=timezone.now() - timedelta(minutes=10)
+        )
+        PropertyOwnerIntake.objects.filter(id=second_spam_intake.id).update(
+            created_at=timezone.now()
+        )
+
+        output = StringIO()
+        call_command("cleanup_spam_owner_intakes", "--limit", "1", stdout=output)
+
+        command_output = output.getvalue()
+        self.assertIn("Suspect intakes: 1", command_output)
+        self.assertIn("second-preview@deepmails.org", command_output)
+        self.assertNotIn("first-preview@bellff.com", command_output)
+        self.assertIn("Dry run only. No records were changed.", command_output)
+        first_spam_intake.refresh_from_db()
+        second_spam_intake.refresh_from_db()
+        self.assertEqual(first_spam_intake.lead_stage, "new")
+        self.assertEqual(second_spam_intake.lead_stage, "new")
+
     def test_cleanup_spam_owner_intakes_delete_respects_limit(self):
         first_spam_intake = PropertyOwnerIntake.objects.create(
             full_name="fumvkozywk",
