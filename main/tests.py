@@ -9328,6 +9328,23 @@ class LiveFlowTests(TestCase):
         with self.assertRaisesMessage(CommandError, "--limit must be zero or greater."):
             call_command("cleanup_spam_owner_intakes", "--limit", "-1", stdout=StringIO())
 
+    def test_cleanup_spam_owner_intakes_rejects_negative_delete_preview_limit(self):
+        spam_intake = PropertyOwnerIntake.objects.create(
+            full_name="fumvkozywk",
+            company_name="xkelqyivvd",
+            email="negative-delete-preview@bellff.com",
+            phone="555-0144",
+            property_count=5730,
+            total_units=5743,
+        )
+        output = StringIO()
+
+        with self.assertRaisesMessage(CommandError, "--limit must be zero or greater."):
+            call_command("cleanup_spam_owner_intakes", "--delete", "--limit", "-1", stdout=output)
+
+        self.assertEqual(output.getvalue(), "")
+        self.assertTrue(PropertyOwnerIntake.objects.filter(id=spam_intake.id).exists())
+
     def test_cleanup_spam_owner_intakes_rejects_negative_confirm_limit_before_marking(self):
         spam_intake = PropertyOwnerIntake.objects.create(
             full_name="fumvkozywk",
