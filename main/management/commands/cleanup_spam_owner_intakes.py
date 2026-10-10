@@ -1,6 +1,6 @@
 import re
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
@@ -65,13 +65,17 @@ class Command(BaseCommand):
         parser.add_argument("--limit", type=int, default=100, help="Maximum suspect records to show or process.")
 
     def handle(self, *args, **options):
+        limit = options["limit"]
+        if limit < 0:
+            raise CommandError("--limit must be zero or greater.")
+
         suspects = []
         for intake in PropertyOwnerIntake.objects.all().order_by("-created_at")[:1000]:
+            if len(suspects) >= limit:
+                break
             reasons = spam_reasons(intake)
             if reasons:
                 suspects.append((intake, reasons))
-            if len(suspects) >= options["limit"]:
-                break
 
         self.stdout.write("Spam owner intake cleanup preview")
         self.stdout.write("=================================")
