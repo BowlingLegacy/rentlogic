@@ -9390,9 +9390,12 @@ class LiveFlowTests(TestCase):
             total_units=5743,
         )
 
-        with self.assertRaisesMessage(CommandError, "--limit must be zero or greater."):
-            call_command("cleanup_spam_owner_intakes", "--delete", "--confirm", "--limit", "-1", stdout=StringIO())
+        output = StringIO()
 
+        with self.assertRaisesMessage(CommandError, "--limit must be zero or greater."):
+            call_command("cleanup_spam_owner_intakes", "--delete", "--confirm", "--limit", "-1", stdout=output)
+
+        self.assertEqual(output.getvalue(), "")
         self.assertTrue(PropertyOwnerIntake.objects.filter(id=spam_intake.id).exists())
 
     def test_cleanup_spam_owner_intakes_delete_removes_only_suspects(self):
