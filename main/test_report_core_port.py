@@ -8,6 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import (
+    AccountingPeriod,
     AccountingReceipt,
     AccountingReceiptSplit,
     ExpenseCategory,
@@ -181,7 +182,31 @@ class SharedReportCorePortTests(TestCase):
         self.assertEqual(row[3], "Not calculated")
         self.assertIn("0 of 12 accounting months explicitly closed", row[4])
         self.assertIn("missing Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec", row[4])
-        self.assertIn("does not yet store accounting-period close provenance", row[4])
+        self.assertIn("Valuation remains intentionally disabled", row[4])
+        self.assertNotContains(response, "months annualized")
+
+    def test_valuation_stays_disabled_with_twelve_closed_periods(self):
+        for month in range(1, 13):
+            AccountingPeriod.objects.create(
+                property=self.a,
+                year=2026,
+                month=month,
+                status="closed",
+                closed_by=self.landlord,
+            )
+        self.entry(self.upload(self.a, "closed-year"), self.a, Decimal("1200.00"), month=1)
+
+        response = self.client.get(reverse("custom_reports"), {
+            "report_type": "valuation_estimate", "property_id": self.a.id,
+            "start_date": "2026-01-01",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        row = response.context["report_rows"][0]
+        self.assertEqual(row[1], "Not calculated")
+        self.assertEqual(row[3], "Not calculated")
+        self.assertIn("12 of 12 accounting months explicitly closed", row[4])
+        self.assertIn("Valuation remains intentionally disabled", row[4])
         self.assertNotContains(response, "months annualized")
 
     @patch("main.views.timezone.localdate", return_value=date(2026, 1, 31))

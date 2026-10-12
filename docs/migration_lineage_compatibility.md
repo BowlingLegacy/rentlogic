@@ -13,6 +13,16 @@ Migration identity is the complete `(app_label, migration_name)` pair. The
 candidate therefore retains both named branches and merges them; it does not
 fake migrations based on their numeric prefixes.
 
+This compatibility path is deliberately scoped to fresh databases and the
+verified BowlingLegacy-first lineage used by Demo-Mode (`0084`) and the current
+BowlingLegacy release (`0086`). It is not a bidirectional repair for an
+independent database that already applied RentalReadyPro's former duplicate
+`0043`, `0047`, or `0055` operations. Those migration files were changed before
+deployment so their historical identities remain present but their duplicate
+DDL is not issued after the BowlingLegacy-owned objects. An already-migrated
+RentalReadyPro-first database requires a separately tested reconciliation plan;
+do not point this candidate at one merely because the leaf names match.
+
 ## Compatibility behavior
 
 The BowlingLegacy schema migrations are represented under their exact applied
@@ -72,11 +82,11 @@ no production data.
 uses `bowlinglegacy-postgres`; the databases are not shared. The legacy
 `rentlogic-cly7` service has no PostgreSQL environment attachment.
 
-Render's read-only database metadata confirms Demo-Mode is available,
-PostgreSQL 18, on the paid `basic_256mb` plan, with HA disabled and no read
-replicas. The API does not expose its actual recovery points or logical exports.
-Before deployment, an operator must verify in the Demo-Mode database dashboard
-that a current PITR recovery point or completed logical export exists.
+Render's database dashboard confirms Demo-Mode has Point-in-Time Recovery for
+any timestamp in the past three days. Its logical-export section states that
+exports are retained for at least seven days, but no export was created as part
+of this read-only review. Recheck that the recovery window remains active
+immediately before deployment.
 
 ## Rollback
 
@@ -91,3 +101,11 @@ shared BowlingLegacy columns.
 Deployment should pin an exact reviewed commit to `rentlogic-1`. Do not push or
 promote `main`, because the legacy `rentlogic-cly7` service also auto-deploys
 from that branch.
+
+Do not use the dashboard's **Deploy a specific commit** dialog for this release:
+the dialog states that it disables Auto-Deploy for the service. After review,
+push the candidate to a non-`main` review branch, then target only the
+`rentlogic-1` service ID (`srv-d8fqhdp9rddc73apjtng`) with the Render CLI/API
+exact-commit deploy operation. This leaves both services' branch-tracking and
+Auto-Deploy settings unchanged. No deployment or production migration was
+performed during this review.

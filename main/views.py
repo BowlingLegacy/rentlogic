@@ -104,6 +104,7 @@ from .models import (
     PlatformRevenueEntry,
     OwnerBillingAccount,
     PropertyMembership,
+    AccountingPeriod,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
 from .permissions import can_access_landlord_dashboard
@@ -6043,16 +6044,30 @@ def custom_reports(request):
             report_columns = ["Property", "NOI Used", "Cap Rate", "Estimated Value", "Status / Method"]
             report_year = custom_report_period_year(start_date)
             for property_obj in filtered_properties:
-                missing_months = ", ".join(calendar.month_abbr[month_number] for month_number in range(1, 13))
+                closed_months = set(
+                    AccountingPeriod.objects.filter(
+                        property=property_obj,
+                        year=report_year,
+                        status="closed",
+                    ).values_list("month", flat=True)
+                )
+                missing_months = ", ".join(
+                    calendar.month_abbr[month_number]
+                    for month_number in range(1, 13)
+                    if month_number not in closed_months
+                )
+                period_status = f"{len(closed_months)} of 12 accounting months explicitly closed for {report_year}"
+                if missing_months:
+                    period_status += f"; missing {missing_months}"
                 report_rows.append([
                     property_obj.name,
                     "Not calculated",
                     "—",
                     "Not calculated",
                     (
-                        f"Incomplete: 0 of 12 accounting months explicitly closed for {report_year}; "
-                        f"missing {missing_months}. RentalReadyPro does not yet store accounting-period "
-                        "close provenance, so closed empty months cannot be distinguished from absent data."
+                        f"Accounting-period status: {period_status}. Valuation remains intentionally "
+                        "disabled pending reviewed adoption of a calculation policy; no estimate is "
+                        "generated automatically."
                     ),
                 ])
 
