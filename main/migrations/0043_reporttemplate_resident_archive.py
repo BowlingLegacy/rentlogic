@@ -23,11 +23,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="housingapplication",
-            name="move_out_date",
-            field=models.DateField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name="housingapplication",
             name="resident_file_status",
             field=models.CharField(
                 choices=[("active", "Active / Current"), ("archived", "Archived / Moved Out")],

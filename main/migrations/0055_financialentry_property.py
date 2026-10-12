@@ -19,18 +19,5 @@ def populate_entry_property(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [("main", "0054_alter_financialentry_property_name_and_more")]
 
-    operations = [
-        migrations.AddField(
-            model_name="financialentry",
-            name="property",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Stable row-level property attribution; company rows remain blank.",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="financial_entries",
-                to="main.property",
-            ),
-        ),
-        migrations.RunPython(populate_entry_property, migrations.RunPython.noop),
-    ]
+    # BowlingLegacy 0085 owns the shared field and conservative backfill.
+    operations = []

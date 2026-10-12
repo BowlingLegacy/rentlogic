@@ -3632,7 +3632,8 @@ def room_rent_setup_rows(user, property_obj=None):
 
     existing_files = (
         staff_managed_applications(user)
-        .select_related("property", "existing_resident_intake")
+        .select_related("property")
+        .prefetch_related("existing_resident_intakes")
         .exclude(space_label="")
         .order_by("property__name", "space_label", "full_name")
     )
@@ -3690,12 +3691,7 @@ def is_orphan_existing_resident_setup_file(application):
     if application.user:
         return False
 
-    try:
-        application.existing_resident_intake
-    except ExistingResidentIntake.DoesNotExist:
-        return True
-
-    return False
+    return not application.existing_resident_intakes.exists()
 
 
 def normalized_room_label(room_unit_label):

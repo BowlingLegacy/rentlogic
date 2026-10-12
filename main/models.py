@@ -641,6 +641,15 @@ class HousingApplication(models.Model):
         ("archived", "Archived / Moved Out"),
         ("unit_file", "Empty Unit File"),
     ]
+    APPLICATION_FOLDER_CHOICES = [
+        ("active", "Active"),
+        ("waiting", "Waiting List"),
+        ("archived", "Archived"),
+    ]
+    TENANCY_STATUS_CHOICES = [
+        ("active", "Active Tenant"),
+        ("former", "Former Tenant"),
+    ]
 
     property = models.ForeignKey(Property, on_delete=models.SET_NULL, null=True, blank=True, related_name="applications")
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="resident_profile")
@@ -652,12 +661,19 @@ class HousingApplication(models.Model):
     move_out_date = models.DateField(blank=True, null=True)
     archived_at = models.DateTimeField(blank=True, null=True)
     archive_notes = models.TextField(blank=True)
+    application_folder = models.CharField(max_length=20, choices=APPLICATION_FOLDER_CHOICES, default="active")
+    application_folder_updated_at = models.DateTimeField(blank=True, null=True)
+    tenancy_status = models.CharField(max_length=20, choices=TENANCY_STATUS_CHOICES, default="active")
+    former_tenant_archived_at = models.DateTimeField(blank=True, null=True)
+    tenancy_end_reason = models.CharField(max_length=255, blank=True)
+    tenancy_archive_notes = models.TextField(blank=True)
 
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20)
     email = models.EmailField(blank=True)
     age = models.PositiveIntegerField()
     profile_photo = models.ImageField(upload_to="resident_profile_photos/", blank=True, null=True)
+    identity_selfie_upload = models.FileField(upload_to="application_identity_selfies/", blank=True, null=True)
     communication_preference = models.CharField(
         max_length=20,
         choices=COMMUNICATION_PREFERENCE_CHOICES,
@@ -667,6 +683,8 @@ class HousingApplication(models.Model):
     sms_opted_in_at = models.DateTimeField(blank=True, null=True)
     sms_opted_out_at = models.DateTimeField(blank=True, null=True)
     sms_phone_verified = models.BooleanField(default=False)
+    has_vehicle = models.BooleanField(default=False)
+    vehicle_description = models.CharField(max_length=255, blank=True)
 
     space_type = models.CharField(max_length=50, blank=True)
     space_label = models.CharField(max_length=50, blank=True)
@@ -1109,6 +1127,7 @@ class Payment(models.Model):
         ("money_order", "Money Order"),
         ("zelle", "Zelle"),
         ("ach", "ACH"),
+        ("service_credit", "Service / Labor Credit"),
         ("other", "Other"),
     ]
 
@@ -1165,6 +1184,52 @@ class Payment(models.Model):
         return f"{self.application.full_name} - {self.get_payment_type_display()} - ${self.amount} - {self.status}"
 
 
+class ResidentBalanceEntry(models.Model):
+    ENTRY_KIND_CHOICES = [("charge", "Charge"), ("credit", "Credit")]
+    BALANCE_TYPE_CHOICES = [("rent", "Rent"), ("utility", "Utilities")]
+
+    application = models.ForeignKey(HousingApplication, on_delete=models.CASCADE, related_name="balance_entries")
+    entry_kind = models.CharField(max_length=20, choices=ENTRY_KIND_CHOICES)
+    balance_type = models.CharField(max_length=20, choices=BALANCE_TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    service_month = models.DateField(blank=True, null=True)
+    description = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    recorded_by = models.ForeignKey("User", on_delete=models.SET_NULL, related_name="resident_balance_entries", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    @property
+    def service_month_label(self):
+        return self.service_month.strftime("%B %Y") if self.service_month else ""
+
+
+class RentRollSnapshot(models.Model):
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="rent_roll_snapshots")
+    application = models.ForeignKey(HousingApplication, on_delete=models.SET_NULL, related_name="rent_roll_snapshots", blank=True, null=True)
+    service_month = models.DateField()
+    room_unit_label = models.CharField(max_length=50)
+    resident_name = models.CharField(max_length=255)
+    monthly_rent = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    rent_charge = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    utility_monthly = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    utility_charge = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    deposit_required = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    deposit_paid = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    locked_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["property__name", "room_unit_label", "resident_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["property", "service_month", "room_unit_label", "application"],
+                name="unique_monthly_rent_roll_tenancy",
+            )
+        ]
+
+
 class FinancialUpload(models.Model):
     LEDGER_SCOPE_CHOICES = [
         ("property", "Property Ledger"),
@@ -1216,6 +1281,40 @@ class ExpenseCategory(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class VendorCategoryRule(models.Model):
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="vendor_category_rules", blank=True, null=True, help_text="Leave blank to use this rule for every property.")
+    vendor_contains = models.CharField(max_length=255)
+    category = models.ForeignKey(ExpenseCategory, on_delete=models.SET_NULL, related_name="vendor_rules", blank=True, null=True)
+    entry_type = models.CharField(max_length=50, choices=ExpenseCategory.ENTRY_TYPE_CHOICES, default="operating_expense")
+    description_template = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey("User", on_delete=models.SET_NULL, related_name="created_vendor_category_rules", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("property__name", "vendor_contains")
+        unique_together = ("property", "vendor_contains")
+
+
+class AccountingPeriod(models.Model):
+    STATUS_CHOICES = [("open", "Open"), ("closed", "Closed")]
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="accounting_periods")
+    month = models.PositiveSmallIntegerField()
+    year = models.PositiveIntegerField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
+    closed_by = models.ForeignKey("User", on_delete=models.SET_NULL, related_name="closed_accounting_periods", blank=True, null=True)
+    closed_at = models.DateTimeField(blank=True, null=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-year", "-month", "property__name")
+        unique_together = ("property", "month", "year")
 
 
 class AccountingReceipt(models.Model):
@@ -1304,10 +1403,8 @@ class AccountingReceiptSplit(models.Model):
     receipt = models.ForeignKey(AccountingReceipt, on_delete=models.CASCADE, related_name="splits")
     category = models.ForeignKey(
         ExpenseCategory,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="receipt_splits",
-        blank=True,
-        null=True,
     )
     entry_type = models.CharField(
         max_length=50,
@@ -1323,6 +1420,7 @@ class AccountingReceiptSplit(models.Model):
         blank=True,
         null=True,
     )
+    created_by = models.ForeignKey("User", on_delete=models.SET_NULL, related_name="created_receipt_splits", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1420,10 +1518,10 @@ class ExistingResidentIntake(models.Model):
         on_delete=models.CASCADE,
         related_name="existing_resident_intakes",
     )
-    application = models.OneToOneField(
+    application = models.ForeignKey(
         "HousingApplication",
         on_delete=models.SET_NULL,
-        related_name="existing_resident_intake",
+        related_name="existing_resident_intakes",
         blank=True,
         null=True,
     )
@@ -1701,11 +1799,13 @@ class SmsMessageLog(models.Model):
         ("not_configured", "Provider Not Configured"),
         ("skipped_no_consent", "Skipped - No Consent"),
         ("queued", "Queued"),
-        ("sent", "Sent"),
+        ("sent", "Accepted by Provider"),
+        ("delivered", "Delivered"),
+        ("undelivered", "Undelivered"),
         ("failed", "Failed"),
     ]
 
-    application = models.ForeignKey(HousingApplication, on_delete=models.CASCADE, related_name="sms_logs")
+    application = models.ForeignKey(HousingApplication, on_delete=models.CASCADE, related_name="sms_logs", blank=True, null=True)
     resident_message = models.ForeignKey(
         ResidentMessage,
         on_delete=models.SET_NULL,
@@ -1714,9 +1814,11 @@ class SmsMessageLog(models.Model):
         null=True,
     )
     to_phone = models.CharField(max_length=50)
+    recipient_label = models.CharField(max_length=255, blank=True)
     body = models.TextField()
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="queued")
     provider_message_id = models.CharField(max_length=255, blank=True)
+    provider_status = models.CharField(max_length=100, blank=True)
     error_message = models.TextField(blank=True)
     sent_by = models.ForeignKey(
         "User",
@@ -1727,12 +1829,14 @@ class SmsMessageLog(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     sent_at = models.DateTimeField(blank=True, null=True)
+    delivery_updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.application.full_name} - {self.get_status_display()}"
+        recipient = self.application.full_name if self.application else self.recipient_label or self.to_phone
+        return f"{recipient} - {self.get_status_display()}"
 
 
 class CompanyMailboxConnection(models.Model):
