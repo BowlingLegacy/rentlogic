@@ -15,7 +15,7 @@ from .forms import (
     StripePaymentConfigurationForm,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
-from .models import ApplicantDocument, CurrentResidentRosterEntry, FinancialUpload, OwnerBillingAccount, Property, PropertyImage, HousingApplication, Payment, ResidentMessage, StripePaymentConfiguration
+from .models import ApplicantDocument, CurrentResidentRosterEntry, FinancialUpload, OwnerBillingAccount, Property, PropertyImage, PropertyMembership, HousingApplication, Payment, ResidentMessage, StripePaymentConfiguration
 from .permissions import can_access_owner_dashboard, is_super_admin, is_assistant_admin
 
 
@@ -338,7 +338,9 @@ def owner_properties_for(user):
     if is_super_admin(user) or is_assistant_admin(user):
         return Property.objects.all().order_by("name")
 
-    return Property.objects.filter(owner_email__iexact=user.email).order_by("name")
+    if settings.PROPERTY_MEMBERSHIP_ENFORCEMENT:
+        return Property.objects.filter(memberships__user=user, memberships__role="owner").distinct().order_by("name")
+    return Property.objects.filter(Q(memberships__user=user, memberships__role="owner") | Q(owner_email__iexact=user.email)).distinct().order_by("name")
 
 
 @login_required
@@ -437,6 +439,7 @@ def owner_property_create(request):
         property_obj = form.save(commit=False)
         property_obj.owner_email = request.user.email
         property_obj.save()
+        PropertyMembership.objects.get_or_create(property=property_obj, user=request.user, role="owner")
 
         PropertyImage.objects.bulk_create([
             PropertyImage(property=property_obj, image=image)
@@ -486,6 +489,7 @@ def owner_landlord_invite(request):
 
         user = create_pending_portal_user(intake.full_name, intake.email, "landlord", intake.id)
         user.refresh_invite_code()
+        PropertyMembership.objects.get_or_create(property=property_obj, user=user, role="manager")
         intake.user = user
         intake.status = "invited"
         intake.invite_sent_at = timezone.now()

@@ -23,7 +23,7 @@
                             <tr>
                                 <td><strong>{{ property.name }}</strong><br><span class="text-muted small">{{ property.address }}</span></td>
                                 <td><a href="{% url 'property_detail' property.pk %}" class="btn btn-outline-secondary btn-sm">Open</a></td>
-                                <td><a href="{% url 'property_financials' property.name %}" class="btn btn-outline-primary btn-sm">Open</a></td>
+                                <td><a href="{% url 'property_financials' property.id %}" class="btn btn-outline-primary btn-sm">Open</a></td>
                                 <td><a href="{% url 'property_blog_manager' %}" class="btn btn-outline-dark btn-sm">Open</a></td>
                             </tr>
                         {% endfor %}

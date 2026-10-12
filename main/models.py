@@ -444,6 +444,23 @@ class OwnerBillingAccount(models.Model):
         return self.status in ["trial", "past_due", "cancelled"]
 
 
+class PropertyMembership(models.Model):
+    ROLE_CHOICES = [("owner", "Owner"), ("manager", "Manager")]
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="property_memberships")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["property", "user", "role"], name="unique_property_user_role"),
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.property} ({self.role})"
+
+
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="property_gallery/")
@@ -1599,6 +1616,14 @@ class FinancialEntry(models.Model):
     ]
 
     upload = models.ForeignKey(FinancialUpload, on_delete=models.CASCADE, related_name="entries")
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.SET_NULL,
+        related_name="financial_entries",
+        blank=True,
+        null=True,
+        help_text="Stable row-level property attribution; company rows remain blank.",
+    )
     ledger_scope = models.CharField(max_length=30, choices=FinancialUpload.LEDGER_SCOPE_CHOICES, default="property")
     property_name = models.CharField(max_length=255, blank=True, default="Rental Property")
     sheet_name = models.CharField(max_length=255)

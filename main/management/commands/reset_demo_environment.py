@@ -429,9 +429,9 @@ class Command(BaseCommand):
                 notes="Seeded demo summary data. This database resets automatically.",
             )
             for month, income, expenses, debt in spec["summary"]:
-                FinancialEntry.objects.create(upload=upload, property_name=property_obj.name, sheet_name="Demo Summary", row_number=month, year=2026, month=month, entry_type="income", category="Rent and Other Income", amount=Decimal(income))
-                FinancialEntry.objects.create(upload=upload, property_name=property_obj.name, sheet_name="Demo Summary", row_number=month + 20, year=2026, month=month, entry_type="operating_expense", category="Operating Expenses", amount=Decimal(expenses))
-                FinancialEntry.objects.create(upload=upload, property_name=property_obj.name, sheet_name="Demo Summary", row_number=month + 40, year=2026, month=month, entry_type="debt_service", category="Debt Service", amount=Decimal(debt))
+                FinancialEntry.objects.create(upload=upload, property=property_obj, property_name=property_obj.name, sheet_name="Demo Summary", row_number=month, year=2026, month=month, entry_type="income", category="Rent and Other Income", amount=Decimal(income))
+                FinancialEntry.objects.create(upload=upload, property=property_obj, property_name=property_obj.name, sheet_name="Demo Summary", row_number=month + 20, year=2026, month=month, entry_type="operating_expense", category="Operating Expenses", amount=Decimal(expenses))
+                FinancialEntry.objects.create(upload=upload, property=property_obj, property_name=property_obj.name, sheet_name="Demo Summary", row_number=month + 40, year=2026, month=month, entry_type="debt_service", category="Debt Service", amount=Decimal(debt))
 
             receipt_upload = FinancialUpload.objects.create(
                 property=property_obj,
@@ -451,6 +451,7 @@ class Command(BaseCommand):
                 category = expense_categories[category_name]
                 financial_entry = FinancialEntry.objects.create(
                     upload=receipt_upload,
+                    property=property_obj,
                     property_name=property_obj.name,
                     sheet_name="Demo Receipts",
                     row_number=row_number,

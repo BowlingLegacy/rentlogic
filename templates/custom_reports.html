@@ -390,9 +390,9 @@ body {
         <div class="launcher-grid">
             <a href="{% url 't12_report' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="launcher-card primary">
                 <div class="launcher-label">Financial</div>
-                <div class="launcher-name">T-12 Report</div>
+                <div class="launcher-name">Annual Operating Report</div>
                 <div class="launcher-copy">Income, expenses, NOI, debt, and cash flow.</div>
-                <div class="launcher-go">Open T-12</div>
+                <div class="launcher-go">Open Annual Report</div>
             </a>
 
             <a href="{% url 'rent_roll' %}{% if selected_property %}?property_id={{ selected_property.id }}{% endif %}" class="launcher-card">
@@ -504,6 +504,11 @@ body {
         </div>
 
         <form method="get" class="row g-3 align-items-end">
+            {% if form.non_field_errors %}
+                <div class="col-12">
+                    <div class="alert alert-danger mb-0">{{ form.non_field_errors }}</div>
+                </div>
+            {% endif %}
             <div class="col-lg-3">
                 <label class="form-label fw-bold">Report Type</label>
                 {{ form.report_type }}

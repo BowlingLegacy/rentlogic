@@ -1,6 +1,9 @@
 import os
+import sys
 from pathlib import Path
 from urllib.parse import unquote, urlparse
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,9 +19,16 @@ def env_bool(name, default=False):
 # ---------------------------------------------------------
 # SECURITY
 # ---------------------------------------------------------
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
 DEBUG = env_bool("DEBUG")
+IS_TESTING = "test" in sys.argv
+SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
+if not SECRET_KEY:
+    if DEBUG or IS_TESTING:
+        SECRET_KEY = "local-development-only-secret-key"
+    else:
+        raise ImproperlyConfigured("SECRET_KEY must be configured when DEBUG is disabled.")
 DEMO_MODE = env_bool("DEMO_MODE")
+PROPERTY_MEMBERSHIP_ENFORCEMENT = env_bool("PROPERTY_MEMBERSHIP_ENFORCEMENT")
 RENTAL_LEDGER_SITE = env_bool("RENTAL_LEDGER_SITE")
 DEMO_SESSION_SECONDS = int(os.environ.get("DEMO_SESSION_SECONDS", "7200"))
 DEMO_ADMIN_USERNAME = os.environ.get("DEMO_ADMIN_USERNAME", "demo-admin")
@@ -128,7 +138,7 @@ if database_url:
             "HOST": parsed_database_url.hostname or "",
             "PORT": str(parsed_database_url.port or 5432),
             "OPTIONS": {
-                "sslmode": "require",
+                "sslmode": os.environ.get("POSTGRES_SSLMODE", "require"),
             },
         }
     }
@@ -142,7 +152,7 @@ elif os.environ.get("POSTGRES_HOST"):
             "HOST": os.environ.get("POSTGRES_HOST"),
             "PORT": os.environ.get("POSTGRES_PORT", "5432"),
             "OPTIONS": {
-                "sslmode": "require",
+                "sslmode": os.environ.get("POSTGRES_SSLMODE", "require"),
             },
         }
     }
