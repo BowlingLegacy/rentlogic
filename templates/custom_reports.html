@@ -143,6 +143,17 @@ body {
     color: var(--ink);
 }
 
+@media screen and (max-width: 600px) {
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .report-table {
+        min-width: 720px;
+    }
+}
+
 .totals-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

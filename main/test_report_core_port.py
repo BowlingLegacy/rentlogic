@@ -7,7 +7,17 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import FinancialEntry, FinancialUpload, HousingApplication, LandlordIntake, Payment, Property
+from .models import (
+    AccountingReceipt,
+    AccountingReceiptSplit,
+    ExpenseCategory,
+    FinancialEntry,
+    FinancialUpload,
+    HousingApplication,
+    LandlordIntake,
+    Payment,
+    Property,
+)
 from .views import financial_entries_for_properties, payment_month_allocations, t12_report_rows
 
 
@@ -128,6 +138,51 @@ class SharedReportCorePortTests(TestCase):
         self.assertIn("'+manual-ref", content)
         self.assertNotIn("pi_fallback", content)
         self.assertIn(str(payment.id), content)
+
+    def test_vendor_total_counts_only_approved_and_each_receipt_lineage_once(self):
+        power, _ = ExpenseCategory.objects.get_or_create(name="Power", defaults={"entry_type": "operating_expense"})
+        repairs, _ = ExpenseCategory.objects.get_or_create(name="Repairs", defaults={"entry_type": "operating_expense"})
+
+        def receipt(vendor, amount, status, category=None):
+            return AccountingReceipt.objects.create(
+                property=self.a, vendor=vendor,
+                receipt_file=SimpleUploadedFile(f"{vendor}.txt", b"synthetic receipt"),
+                receipt_date=date(2026, 4, 15), category=category, amount=amount, status=status,
+            )
+
+        receipt("Approved Unsplit", Decimal("50.00"), "approved", power)
+        split_receipt = receipt("Approved Split", Decimal("999.00"), "approved")
+        AccountingReceiptSplit.objects.create(receipt=split_receipt, category=power, amount=Decimal("60.00"))
+        AccountingReceiptSplit.objects.create(receipt=split_receipt, category=repairs, amount=Decimal("40.00"))
+        receipt("Pending Vendor", Decimal("20.00"), "needs_review", power)
+        receipt("Ignored Duplicate", Decimal("30.00"), "ignored", power)
+
+        response = self.client.get(reverse("custom_reports"), {
+            "report_type": "vendor_expense", "property_id": self.a.id,
+            "start_date": "2026-04-01", "end_date": "2026-04-30",
+        })
+        self.assertEqual(response.context["totals"], {
+            "Approved Expense Total": Decimal("150.00"),
+            "Pending / Needs Review (excluded)": Decimal("20.00"),
+            "Ignored / Duplicate (excluded)": Decimal("30.00"),
+        })
+        self.assertNotIn(Decimal("999.00"), [row[3] for row in response.context["report_rows"]])
+
+    def test_valuation_fails_closed_without_explicit_period_close_provenance(self):
+        self.entry(self.upload(self.a, "partial-year"), self.a, Decimal("1200.00"), month=1)
+        response = self.client.get(reverse("custom_reports"), {
+            "report_type": "valuation_estimate", "property_id": self.a.id,
+            "start_date": "2026-01-01",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["report_rows"]), 1)
+        row = response.context["report_rows"][0]
+        self.assertEqual(row[1], "Not calculated")
+        self.assertEqual(row[3], "Not calculated")
+        self.assertIn("0 of 12 accounting months explicitly closed", row[4])
+        self.assertIn("missing Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec", row[4])
+        self.assertIn("does not yet store accounting-period close provenance", row[4])
+        self.assertNotContains(response, "months annualized")
 
     @patch("main.views.timezone.localdate", return_value=date(2026, 1, 31))
     def test_projection_uses_elapsed_months_only(self, _today):

@@ -5902,7 +5902,9 @@ class LiveFlowTests(TestCase):
         insurance = self.client.get(reverse("custom_reports"), {"report_type": "insurance_compliance", "property_id": property_obj.id})
 
         self.assertContains(valuation, "Valuation Estimate Report")
-        self.assertContains(valuation, "1 months annualized")
+        self.assertContains(valuation, "Not calculated")
+        self.assertContains(valuation, "0 of 12 accounting months explicitly closed")
+        self.assertNotContains(valuation, "months annualized")
         self.assertContains(utility, "Power")
         self.assertContains(vendor, "Pacific Power")
         self.assertContains(occupancy, "Occupancy / Vacancy Report")
