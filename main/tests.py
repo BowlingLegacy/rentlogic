@@ -2729,6 +2729,52 @@ class LiveFlowTests(TestCase):
         self.assertNotIn("Deleted Setup Person", resident_names)
         self.assertIn(regular_application.full_name, resident_names)
 
+    def test_rent_setup_keeps_setup_file_with_multiple_intake_attempts(self):
+        landlord = User.objects.create_user(
+            username="multi-intake-setup-landlord",
+            email="multi-intake-setup-landlord@example.com",
+            password="StrongPass123!",
+            role="landlord",
+            is_staff=True,
+        )
+        property_obj = Property.objects.create(name="Multi Intake Setup Property", landlord_email=landlord.email)
+        resident = HousingApplication.objects.create(
+            property=property_obj,
+            full_name="Multiple Intake Resident",
+            phone="555-0197",
+            email="multi-intake@example.com",
+            age=0,
+            income_source="Existing resident intake",
+            monthly_income=Decimal("0.00"),
+            housing_need="Existing resident profile setup.",
+            space_type="Room",
+            space_label="Room K",
+            monthly_rent=Decimal("0.00"),
+            balance=Decimal("0.00"),
+            utility_monthly=Decimal("0.00"),
+            utility_balance=Decimal("0.00"),
+        )
+        for phone in ["555-0197", "555-0198"]:
+            ExistingResidentIntake.objects.create(
+                property=property_obj,
+                application=resident,
+                first_name="Multiple",
+                last_name="Resident",
+                email=resident.email,
+                phone=phone,
+                room_unit_label="Room K",
+            )
+
+        self.client.login(username="multi-intake-setup-landlord", password="StrongPass123!")
+        response = self.client.get(reverse("landlord_rent_setup"))
+
+        rows = [
+            row for row in response.context["room_rows"]
+            if row["property"] == property_obj and row["room_unit_label"] == "K"
+        ]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["residents"], ["Multiple Intake Resident"])
+
     def test_rent_setup_keeps_completed_existing_resident_file_without_intake(self):
         landlord = User.objects.create_user(
             username="completed-setup-landlord",
