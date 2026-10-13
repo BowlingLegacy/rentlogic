@@ -40,7 +40,7 @@ def secure_media(request, path):
     if path.startswith("../") or path.startswith("/"):
         raise Http404
 
-    if path.startswith("blog_images/") and BlogPost.objects.filter(image=path).exists():
+    if path.startswith("blog_images/") and BlogPost.objects.filter(image=path, property__isnull=True).exists():
         return serve(request, path, document_root=settings.MEDIA_ROOT)
     if path.startswith("rental_listing_photos/") and RentalListingPhoto.objects.filter(image=path, listing__status="published").exists():
         return serve(request, path, document_root=settings.MEDIA_ROOT)
@@ -53,12 +53,14 @@ def secure_media(request, path):
     if not request.user.is_authenticated:
         raise Http404
     property_ids = _managed_property_ids(request.user)
+    resident_property_ids = HousingApplication.objects.filter(user=request.user).values_list("property_id", flat=True)
     own_applications = HousingApplication.objects.filter(user=request.user)
     managed_applications = HousingApplication.objects.filter(property_id__in=property_ids)
     applications = own_applications | managed_applications
 
     authorized = (
-        ApplicantDocument.objects.filter(file=path, application__in=applications).exists()
+        BlogPost.objects.filter(image=path).filter(Q(property_id__in=property_ids) | Q(property_id__in=resident_property_ids)).exists()
+        or ApplicantDocument.objects.filter(file=path, application__in=applications).exists()
         or HousingApplication.objects.filter(id_upload=path).filter(id__in=applications).exists()
         or HousingApplication.objects.filter(background_report=path).filter(id__in=applications).exists()
         or HousingApplication.objects.filter(profile_photo=path).filter(id__in=applications).exists()

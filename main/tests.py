@@ -9742,6 +9742,49 @@ class SecurityRegressionTests(TestCase):
                 closer()
             private_response._resource_closers.clear()
 
+    def test_media_scopes_property_blog_images_to_property_audience(self):
+        with tempfile.TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            def media_status(url):
+                response = self.client.get(url)
+                status_code = response.status_code
+                for closer in response._resource_closers:
+                    closer()
+                response._resource_closers.clear()
+                return status_code
+
+            resident_user = User.objects.create_user(username="blog-resident", email="resident-blog@example.com", password="pw", role="tenant")
+            outsider = User.objects.create_user(username="blog-outsider", email="outsider-blog@example.com", password="pw", role="tenant")
+            property_obj = Property.objects.create(name="Private Blog Property")
+            HousingApplication.objects.create(
+                property=property_obj,
+                user=resident_user,
+                full_name="Blog Resident",
+                phone="5550198",
+                email=resident_user.email,
+                age=61,
+                income_source="Retirement",
+                monthly_income=Decimal("1800"),
+                housing_need="Current resident",
+            )
+            property_post = BlogPost.objects.create(
+                property=property_obj,
+                title="Resident Update",
+                body="Private property update.",
+                image=SimpleUploadedFile("resident-update.jpg", b"resident-update", content_type="image/jpeg"),
+            )
+            website_post = BlogPost.objects.create(
+                title="Website Update",
+                body="Public website update.",
+                image=SimpleUploadedFile("website-update.jpg", b"website-update", content_type="image/jpeg"),
+            )
+
+            self.assertEqual(media_status(website_post.image.url), 200)
+            self.assertEqual(media_status(property_post.image.url), 404)
+            self.client.force_login(outsider)
+            self.assertEqual(media_status(property_post.image.url), 404)
+            self.client.force_login(resident_user)
+            self.assertEqual(media_status(property_post.image.url), 200)
+
     def test_printable_application_requires_owner_scope_or_resident_identity(self):
         owner = User.objects.create_user(username="scoped-owner", email="owner@example.com", password="pw", role="property_owner")
         outsider = User.objects.create_user(username="other-owner", email="other@example.com", password="pw", role="property_owner")
