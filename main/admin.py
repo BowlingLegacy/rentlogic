@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     User,
     Property,
+    PropertyMembership,
     PropertyImage,
     PropertyRoomRent,
     PropertyUtilityVendor,
@@ -41,6 +42,13 @@ from .models import (
 from django.utils import timezone
 
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
+
+
+@admin.register(PropertyMembership)
+class PropertyMembershipAdmin(admin.ModelAdmin):
+    list_display = ("property", "user", "role", "created_at")
+    list_filter = ("role",)
+    search_fields = ("property__name", "user__username", "user__email")
 
 
 @admin.register(User)

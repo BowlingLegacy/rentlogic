@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
@@ -165,6 +166,11 @@ class AccountingReceiptForm(forms.ModelForm):
     def save(self, commit=True):
         receipt = super().save(commit=False)
         new_category = self.cleaned_data.get("new_category", "").strip()
+
+        # An empty optional ModelForm decimal becomes None and bypasses the
+        # model default. Persist zero so OCR can safely fill the value next.
+        if receipt.amount is None:
+            receipt.amount = Decimal("0.00")
 
         if new_category:
             category = ExpenseCategory.objects.filter(name__iexact=new_category).first()
@@ -1272,6 +1278,8 @@ class CustomReportForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
         save_template = cleaned_data.get("save_template")
         template_name = (cleaned_data.get("template_name") or "").strip()
         math_mode = cleaned_data.get("math_mode")
@@ -1282,6 +1290,9 @@ class CustomReportForm(forms.Form):
 
         if math_mode in ["sum", "average"] and not math_column:
             self.add_error("math_column", "Enter the column name to calculate.")
+
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError("Start date must be on or before end date.")
 
         return cleaned_data
 
@@ -1746,6 +1757,19 @@ class ReplacementInviteCodeForm(forms.Form):
 
 
 class SignUpForm(UserCreationForm):
+    def __init__(self, *args, invited_email="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.invited_email = (invited_email or "").strip()
+        if self.invited_email:
+            self.fields["email"].initial = self.invited_email
+            self.fields["email"].widget.attrs["readonly"] = True
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip()
+        if self.invited_email and email.casefold() != self.invited_email.casefold():
+            raise forms.ValidationError("Use the email address that received this invitation.")
+        return self.invited_email or email
+
     class Meta:
         model = User
         fields = ["username", "email", "password1", "password2"]

@@ -71,9 +71,7 @@
             color: var(--panel);
             padding: 1rem 1.15rem;
         }
-        .payment-table {
-            min-width: 1180px;
-        }
+        .payment-table { width: 100%; }
 
         .payment-table th,
         .payment-table td {
@@ -197,7 +195,7 @@
         <div class="d-flex gap-2 flex-wrap justify-content-end">
             <a href="{% url 'custom_reports' %}" class="btn btn-outline-light btn-sm rlp-btn">Reports</a>
             <a href="{% url 'rent_roll' %}" class="btn btn-outline-light btn-sm rlp-btn">Rent Roll</a>
-            <a href="{% url 't12_report' %}" class="btn btn-outline-light btn-sm rlp-btn">T-12</a>
+            <a href="{% url 't12_report' %}" class="btn btn-outline-light btn-sm rlp-btn">Annual Report</a>
             <a href="{% url 'landlord_dashboard' %}" class="btn btn-outline-light btn-sm rlp-btn">Landlord Dashboard</a>
         </div>
     </div>
