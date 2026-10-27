@@ -280,6 +280,7 @@
 
                 <form method="post">
                     {% csrf_token %}
+                    <label for="{{ form.invite_code.id_for_label }}">{{ form.invite_code.label }}</label>
                     {{ form.invite_code }}
                     <button type="submit">Continue Setup</button>
                 </form>

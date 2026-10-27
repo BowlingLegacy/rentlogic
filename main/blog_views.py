@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -43,10 +44,14 @@ def manageable_properties(user):
         return Property.objects.all().order_by("name")
 
     if is_owner(user):
-        return Property.objects.filter(owner_email__iexact=user.email).order_by("name")
+        if settings.PROPERTY_MEMBERSHIP_ENFORCEMENT:
+            return Property.objects.filter(memberships__user=user, memberships__role="owner").distinct().order_by("name")
+        return Property.objects.filter(Q(memberships__user=user, memberships__role="owner") | Q(owner_email__iexact=user.email)).distinct().order_by("name")
 
     if is_landlord(user):
-        return Property.objects.filter(landlord_email__iexact=user.email).order_by("name")
+        if settings.PROPERTY_MEMBERSHIP_ENFORCEMENT:
+            return Property.objects.filter(memberships__user=user, memberships__role="manager").distinct().order_by("name")
+        return Property.objects.filter(Q(memberships__user=user, memberships__role="manager") | Q(landlord_email__iexact=user.email)).distinct().order_by("name")
 
     return Property.objects.none()
 
@@ -59,10 +64,14 @@ def can_manage_property_blog(user, property_obj):
         return False
 
     if is_owner(user):
-        return bool(property_obj.owner_email and property_obj.owner_email.lower() == user.email.lower())
+        return property_obj.memberships.filter(user=user, role="owner").exists() or (
+            not settings.PROPERTY_MEMBERSHIP_ENFORCEMENT and property_obj.owner_email and user.email and property_obj.owner_email.lower() == user.email.lower()
+        )
 
     if is_landlord(user):
-        return bool(property_obj.landlord_email and property_obj.landlord_email.lower() == user.email.lower())
+        return property_obj.memberships.filter(user=user, role="manager").exists() or (
+            not settings.PROPERTY_MEMBERSHIP_ENFORCEMENT and property_obj.landlord_email and user.email and property_obj.landlord_email.lower() == user.email.lower()
+        )
 
     return False
 

@@ -41,7 +41,7 @@
                             <tr>
                                 <td><strong>{{ packet.name }}</strong><br><span class="text-muted small">{{ packet.get_document_type_display }}</span></td>
                                 <td>{{ packet.application.property.name|default:"No Property" }}</td>
-                                <td>{{ packet.application.full_name }}{% if packet.application.space_label %} | {{ packet.application.space_label }}{% endif %}</td>
+                                <td>{% if packet.application.resident_file_status == "unit_file" %}Unassigned resident{% else %}{{ packet.application.full_name }}{% endif %}{% if packet.application.space_label %} | {{ packet.application.space_label }}{% endif %}</td>
                                 <td>{{ packet.get_ocr_status_display }}</td>
                                 <td><a href="{% url 'tenant_file_packet_review' packet.id %}" class="btn btn-outline-primary btn-sm">Review Packet</a></td>
                             </tr>

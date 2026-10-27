@@ -176,7 +176,11 @@ def process_receipt_ocr(receipt):
     receipt.ocr_processed_at = timezone.now()
 
     if not extracted_text:
-        receipt.ocr_status = "needs_ocr_provider" if "not configured" in provider_error.lower() else "failed"
+        missing_provider = provider_error in {
+            "No receipt OCR provider is configured.",
+            "OCR_SPACE_API_KEY is not configured.",
+        }
+        receipt.ocr_status = "needs_ocr_provider" if missing_provider else "failed"
         receipt.ocr_text = ""
         receipt.ocr_error = (
             provider_error

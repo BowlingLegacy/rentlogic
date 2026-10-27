@@ -135,7 +135,7 @@ urlpatterns = [
     path("accounting/receipts/<int:receipt_id>/ocr/", views.process_accounting_receipt_ocr, name="process_accounting_receipt_ocr"),
     path("documents/<int:document_id>/open/", views.open_applicant_document, name="open_applicant_document"),
 
-    path("property-financials/<str:property_name>/", views.property_financials, name="property_financials"),
+    path("property-financials/<int:property_id>/", views.property_financials, name="property_financials"),
 
     path("export/payment-log/", views.export_payment_log_csv, name="export_payment_log_csv"),
     path("export/rent-roll/", views.export_rent_roll_csv, name="export_rent_roll_csv"),

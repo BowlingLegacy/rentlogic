@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import calendar
 from datetime import date, timedelta
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import csv
 import html
 from html.parser import HTMLParser
@@ -26,6 +26,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.management import call_command
 from django.core.mail import EmailMessage, send_mail
+from django.db import transaction
 from django.db.models import Count, Max, Min, Q, Sum
 from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -102,6 +103,8 @@ from .models import (
     PlatformFeeSetting,
     PlatformRevenueEntry,
     OwnerBillingAccount,
+    PropertyMembership,
+    AccountingPeriod,
 )
 from .invite_utils import create_pending_portal_user, send_portal_access_invite_email
 from .permissions import can_access_landlord_dashboard
@@ -406,6 +409,7 @@ def create_financial_entry_from_import(upload, property_obj, sheet_name, row, en
 
     return FinancialEntry.objects.create(
         upload=upload,
+        property=property_obj if upload.ledger_scope == "property" else None,
         ledger_scope=upload.ledger_scope,
         property_name=property_name,
         sheet_name=sheet_name,
@@ -1043,6 +1047,17 @@ def payment_month_allocations(payment):
         yield add_months(start_month, index), amount
 
 
+def csv_safe_text(value):
+    value = str(value or "")
+    if value.lstrip().startswith(("=", "+", "-", "@")):
+        return "'" + value
+    return value
+
+
+def payment_reference(payment):
+    return payment.reference_number or payment.stripe_payment_intent or payment.stripe_session_id or ""
+
+
 def payment_amount_for_month(payments, year, month, payment_types=None):
     total = Decimal("0.00")
     payment_types = set(payment_types or [])
@@ -1256,8 +1271,7 @@ UTILITY_REPORT_KEYWORDS = [
 
 
 def custom_report_financial_entries(query_properties, entry_types=None, start_date=None, end_date=None):
-    property_names = list(query_properties.values_list("name", flat=True))
-    entries = FinancialEntry.objects.filter(property_name__in=property_names).select_related("upload")
+    entries = financial_entries_for_properties(query_properties).select_related("upload", "property")
     if entry_types:
         entries = entries.filter(entry_type__in=entry_types)
     if start_date:
@@ -1265,6 +1279,26 @@ def custom_report_financial_entries(query_properties, entry_types=None, start_da
     if end_date:
         entries = entries.filter(entry_date__lte=end_date)
     return entries.order_by("property_name", "year", "month", "category", "description")
+
+
+def financial_entries_for_properties(properties):
+    """Return property-ledger rows with stable attribution and a narrow legacy fallback."""
+    property_ids = list(properties.values_list("id", flat=True))
+    property_names = list(properties.values_list("name", flat=True))
+    unique_names = [
+        name for name in property_names
+        if Property.objects.filter(name=name).count() == 1
+    ]
+    return FinancialEntry.objects.filter(ledger_scope="property").filter(
+        Q(property_id__in=property_ids)
+        | Q(property__isnull=True, property_name__in=unique_names)
+        | Q(
+            property__isnull=True,
+            property_name="",
+            upload__ledger_scope="property",
+            upload__property_id__in=property_ids,
+        )
+    )
 
 
 def custom_report_period_year(start_date):
@@ -1278,18 +1312,18 @@ def custom_report_csv_response(report_title, report_columns, report_rows, totals
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
-    writer.writerow([report_title or "Custom Report"])
+    writer.writerow([csv_safe_text(report_title or "Custom Report")])
     writer.writerow(["Generated", timezone.localtime().strftime("%Y-%m-%d %H:%M")])
     writer.writerow([])
     writer.writerow(report_columns)
     for row in report_rows:
-        writer.writerow(row)
+        writer.writerow([csv_safe_text(value) for value in row])
 
     if totals:
         writer.writerow([])
         writer.writerow(["Totals"])
         for label, value in totals.items():
-            writer.writerow([label, value])
+            writer.writerow([csv_safe_text(label), csv_safe_text(value)])
 
     return response
 
@@ -2238,9 +2272,17 @@ self.addEventListener("fetch", event => {
 
 
 def owner_intake_submission_started_at(request):
+    started_at = request.POST.get("started_at")
+    if not started_at:
+        return None
+
     try:
+        timestamp = int(started_at)
+        if timestamp <= 0:
+            return None
+
         return timezone.datetime.fromtimestamp(
-            int(request.POST.get("started_at", "0")),
+            timestamp,
             tz=timezone.get_current_timezone(),
         )
     except (TypeError, ValueError, OverflowError):
@@ -2617,12 +2659,12 @@ def signup(request):
 
     if request.method == "POST":
         form_class = LandlordSignUpForm if pending_user.role == "landlord" else SignUpForm
-        form = form_class(request.POST)
+        form = form_class(request.POST, invited_email=pending_user.email)
 
         if form.is_valid():
             user = form.save(commit=False)
             user.role = pending_user.role
-            user.email = form.cleaned_data.get("email") or pending_user.email
+            user.email = pending_user.email
             user.is_staff = user.role in ["landlord", "assistant"]
             user.is_superuser = False
             user.save()
@@ -2635,6 +2677,7 @@ def signup(request):
                 owner_intake.user = user
                 owner_intake.status = "registered"
                 owner_intake.save(update_fields=["user", "status"])
+                PropertyMembership.objects.filter(user=pending_user).update(user=user)
 
             if landlord_intake_obj:
                 landlord_intake_obj.full_name = form.cleaned_data.get("full_name", "")
@@ -2672,7 +2715,7 @@ def signup(request):
                 "address": landlord_intake_obj.address,
             })
 
-        form = form_class(initial=initial)
+        form = form_class(initial=initial, invited_email=pending_user.email)
 
     return render(request, "signup.html", {
         "form": form,
@@ -2793,10 +2836,16 @@ def staff_managed_properties(user):
         return Property.objects.all()
 
     if getattr(user, "role", "") == "property_owner":
-        return Property.objects.filter(owner_email__iexact=user.email)
+        memberships = Property.objects.filter(memberships__user=user, memberships__role="owner")
+        if settings.PROPERTY_MEMBERSHIP_ENFORCEMENT:
+            return memberships.distinct()
+        return Property.objects.filter(Q(memberships__user=user, memberships__role="owner") | Q(owner_email__iexact=user.email)).distinct()
 
     if getattr(user, "role", "") == "landlord":
-        return Property.objects.filter(landlord_email__iexact=user.email)
+        memberships = Property.objects.filter(memberships__user=user, memberships__role="manager")
+        if settings.PROPERTY_MEMBERSHIP_ENFORCEMENT:
+            return memberships.distinct()
+        return Property.objects.filter(Q(memberships__user=user, memberships__role="manager") | Q(landlord_email__iexact=user.email)).distinct()
 
     return Property.objects.none()
 
@@ -3584,7 +3633,8 @@ def room_rent_setup_rows(user, property_obj=None):
 
     existing_files = (
         staff_managed_applications(user)
-        .select_related("property", "existing_resident_intake")
+        .select_related("property")
+        .prefetch_related("existing_resident_intakes")
         .exclude(space_label="")
         .order_by("property__name", "space_label", "full_name")
     )
@@ -3642,12 +3692,7 @@ def is_orphan_existing_resident_setup_file(application):
     if application.user:
         return False
 
-    try:
-        application.existing_resident_intake
-    except ExistingResidentIntake.DoesNotExist:
-        return True
-
-    return False
+    return not application.existing_resident_intakes.exists()
 
 
 def normalized_room_label(room_unit_label):
@@ -5457,7 +5502,8 @@ Replying to this email will go to the resident's email address. To keep the conv
 def payment_log(request):
     raw_month = (request.GET.get("month") or "").strip()
     raw_property_id = (request.GET.get("property_id") or "").strip()
-    month_filter_active = bool(raw_month)
+    show_all_months = raw_month.lower() == "all"
+    month_filter_active = bool(raw_month) and not show_all_months
     selected_month = selected_report_month(request) if month_filter_active else None
     previous_month = add_months(selected_month, -1) if selected_month else None
     next_month = add_months(selected_month, 1) if selected_month else None
@@ -5708,7 +5754,7 @@ def custom_reports(request):
     report_columns = []
     report_rows = []
     totals = {}
-    generated = bool(request.GET)
+    generated = bool(request.GET) and form.is_valid()
     active_template = None
 
     if form.is_valid() and generated:
@@ -5995,27 +6041,35 @@ def custom_reports(request):
 
         elif report_type == "valuation_estimate":
             report_title = "Valuation Estimate Report"
-            report_columns = ["Property", "NOI Used", "Cap Rate", "Estimated Value", "Method"]
+            report_columns = ["Property", "NOI Used", "Cap Rate", "Estimated Value", "Status / Method"]
             report_year = custom_report_period_year(start_date)
-            cap_rates = [Decimal("0.060"), Decimal("0.065"), Decimal("0.070"), Decimal("0.075"), Decimal("0.080"), Decimal("0.085")]
             for property_obj in filtered_properties:
-                property_qs = Property.objects.filter(id=property_obj.id)
-                months, property_totals = t12_report_rows(request.user, report_year, property_qs)
-                active_months = sum(1 for month in months if month["total_income"] > 0 or month["operating_expenses"] > 0)
-                noi_used = property_totals["net_operating_income"]
-                method = f"{report_year} actual"
-                if active_months and active_months < 12:
-                    noi_used = (noi_used / Decimal(active_months) * Decimal("12.00")).quantize(Decimal("0.01"))
-                    method = f"{active_months} months annualized"
-                for cap_rate in cap_rates:
-                    estimated_value = (noi_used / cap_rate).quantize(Decimal("0.01")) if cap_rate else Decimal("0.00")
-                    report_rows.append([
-                        property_obj.name,
-                        noi_used,
-                        f"{(cap_rate * Decimal('100')).quantize(Decimal('0.1'))}%",
-                        estimated_value,
-                        method,
-                    ])
+                closed_months = set(
+                    AccountingPeriod.objects.filter(
+                        property=property_obj,
+                        year=report_year,
+                        status="closed",
+                    ).values_list("month", flat=True)
+                )
+                missing_months = ", ".join(
+                    calendar.month_abbr[month_number]
+                    for month_number in range(1, 13)
+                    if month_number not in closed_months
+                )
+                period_status = f"{len(closed_months)} of 12 accounting months explicitly closed for {report_year}"
+                if missing_months:
+                    period_status += f"; missing {missing_months}"
+                report_rows.append([
+                    property_obj.name,
+                    "Not calculated",
+                    "—",
+                    "Not calculated",
+                    (
+                        f"Accounting-period status: {period_status}. Valuation remains intentionally "
+                        "disabled pending reviewed adoption of a calculation policy; no estimate is "
+                        "generated automatically."
+                    ),
+                ])
 
         elif report_type == "income_statement":
             report_title = "Income Statement / P&L"
@@ -6052,25 +6106,54 @@ def custom_reports(request):
         elif report_type == "vendor_expense":
             report_title = "Vendor Expense Report"
             report_columns = ["Property", "Vendor", "Category", "Amount", "Status"]
-            receipts = AccountingReceipt.objects.filter(property__in=filtered_properties)
+            receipts = AccountingReceipt.objects.filter(property__in=filtered_properties).select_related(
+                "property", "category"
+            ).prefetch_related("splits__category")
             if start_date:
                 receipts = receipts.filter(receipt_date__gte=start_date)
             if end_date:
                 receipts = receipts.filter(receipt_date__lte=end_date)
-            grouped_receipts = (
-                receipts.values("property__name", "vendor", "category__name", "status")
-                .annotate(total=Sum("amount"))
-                .order_by("property__name", "vendor", "category__name")
-            )
-            for receipt in grouped_receipts:
+            status_labels = {
+                "approved": "Approved",
+                "needs_review": "Pending / Needs Review",
+                "ignored": "Ignored / Duplicate",
+            }
+            status_totals = {status: Decimal("0.00") for status in status_labels}
+            grouped_amounts = {}
+            for receipt in receipts:
+                status = receipt.status if receipt.status in status_labels else "needs_review"
+                splits = list(receipt.splits.all())
+                source_rows = [
+                    (split.category.name if split.category_id else "Unassigned Category", split.amount)
+                    for split in splits
+                ] or [
+                    (receipt.category.name if receipt.category_id else "Unassigned Category", receipt.amount)
+                ]
+                for category_name, amount in source_rows:
+                    amount = amount or Decimal("0.00")
+                    key = (
+                        receipt.property.name,
+                        receipt.vendor or "Unassigned Vendor",
+                        category_name,
+                        status,
+                    )
+                    grouped_amounts[key] = grouped_amounts.get(key, Decimal("0.00")) + amount
+                    status_totals[status] += amount
+
+            for key in sorted(grouped_amounts, key=lambda value: (value[0], value[1], value[2], value[3])):
+                property_name, vendor, category_name, status = key
                 report_rows.append([
-                    receipt["property__name"],
-                    receipt["vendor"] or "Unassigned Vendor",
-                    receipt["category__name"] or "Unassigned Category",
-                    receipt["total"],
-                    receipt["status"],
+                    property_name,
+                    vendor,
+                    category_name,
+                    grouped_amounts[key],
+                    status_labels[status],
                 ])
-            totals = {"Vendor Expense Total": receipts.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")}
+            totals = {
+                "Approved Expense Total": status_totals["approved"],
+                "Pending / Needs Review (excluded)": status_totals["needs_review"],
+                "Ignored / Duplicate (excluded)": status_totals["ignored"],
+            }
 
         elif report_type == "receipt_expense_detail":
             report_title = "Receipt Expense Detail"
@@ -6345,7 +6428,7 @@ def custom_reports(request):
                     PropertyRoomRent.objects.filter(property=property_obj).count(),
                     Payment.objects.filter(application__property=property_obj).count(),
                     AccountingReceipt.objects.filter(property=property_obj).count(),
-                    FinancialEntry.objects.filter(property_name=property_obj.name).count(),
+                    financial_entries_for_properties(Property.objects.filter(id=property_obj.id)).count(),
                     PropertyUtilityVendor.objects.filter(property=property_obj).count(),
                     RentalListing.objects.filter(property=property_obj).count(),
                     ResidentMessage.objects.filter(application__property=property_obj).count(),
@@ -6418,7 +6501,7 @@ def run_custom_report_template(request, template_id):
 def export_payment_log_csv(request):
     raw_month = (request.GET.get("month") or "").strip()
     raw_property_id = (request.GET.get("property_id") or "").strip()
-    selected_month = selected_report_month(request) if raw_month else None
+    selected_month = None if not raw_month or raw_month.lower() == "all" else selected_report_month(request)
     selected_property = None
     if raw_property_id:
         selected_property = get_object_or_404(staff_managed_properties(request.user), id=raw_property_id)
@@ -6428,7 +6511,7 @@ def export_payment_log_csv(request):
     response["Content-Disposition"] = f'attachment; filename="payment_log{property_suffix}{month_suffix}.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(["Resident", "Property", "Payment Type", "Amount", "Status", "Date Received", "Applies To", "Months Covered"])
+    writer.writerow(["Payment ID", "Resident", "Property", "Unit", "Payment Type", "Method", "Amount", "Status", "Date Received", "Applies To", "Months Covered", "Reference"])
 
     payments = (
         Payment.objects
@@ -6454,14 +6537,18 @@ def export_payment_log_csv(request):
             continue
         display_paid_at = payment.received_at or payment.created_at
         writer.writerow([
-            payment.application.full_name,
-            payment.application.property.name if payment.application.property else "",
-            payment.get_payment_type_display(),
+            payment.id,
+            csv_safe_text(payment.application.full_name),
+            csv_safe_text(payment.application.property.name if payment.application.property else ""),
+            csv_safe_text(canonical_room_label(payment.application.space_label or payment.application.space_type)),
+            csv_safe_text(payment.get_payment_type_display()),
+            csv_safe_text(payment.get_payment_method_display()),
             payment.amount,
             payment.status,
             timezone.localtime(display_paid_at).strftime("%Y-%m-%d %H:%M"),
             payment.accounting_month_label,
             payment.months_covered,
+            csv_safe_text(payment_reference(payment)),
         ])
 
     return response
@@ -6479,6 +6566,7 @@ def export_rent_roll_csv(request):
     writer = csv.writer(response)
     writer.writerow([
         "Month",
+        "Property",
         "Resident",
         "Unit",
         "Rent",
@@ -6497,8 +6585,9 @@ def export_rent_roll_csv(request):
     for row in rows:
         writer.writerow([
             selected_month.strftime("%B %Y"),
-            row["resident"],
-            row["room"],
+            csv_safe_text(row["property"]),
+            csv_safe_text(row["resident"]),
+            csv_safe_text(row["room"]),
             row["monthly_rent"],
             row["rent_paid"],
             row["rent_balance"],
@@ -6511,6 +6600,7 @@ def export_rent_roll_csv(request):
         ])
     writer.writerow([
         selected_month.strftime("%B %Y"),
+        "",
         "TOTAL",
         "",
         totals["monthly_rent"],
@@ -6535,7 +6625,7 @@ def export_t12_csv(request):
     months, totals = t12_report_rows(request.user, year, report_properties)
     property_suffix = f'_{selected_property.name.replace(" ", "_")}' if selected_property else ""
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = f'attachment; filename="t12_report{property_suffix}_{year}.csv"'
+    response["Content-Disposition"] = f'attachment; filename="annual_operating_report{property_suffix}_{year}.csv"'
 
     writer = csv.writer(response)
     writer.writerow([
@@ -6627,90 +6717,115 @@ def selected_report_properties(request):
 
 def t12_report_rows(user, year, report_properties=None):
     accessible_properties = report_properties or staff_managed_properties(user)
-    accessible_property_names = list(accessible_properties.values_list("name", flat=True))
-    financial_entries = FinancialEntry.objects.filter(
-        Q(upload__property__in=accessible_properties) | Q(property_name__in=accessible_property_names),
-    ).filter(
-        Q(year=year) | Q(entry_date__year=year),
-    )
-    completed_payments = list(
-        Payment.objects
-        .filter(application__in=staff_managed_applications(user), status="completed")
-        .filter(application__property__in=accessible_properties)
-    )
     months = []
     totals = {
         "online_income": Decimal("0.00"),
         "spreadsheet_income": Decimal("0.00"),
+        "receipt_income": Decimal("0.00"),
         "total_income": Decimal("0.00"),
         "operating_expenses": Decimal("0.00"),
         "debt_service": Decimal("0.00"),
         "capital_expenses": Decimal("0.00"),
         "net_operating_income": Decimal("0.00"),
         "cash_flow_after_debt": Decimal("0.00"),
+        "net_cash_flow": Decimal("0.00"),
     }
 
     for month_number in range(1, 13):
-        portal_income = payment_amount_for_month(completed_payments, year, month_number, T12_INCOME_PAYMENT_TYPES)
+        online_income = Decimal("0.00")
+        spreadsheet_income = Decimal("0.00")
+        receipt_income = Decimal("0.00")
+        operating_expenses = Decimal("0.00")
+        debt_service = Decimal("0.00")
+        capital_expenses = Decimal("0.00")
+        income_sources = set()
         month_filter = Q(month=month_number) | Q(entry_date__month=month_number)
-        month_entries = financial_entries.filter(month_filter)
-        summary_entries = month_entries.filter(source_receipt__isnull=True)
-        receipt_entries = month_entries.filter(source_receipt__isnull=False)
-        baseline_time = latest_summary_baseline_time(financial_entries, month_filter)
-        if baseline_time:
-            receipt_entries = receipt_entries.filter(created_at__gt=baseline_time)
 
-        spreadsheet_income = entries_total(
-            summary_entries
-            .filter(entry_type="income")
-            .exclude(category__icontains="deposit")
-        )
-        receipt_income = entries_total(
-            receipt_entries
-            .filter(entry_type="income")
-            .exclude(category__icontains="deposit")
-        )
-        operating_expenses = (
-            entries_total(summary_entries.filter(entry_type="operating_expense"))
-            + entries_total(receipt_entries.filter(entry_type="operating_expense"))
-        )
-        debt_service = (
-            entries_total(summary_entries.filter(entry_type="debt_service"))
-            + entries_total(receipt_entries.filter(entry_type="debt_service"))
-        )
-        capital_expenses = (
-            entries_total(summary_entries.filter(entry_type="capital_expense"))
-            + entries_total(receipt_entries.filter(entry_type="capital_expense"))
-        )
+        for property_obj in accessible_properties:
+            property_entries = financial_entries_for_properties(
+                Property.objects.filter(id=property_obj.id)
+            ).filter(Q(year=year) | Q(entry_date__year=year))
+            month_entries = property_entries.filter(month_filter)
+            summary_entries = month_entries.filter(source_receipt__isnull=True)
+            receipt_entries = month_entries.filter(source_receipt__isnull=False)
+            baseline_time = latest_summary_baseline_time(property_entries, month_filter)
+            if baseline_time:
+                receipt_entries = receipt_entries.filter(created_at__gt=baseline_time)
 
-        if spreadsheet_income > 0:
-            online_income = Decimal("0.00")
-            total_income = spreadsheet_income + receipt_income
-            income_source = "Spreadsheet + Receipts" if receipt_income > 0 else "Spreadsheet"
-        else:
-            online_income = portal_income
-            total_income = portal_income + receipt_income
-            income_source = "Portal + Receipts" if receipt_income > 0 else "Portal"
+            property_spreadsheet_income = entries_total(
+                summary_entries.filter(entry_type="income").exclude(category__icontains="deposit")
+            )
+            property_receipt_income = entries_total(
+                receipt_entries.filter(entry_type="income").exclude(category__icontains="deposit")
+            )
+            property_payments = Payment.objects.filter(
+                application__property_id=property_obj.id,
+                status="completed",
+            )
+            property_portal_income = payment_amount_for_month(
+                property_payments, year, month_number, T12_INCOME_PAYMENT_TYPES
+            )
+
+            spreadsheet_income += property_spreadsheet_income
+            receipt_income += property_receipt_income
+            if property_spreadsheet_income > 0:
+                income_sources.add("Spreadsheet")
+            else:
+                online_income += property_portal_income
+                if property_portal_income > 0:
+                    income_sources.add("Portal")
+            if property_receipt_income > 0:
+                income_sources.add("Receipts")
+
+            operating_expenses += entries_total(summary_entries.filter(entry_type="operating_expense"))
+            operating_expenses += entries_total(receipt_entries.filter(entry_type="operating_expense"))
+            debt_service += entries_total(summary_entries.filter(entry_type="debt_service"))
+            debt_service += entries_total(receipt_entries.filter(entry_type="debt_service"))
+            capital_expenses += entries_total(summary_entries.filter(entry_type="capital_expense"))
+            capital_expenses += entries_total(receipt_entries.filter(entry_type="capital_expense"))
+
+        total_income = online_income + spreadsheet_income + receipt_income
+        income_source = " + ".join(source for source in ["Spreadsheet", "Portal", "Receipts"] if source in income_sources)
 
         net_operating_income = total_income - operating_expenses
         cash_flow_after_debt = net_operating_income - debt_service
+        net_cash_flow = cash_flow_after_debt - capital_expenses
 
         row = {
             "month_name": date(year, month_number, 1).strftime("%B"),
             "income_source": income_source if total_income > 0 else "",
             "online_income": online_income,
             "spreadsheet_income": spreadsheet_income,
+            "receipt_income": receipt_income,
             "total_income": total_income,
             "operating_expenses": operating_expenses,
             "debt_service": debt_service,
             "capital_expenses": capital_expenses,
             "net_operating_income": net_operating_income,
             "cash_flow_after_debt": cash_flow_after_debt,
+            "net_cash_flow": net_cash_flow,
         }
         months.append(row)
 
         for key in totals:
             totals[key] += row[key]
+
+    today = timezone.localdate()
+    projection_months = today.month if year == today.year else 12
+    if year > today.year:
+        projection_months = 0
+    totals["projection_months"] = projection_months
+    projection_basis = sum(
+        (row["net_cash_flow"] for row in months[:projection_months]),
+        Decimal("0.00"),
+    )
+    totals["projected_annual_cash_flow"] = (
+        (projection_basis / Decimal(projection_months) * Decimal("12")).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        if projection_months
+        else Decimal("0.00")
+    )
 
     return months, totals
 
@@ -6992,6 +7107,7 @@ def approve_accounting_receipt(request, receipt_id):
 
             split.financial_entry = FinancialEntry.objects.create(
                 upload=receipt.financial_upload,
+                property=receipt.property,
                 ledger_scope=receipt.financial_upload.ledger_scope,
                 property_name=receipt.property.name,
                 sheet_name="Receipt Upload",
@@ -7012,6 +7128,7 @@ def approve_accounting_receipt(request, receipt_id):
     elif not receipt.financial_entry:
         receipt.financial_entry = FinancialEntry.objects.create(
             upload=receipt.financial_upload,
+            property=receipt.property,
             ledger_scope=receipt.financial_upload.ledger_scope,
             property_name=receipt.property.name,
             sheet_name="Receipt Upload",
@@ -7241,9 +7358,9 @@ def parse_financial_upload(request, upload_id):
 
 
 @login_required
-@user_passes_test(staff_required)
-def property_financials(request, property_name):
-    property_obj = get_object_or_404(staff_managed_properties(request.user), name=property_name)
+@user_passes_test(reporting_required)
+def property_financials(request, property_id):
+    property_obj = get_object_or_404(staff_managed_properties(request.user), id=property_id)
     current_year = timezone.localdate().year
     current_month_number = timezone.localdate().month
     residents = (
@@ -7318,14 +7435,15 @@ def user_can_view_property_blog(user, property_obj):
     if user.is_superuser or getattr(user, "role", "") in ["admin", "assistant"]:
         return True
 
-    if property_obj.owner_email and user.email and property_obj.owner_email.lower() == user.email.lower():
+    if getattr(user, "role", "") == "property_owner" and (
+        property_obj.memberships.filter(user=user, role="owner").exists()
+        or (not settings.PROPERTY_MEMBERSHIP_ENFORCEMENT and property_obj.owner_email and user.email and property_obj.owner_email.lower() == user.email.lower())
+    ):
         return True
 
-    if (
-        getattr(user, "role", "") == "landlord"
-        and property_obj.landlord_email
-        and user.email
-        and property_obj.landlord_email.lower() == user.email.lower()
+    if getattr(user, "role", "") == "landlord" and (
+        property_obj.memberships.filter(user=user, role="manager").exists()
+        or (not settings.PROPERTY_MEMBERSHIP_ENFORCEMENT and property_obj.landlord_email and user.email and property_obj.landlord_email.lower() == user.email.lower())
     ):
         return True
 
@@ -7340,14 +7458,18 @@ def user_can_manage_property_blog(user, property_obj):
     if user.is_superuser or getattr(user, "role", "") in ["admin", "assistant"]:
         return True
 
-    if property_obj.owner_email and user.email and property_obj.owner_email.lower() == user.email.lower():
+    if getattr(user, "role", "") == "property_owner" and (
+        property_obj.memberships.filter(user=user, role="owner").exists()
+        or (not settings.PROPERTY_MEMBERSHIP_ENFORCEMENT and property_obj.owner_email and user.email and property_obj.owner_email.lower() == user.email.lower())
+    ):
         return True
 
     return bool(
         getattr(user, "role", "") == "landlord"
-        and property_obj.landlord_email
-        and user.email
-        and property_obj.landlord_email.lower() == user.email.lower()
+        and (
+            property_obj.memberships.filter(user=user, role="manager").exists()
+            or (not settings.PROPERTY_MEMBERSHIP_ENFORCEMENT and property_obj.landlord_email and user.email and property_obj.landlord_email.lower() == user.email.lower())
+        )
     )
 
 
@@ -8211,8 +8333,14 @@ def add_blog_comment(request, post_id):
     return redirect("home")
 
 
+@login_required
 def printable_application(request, pk):
-    application = get_object_or_404(HousingApplication, pk=pk)
+    accessible_applications = HousingApplication.objects.none()
+    if reporting_required(request.user):
+        accessible_applications = staff_managed_applications(request.user)
+    elif getattr(request.user, "role", "") in ["tenant", "resident"]:
+        accessible_applications = HousingApplication.objects.filter(user=request.user)
+    application = get_object_or_404(accessible_applications.select_related("property"), pk=pk)
     if (
         request.user.is_authenticated
         and staff_required(request.user)
@@ -8720,26 +8848,44 @@ def stripe_webhook(request):
     if not payment_id:
         return HttpResponse(status=200)
 
-    payment = Payment.objects.filter(id=payment_id).first()
+    with transaction.atomic():
+        try:
+            payment = Payment.objects.select_for_update(of=("self",)).get(id=payment_id)
+        except Payment.DoesNotExist:
+            return HttpResponse(status=200)
+        if payment.status == "completed":
+            return HttpResponse(status=200)
 
-    if not payment or payment.status == "completed":
-        return HttpResponse(status=200)
+        expected_amount = int((payment.amount * Decimal("100")).quantize(Decimal("1")))
+        if (
+            session.get("id") != payment.stripe_session_id
+            or session.get("payment_status") != "paid"
+            or str(session.get("currency", "")).lower() != "usd"
+            or session.get("amount_total") != expected_amount
+        ):
+            return HttpResponse(status=400)
 
-    payment.status = "completed"
-    payment.stripe_payment_intent = session.get("payment_intent") or ""
-    if not payment.received_at:
-        payment.received_at = timezone.now()
-    payment.save(update_fields=["status", "stripe_payment_intent", "received_at"])
+        application = (
+            HousingApplication.objects
+            .select_related("property")
+            .select_for_update(of=("self",))
+            .get(id=payment.application_id)
+        )
+        payment.application = application
 
-    payment_method_types = session.get("payment_method_types", [])
-    if "cashapp" in payment_method_types:
-        payment.payment_method = "stripe_cashapp"
-        payment.save(update_fields=["payment_method"])
+        payment.status = "completed"
+        payment.stripe_payment_intent = session.get("payment_intent") or ""
+        if not payment.received_at:
+            payment.received_at = timezone.now()
+        payment_method_types = session.get("payment_method_types", [])
+        if "cashapp" in payment_method_types:
+            payment.payment_method = "stripe_cashapp"
+        payment.save(update_fields=["status", "stripe_payment_intent", "received_at", "payment_method"])
 
-    record_platform_revenue_for_completed_payment(payment)
-    completed_payments = split_completed_combined_payment(payment)
-    for completed_payment in completed_payments:
-        apply_completed_payment_to_balance(completed_payment)
+        completed_payments = split_completed_combined_payment(payment)
+        for completed_payment in completed_payments:
+            apply_completed_payment_to_balance(completed_payment)
+            record_platform_revenue_for_completed_payment(completed_payment)
 
     application = payment.application
     owner_email = settings.RENTAL_LEDGER_LEAD_EMAIL

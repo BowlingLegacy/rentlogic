@@ -2,17 +2,11 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect, render
 
-from .models import Property
-
-
 def dashboard_for_user(user):
     if user.is_superuser or getattr(user, "role", "") == "admin":
         return "superadmin_dashboard"
 
     if getattr(user, "role", "") == "property_owner":
-        return "property_owner_dashboard"
-
-    if user.email and Property.objects.filter(owner_email__iexact=user.email).exists():
         return "property_owner_dashboard"
 
     if user.is_staff or getattr(user, "role", "") in ["landlord", "assistant"]:

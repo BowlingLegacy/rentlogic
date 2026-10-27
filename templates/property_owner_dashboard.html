@@ -518,9 +518,9 @@
                     <div class="col-lg-4">
                         <div class="fin-section">
                             <div class="fin-title">Expenses & Debt Position</div>
-                            <a class="metric-btn" href="{% url 'property_financials' card.property.name %}"><span class="metric-label">Operating Expenses</span><span class="metric-value">Open</span></a>
-                            <a class="metric-btn" href="{% url 'property_financials' card.property.name %}"><span class="metric-label">Debt Service</span><span class="metric-value">Open</span></a>
-                            <a class="metric-btn" href="{% url 'property_financials' card.property.name %}"><span class="metric-label">Capital Expenses</span><span class="metric-value">Open</span></a>
+                            <a class="metric-btn" href="{% url 'property_financials' card.property.id %}"><span class="metric-label">Operating Expenses</span><span class="metric-value">Open</span></a>
+                            <a class="metric-btn" href="{% url 'property_financials' card.property.id %}"><span class="metric-label">Debt Service</span><span class="metric-value">Open</span></a>
+                            <a class="metric-btn" href="{% url 'property_financials' card.property.id %}"><span class="metric-label">Capital Expenses</span><span class="metric-value">Open</span></a>
                         </div>
                     </div>
 
@@ -529,13 +529,13 @@
                             <div class="fin-title">Performance</div>
                             <a class="metric-btn" href="{% url 't12_report' %}?property_id={{ card.property.id }}"><span class="metric-label">NOI</span><span class="metric-value">Open</span></a>
                             <a class="metric-btn" href="{% url 't12_report' %}?property_id={{ card.property.id }}"><span class="metric-label">Cash Flow After Debt</span><span class="metric-value">Open</span></a>
-                            <a class="metric-btn" href="{% url 'property_financials' card.property.name %}"><span class="metric-label">Occupancy / Collection %</span><span class="metric-value">Open</span></a>
+                            <a class="metric-btn" href="{% url 'property_financials' card.property.id %}"><span class="metric-label">Occupancy / Collection %</span><span class="metric-value">Open</span></a>
                         </div>
                     </div>
                 </div>
 
                 <div class="d-flex gap-2 flex-wrap mt-3">
-                    <a href="{% url 'property_financials' card.property.name %}" class="btn-owner">Open {{ card.property.name }} Financials</a>
+                    <a href="{% url 'property_financials' card.property.id %}" class="btn-owner">Open {{ card.property.name }} Financials</a>
                     <a href="{% url 'custom_reports' %}?property_id={{ card.property.id }}" class="btn-dark-soft">Custom Reports</a>
                     <a href="{% url 'owner_property_onboarding_documents' card.property.id %}" class="btn-dark-soft">Onboarding Files</a>
                     <a href="{% url 'owner_onboarding_wizard' %}" class="btn-dark-soft">Setup Checklist</a>
