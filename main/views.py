@@ -2238,9 +2238,17 @@ self.addEventListener("fetch", event => {
 
 
 def owner_intake_submission_started_at(request):
+    started_at = request.POST.get("started_at")
+    if not started_at:
+        return None
+
     try:
+        timestamp = int(started_at)
+        if timestamp <= 0:
+            return None
+
         return timezone.datetime.fromtimestamp(
-            int(request.POST.get("started_at", "0")),
+            timestamp,
             tz=timezone.get_current_timezone(),
         )
     except (TypeError, ValueError, OverflowError):
